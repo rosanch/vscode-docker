@@ -33,6 +33,7 @@
     "onCommand:vscode-docker.image.inspect",
     "onCommand:vscode-docker.image.remove",
     "onCommand:vscode-docker.image.push",
+    "onCommand:vscode-docker.image.pushToAzure",
     "onCommand:vscode-docker.image.tag",
     "onCommand:vscode-docker.container.start",
     "onCommand:vscode-docker.container.start.interactive",
@@ -145,6 +146,14 @@
         },
         {
           "command": "vscode-docker.image.push",
+          "when": "view == dockerExplorer && viewItem == imagesRootNode"
+        },
+        {
+          "command": "vscode-docker.image.pushToAzure",
+          "when": "view == dockerExplorer && viewItem == localImageNode"
+        },
+        {
+          "command": "vscode-docker.image.pushToAzure",
           "when": "view == dockerExplorer && viewItem == imagesRootNode"
         },
         {
@@ -547,6 +556,12 @@
         "category": "Docker"
       },
       {
+        "command": "vscode-docker.image.pushToAzure",
+        "title": "Push To Azure",
+        "description": "Push an image to an Azure container registry",
+        "category": "Docker"
+      },
+      {
         "command": "vscode-docker.system.prune",
         "title": "System Prune",
         "category": "Docker",
@@ -629,13 +644,13 @@
     "azure-arm-website": "^1.0.0-preview",
     "dockerfile-language-server-nodejs": "^0.0.17",
     "dockerode": "^2.5.1",
+    "glob": "7.1.2",
     "gradle-to-js": "^1.0.1",
     "moment": "^2.19.3",
     "opn": "^5.1.0",
     "pom-parser": "^1.1.1",
     "request-promise": "^4.2.2",
     "vscode-extension-telemetry": "^0.0.6",
-    "vscode-languageclient": "^4.0.0",
-    "glob": "7.1.2"
+    "vscode-languageclient": "^4.0.0"
   }
 }

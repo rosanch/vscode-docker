@@ -13,6 +13,7 @@ import { buildImage } from './commands/build-image';
 import inspectImageCommand from './commands/inspect-image';
 import { removeImage } from './commands/remove-image';
 import { pushImage } from './commands/push-image';
+import { pushAzure } from './commands/push-azure';
 import { startContainer, startContainerInteractive, startAzureCLI } from './commands/start-container';
 import { stopContainer } from './commands/stop-container';
 import { restartContainer } from './commands/restart-container';
@@ -97,6 +98,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.inspect', inspectImageCommand));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.remove', removeImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.push', pushImage));
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.pushToAzure', pushAzure));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.tag', tagImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.container.start', startContainer));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.container.start.interactive', startContainerInteractive));

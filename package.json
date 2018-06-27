@@ -30,6 +30,7 @@
     "onLanguage:dockerfile",
     "onLanguage:yaml",
     "onCommand:vscode-docker.image.build",
+    "onCommand:vscode-docker.image.acrbuild",
     "onCommand:vscode-docker.image.inspect",
     "onCommand:vscode-docker.image.remove",
     "onCommand:vscode-docker.image.push",
@@ -74,6 +75,11 @@
           "group": "docker"
         },
         {
+          "when": "editorLangId== dockerfile",
+          "command": "vscode-docker.image.acrbuild",
+          "group": "docker"
+        },
+        {
           "when": "resourceFilename == docker-compose.yml",
           "command": "vscode-docker.compose.up",
           "group": "docker"
@@ -103,6 +109,11 @@
         {
           "when": "resourceFilename =~ /[dD]ocker-[cC]ompose/",
           "command": "vscode-docker.compose.up",
+          "group": "docker"
+        },
+        {
+          "when": "resourceFilename =~ /[dD]ocker[fF]ile/",
+          "command": "vscode-docer.image.acrbuild",
           "group": "docker"
         },
         {
@@ -472,6 +483,12 @@
         "category": "Docker"
       },
       {
+        "command": "vscode-docker.image.acrbuild",
+        "title": "ACR Build",
+        "description": "Build a docker image from a dockerfile to azure",
+        "category": "Docker"
+      },
+      {
         "command": "vscode-docker.image.inspect",
         "title": "Inspect Image",
         "description": "Inspect the metadata of a Docker image",
@@ -639,7 +656,7 @@
     "@types/glob": "5.0.35"
   },
   "dependencies": {
-    "azure-arm-containerregistry": "^1.0.0-preview",
+    "azure-arm-containerregistry": "^2.2.0",
     "azure-arm-resource": "^2.0.0-preview",
     "azure-arm-website": "^1.0.0-preview",
     "dockerfile-language-server-nodejs": "^0.0.17",
@@ -647,6 +664,7 @@
     "glob": "7.1.2",
     "gradle-to-js": "^1.0.1",
     "moment": "^2.19.3",
+    "npm": "^6.1.0",
     "opn": "^5.1.0",
     "pom-parser": "^1.1.1",
     "request-promise": "^4.2.2",

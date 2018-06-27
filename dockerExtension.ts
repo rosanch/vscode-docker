@@ -10,6 +10,7 @@ import composeVersionKeys from './dockerCompose/dockerComposeKeyInfo';
 import { DockerComposeParser } from './dockerCompose/dockerComposeParser';
 import vscode = require('vscode');
 import { buildImage } from './commands/build-image';
+import { buildAzureImage } from './commands/build-azure-image';
 import inspectImageCommand from './commands/inspect-image';
 import { removeImage } from './commands/remove-image';
 import { pushImage } from './commands/push-image';
@@ -95,6 +96,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
 
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.configure', configure));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.build', buildImage));
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.acrbuild', buildAzureImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.inspect', inspectImageCommand));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.remove', removeImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.push', pushImage));

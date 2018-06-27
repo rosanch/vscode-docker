@@ -33,11 +33,13 @@ function computeItems(folder: vscode.WorkspaceFolder, uris: vscode.Uri[]): vscod
     return items;
 }
 
+/*Returns a promise for an item that contains information regarding what should be built on ACR build*/
 async function resolveImageItem(folder: vscode.WorkspaceFolder, dockerFileUri?: vscode.Uri): Promise<Item> {
     if (dockerFileUri) {
         return createItem(folder, dockerFileUri);
     };
 
+    //Acquire Docker File if not selected
     const uris: vscode.Uri[] = await getDockerFileUris(folder);
 
     if (!uris || uris.length == 0) {
@@ -54,6 +56,8 @@ export async function buildAzureImage(dockerFileUri?: vscode.Uri) {
     const configOptions: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('docker');
     const defaultContextPath = configOptions.get('imageBuildContextPath', '');
 
+    //1. Acquire the current working directory
+
     let folder: vscode.WorkspaceFolder;
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
         folder = vscode.workspace.workspaceFolders[0];
@@ -69,6 +73,8 @@ export async function buildAzureImage(dockerFileUri?: vscode.Uri) {
         }
         return;
     }
+
+    //2. Acquire vscode items
 
     const uri: Item = await resolveImageItem(folder, dockerFileUri);
     if (!uri) return;

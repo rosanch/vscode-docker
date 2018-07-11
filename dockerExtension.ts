@@ -11,6 +11,7 @@ import { DockerComposeParser } from './dockerCompose/dockerComposeParser';
 import vscode = require('vscode');
 import { buildImage } from './commands/build-image';
 import { createRegistry } from './commands/create-registry';
+import { buildTask } from './commands/acr-buildtask';
 import inspectImageCommand from './commands/inspect-image';
 import { removeImage } from './commands/remove-image';
 import { pushImage } from './commands/push-image';
@@ -111,7 +112,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.down', composeDown));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.system.prune', systemPrune));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
-
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.buildTask', buildTask));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createWebApp', async (context?: AzureImageNode | DockerHubImageNode) => {
         if (context) {
             if (azureAccount) {

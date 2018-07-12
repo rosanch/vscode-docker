@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 import * as dockerHub from '../utils/dockerHubUtils';
 import { NodeBase } from './nodeBase';
-import { AsyncPool } from '../utils/asyncPool';
+import { AsyncPool } from '../utils/asyncpool';
 
 export class DockerHubOrgNode extends NodeBase {
 
@@ -83,7 +83,7 @@ export class DockerHubRepositoryNode extends NodeBase {
         const imageNodes: DockerHubImageNode[] = [];
         let node: DockerHubImageNode;
 
-        const myTags: dockerHub.Tag[] = await dockerHub.getRepositoryTags({namespace: element.repository.namespace, name: element.repository.name});
+        const myTags: dockerHub.Tag[] = await dockerHub.getRepositoryTags({ namespace: element.repository.namespace, name: element.repository.name });
         for (let i = 0; i < myTags.length; i++) {
             node = new DockerHubImageNode(`${element.repository.name}:${myTags[i].name}`, 'dockerHubImageTag');
             node.password = element.password;

@@ -7,7 +7,9 @@ import { NodeBase } from './nodeBase';
 import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
 import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { RegistryType } from './registryType';
-import { asyncPool } from '../utils/asyncpool';
+
+import { AsyncPool } from '../utils/asyncpool';
+
 
 const MAX_CONCURRENT_REQUESTS = 8;
 
@@ -120,7 +122,8 @@ export class AzureRepositoryNode extends NodeBase {
         public readonly iconPath = {
             light: path.join(__filename, '..', '..', '..', '..', 'images', 'light', 'Repository_16x.svg'),
             dark: path.join(__filename, '..', '..', '..', '..', 'images', 'dark', 'Repository_16x.svg')
-    }) {
+        }
+    ) {
         super(label);
     }
 
@@ -138,7 +141,8 @@ export class AzureRepositoryNode extends NodeBase {
             label: this.label,
             collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
             contextValue: this.contextValue,
-            iconPath: this.iconPath 
+            iconPath: this.iconPath
+
         }
     }
 
@@ -151,10 +155,8 @@ export class AzureRepositoryNode extends NodeBase {
         let tags;
 
         const tenantId: string = element.subscription.tenantId;
-        const session: AzureSession = element
-            .azureAccount
-            .sessions
-            .find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
+
+        const session: AzureSession = element.azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
         const { accessToken, refreshToken } = await acquireToken(session);
 
         if (accessToken && refreshToken) {
@@ -196,13 +198,14 @@ export class AzureRepositoryNode extends NodeBase {
                     bearer: accessTokenARC
                 }
             }, (err, httpResponse, body) => {
-                if (err) {return [];}
+                if (err) { return []; }
+
                 if (body.length > 0) {
                     tags = JSON.parse(body).tags;
                 }
             });
 
-            const pool = new asyncPool(MAX_CONCURRENT_REQUESTS);
+            const pool = new AsyncPool(MAX_CONCURRENT_REQUESTS);
             for (let i = 0; i < tags.length; i++) {
                 pool.addTask(async () => {
                     let data = await request.get('https://' + element.repository + '/v2/' + element.label + `/manifests/${tags[i]}`, {
@@ -288,7 +291,9 @@ export class AzureLoadingNode extends NodeBase {
     getTreeItem(): vscode.TreeItem {
         return {
             label: this.label,
-            collapsibleState: vscode.TreeItemCollapsibleState.None }
+            collapsibleState: vscode.TreeItemCollapsibleState.None
+        }
+
     }
 }
 
@@ -297,14 +302,14 @@ async function acquireToken(session: AzureSession) {
         const credentials: any = session.credentials;
         const environment: any = session.environment;
         credentials.context.acquireToken(environment.activeDirectoryResourceId, credentials.username, credentials.clientId, function (err: any, result: any) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({
-                        accessToken: result.accessToken,
-                        refreshToken: result.refreshToken 
-                    });
-                }
-            });
+            if (err) {
+                reject(err);
+            } else {
+                resolve({
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken
+                });
+            }
+        });
     });
 }

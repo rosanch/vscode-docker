@@ -49,6 +49,7 @@
     "onCommand:vscode-docker.dockerHubLogout",
     "onCommand:vscode-docker.createRegistry",
     "onCommand:vscode-docker.deleteRegistry",
+    "onCommand:vscode-docker.buildTaskLog",
     "onCommand:vscode-docker.browseDockerHub",
     "onCommand:vscode-docker.browseAzurePortal",
     "onCommand:vscode-docker.explorer.refresh",
@@ -236,13 +237,17 @@
         {
           "command": "vscode-docker.dockerHubLogout",
           "when": "view == dockerExplorer && viewItem == dockerHubRootNode"
-        },        
+        },
         {
           "command": "vscode-docker.createRegistry",
           "when": "view == dockerExplorer && viewItem == azureRegistryRootNode"
         },
         {
           "command": "vscode-docker.deleteRegistry",
+          "when": "view == dockerExplorer && viewItem == azureRegistryNode"
+        },
+        {
+          "command": "vscode-docker.buildTaskLog",
           "when": "view == dockerExplorer && viewItem == azureRegistryNode"
         },
         {
@@ -583,7 +588,7 @@
         "command": "vscode-docker.dockerHubLogout",
         "title": "Docker Hub Logout",
         "category": "Docker"
-      },      
+      },
       {
         "command": "vscode-docker.createRegistry",
         "title": "Create Registry",
@@ -592,6 +597,11 @@
       {
         "command": "vscode-docker.deleteRegistry",
         "title": "Delete Registry",
+        "category": "Docker"
+      },
+      {
+        "command": "vscode-docker.buildTaskLog",
+        "title": "Build Task Log",
         "category": "Docker"
       },
       {
@@ -659,6 +669,7 @@
     "azure-arm-containerregistry": "^2.3.0",
     "azure-arm-resource": "^2.0.0-preview",
     "azure-arm-website": "^1.0.0-preview",
+    "azure-storage": "^2.8.2",
     "dockerfile-language-server-nodejs": "^0.0.18",
     "dockerode": "^2.5.1",
     "glob": "7.1.2",

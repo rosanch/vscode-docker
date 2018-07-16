@@ -7,23 +7,15 @@ import { AzureAccount, AzureSession } from '../typings/azure-account.api';
 import { accountProvider } from '../dockerExtension';
 import { RegistryRootNode } from "../explorer/models/registryRootNode";
 import { ServiceClientCredentials } from 'ms-rest';
-import { RegistryNameStatus, RegistryListResult } from "azure-arm-containerregistry/lib/models";
-const teleCmdId: string = 'vscode-docker.deleteRegistry';
-import { AzureCredentialsManager } from '../utils/AzureCredentialsManager'
+import { RegistryNameStatus, RegistryListResult, BuildTaskListResult, BuildListResult, Build } from "azure-arm-containerregistry/lib/models";
+const teleCmdId: string = 'vscode-docker.buildTaskLog';
+import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
 import { AzureRegistryNode, AzureLoadingNode, AzureNotSignedInNode } from '../explorer/models/azureRegistryNodes';
+import { Stream } from "stream";
 
 
-export async function deleteRegistry(context?: AzureRegistryNode) {
-    let opt: vscode.InputBoxOptions = {
-        ignoreFocusOut: true,
-        placeHolder: 'No',
-        value: 'No',
-        prompt: 'Are you sure you want to delete this registry and its associated images? Enter Y or N: '
-    };
+export async function buildTaskLog(context?: AzureRegistryNode) {
     console.log(context);
-    let answer = await vscode.window.showInputBox(opt);
-    if (answer == 'N' || answer == 'n') { return };
-
     let azureAccount = context.azureAccount;
     if (!azureAccount) {
         return;
@@ -37,7 +29,7 @@ export async function deleteRegistry(context?: AzureRegistryNode) {
     let resourceGroup: string;
     let subscriptionId: string;
     for (let i = 0; i < registries.length; i++) {
-        if (registries[i].name === context.label) {
+        if (registries[i].loginServer === context.label) {
             resourceGroup = registries[i].id.slice(registries[i].id.search('resourceGroups/') + 'resourceGroups/'.length, registries[i].id.search('/providers/'));
             subscriptionId = registries[i].id.slice('subscriptions/'.length, registries[i].id.search('/resourceGroups/'));
             break;
@@ -47,21 +39,29 @@ export async function deleteRegistry(context?: AzureRegistryNode) {
         throw 'Something went wrong, this registry may no longer exist'
     }
     const subs = AzureCredentialsManager.getInstance().getFilteredSubscriptionList();
-    const subscription = subs.find(function (sub): boolean {
-        return sub.subscriptionId === subscriptionId;
-    });
-    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
-    await client.registries.beginDeleteMethod(resourceGroup, context.label).then(function (response) {
+
+    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
+    let logs = [];
+
+    await client.builds.list(resourceGroup, context.registry.name).then(function (response) {
         console.log("Success!", response);
+        response.forEach((item) => {
+            logs.push(item);
+        })
+
     }, function (error) {
         console.error("Failed!", error);
     })
 
-
-
-    //check to make sure resource group name provided actually exists
-
-    // make sure the registry name entered is possible
-
+    let links: String[] = [];
+    // logs.forEach((item: Build) => {
+    //     let temp=await client.builds.getLogLink(resourceGroup, context.label, item.buildId);
+    //     links.push(temp.logLink);
+    // })
+    for (let i = 0; i < logs.length; i++) {
+        const temp = await client.builds.getLogLink(resourceGroup, context.registry.name, logs[i].buildId);
+        console.log(temp);
+    }
+    console.log("Build items in array form: ", logs);
 }
 

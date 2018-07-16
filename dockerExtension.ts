@@ -12,6 +12,7 @@ import vscode = require('vscode');
 import { buildImage } from './commands/build-image';
 import { createRegistry } from './commands/create-registry';
 import { deleteRegistry } from './commands/delete-registry';
+import { buildTaskLog } from './commands/build-task-log';
 import inspectImageCommand from './commands/inspect-image';
 import { removeImage } from './commands/remove-image';
 import { pushImage } from './commands/push-image';
@@ -82,7 +83,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(new Reporter(ctx));
 
     dockerExplorerProvider = new DockerExplorerProvider(azureAccount);
-    accountProvider = new AzureAccountWrapper(ctx,azureAccount);
+    accountProvider = new AzureAccountWrapper(ctx, azureAccount);
     vscode.window.registerTreeDataProvider('dockerExplorer', dockerExplorerProvider);
     vscode.commands.registerCommand('vscode-docker.explorer.refresh', () => dockerExplorerProvider.refresh());
 
@@ -114,6 +115,8 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.system.prune', systemPrune));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteRegistry', deleteRegistry));
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.buildTaskLog', buildTaskLog));
+
 
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createWebApp', async (context?: AzureImageNode | DockerHubImageNode) => {
         if (context) {

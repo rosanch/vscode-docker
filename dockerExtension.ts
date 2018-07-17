@@ -38,6 +38,7 @@ import * as opn from 'opn';
 import { DockerDebugConfigProvider } from './configureWorkspace/configDebugProvider';
 import { browseAzurePortal } from './explorer/utils/azureUtils';
 import { AzureCredentialsManager } from './utils/AzureCredentialsManager';
+import { createRegistry } from './commands/create-registry';
 
 export const FROM_DIRECTIVE_PATTERN = /^\s*FROM\s*([\w-\/:]*)(\s*AS\s*[a-z][a-z0-9-_\\.]*)?$/i;
 export const COMPOSE_FILE_GLOB_PATTERN = '**/[dD]ocker-[cC]ompose*.{yaml,yml}';
@@ -109,7 +110,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.up', composeUp));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.down', composeDown));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.system.prune', systemPrune));
-
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createWebApp', async (context?: AzureImageNode | DockerHubImageNode) => {
         if (context) {
             if (azureAccount) {

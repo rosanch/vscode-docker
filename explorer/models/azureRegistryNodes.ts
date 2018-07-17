@@ -7,11 +7,8 @@ import { NodeBase } from './nodeBase';
 import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
 import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { RegistryType } from './registryType';
-
-import { AsyncPool } from '../utils/asyncpool';
-
-
-const MAX_CONCURRENT_REQUESTS = 8;
+import { AsyncPool } from '../../utils/asyncpool';
+import { MAX_CONCURRENT_REQUESTS } from '../../utils/constants'
 
 export class AzureRegistryNode extends NodeBase {
     private _azureAccount: AzureAccount;
@@ -142,7 +139,6 @@ export class AzureRepositoryNode extends NodeBase {
             collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
             contextValue: this.contextValue,
             iconPath: this.iconPath
-
         }
     }
 
@@ -155,13 +151,10 @@ export class AzureRepositoryNode extends NodeBase {
         let tags;
 
         const tenantId: string = element.subscription.tenantId;
-
         const session: AzureSession = element.azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
         const { accessToken, refreshToken } = await acquireToken(session);
 
         if (accessToken && refreshToken) {
-            const tenantId = element.subscription.tenantId;
-
             await request.post('https://' + element.repository + '/oauth2/exchange', {
                 form: {
                     grant_type: 'access_token_refresh_token',
@@ -199,7 +192,6 @@ export class AzureRepositoryNode extends NodeBase {
                 }
             }, (err, httpResponse, body) => {
                 if (err) { return []; }
-
                 if (body.length > 0) {
                     tags = JSON.parse(body).tags;
                 }
@@ -227,12 +219,13 @@ export class AzureRepositoryNode extends NodeBase {
                     imageNodes.push(node);
                 });
             }
-            await pool.scheduleRun();
+            await pool.runAll();
+
         }
-        function sortfunction(a: AzureImageNode, b: AzureImageNode): number {
+        function sortFunction(a: AzureImageNode, b: AzureImageNode): number {
             return a.created.localeCompare(b.created);
         }
-        imageNodes.sort(sortfunction);
+        imageNodes.sort(sortFunction);
         return imageNodes;
     }
 }
@@ -293,7 +286,6 @@ export class AzureLoadingNode extends NodeBase {
             label: this.label,
             collapsibleState: vscode.TreeItemCollapsibleState.None
         }
-
     }
 }
 
@@ -301,6 +293,7 @@ async function acquireToken(session: AzureSession) {
     return new Promise<{ accessToken: string; refreshToken: string; }>((resolve, reject) => {
         const credentials: any = session.credentials;
         const environment: any = session.environment;
+        // tslint:disable-next-line:no-function-expression // Grandfathered in
         credentials.context.acquireToken(environment.activeDirectoryResourceId, credentials.username, credentials.clientId, function (err: any, result: any) {
             if (err) {
                 reject(err);

@@ -10,9 +10,7 @@ import composeVersionKeys from './dockerCompose/dockerComposeKeyInfo';
 import { DockerComposeParser } from './dockerCompose/dockerComposeParser';
 import vscode = require('vscode');
 import { buildImage } from './commands/build-image';
-import { createRegistry } from './commands/create-registry';
-import { deleteRegistry } from './commands/delete-registry';
-import inspectImageCommand from './commands/inspect-image';
+import inspectImage from './commands/inspect-image';
 import { removeImage } from './commands/remove-image';
 import { pushImage } from './commands/push-image';
 import { startContainer, startContainerInteractive, startAzureCLI } from './commands/start-container';
@@ -41,20 +39,20 @@ import { DockerDebugConfigProvider } from './configureWorkspace/configDebugProvi
 import { browseAzurePortal } from './explorer/utils/azureUtils';
 import { AzureCredentialsManager } from './utils/AzureCredentialsManager';
 
-
 export const FROM_DIRECTIVE_PATTERN = /^\s*FROM\s*([\w-\/:]*)(\s*AS\s*[a-z][a-z0-9-_\\.]*)?$/i;
 export const COMPOSE_FILE_GLOB_PATTERN = '**/[dD]ocker-[cC]ompose*.{yaml,yml}';
 export const DOCKERFILE_GLOB_PATTERN = '**/{*.dockerfile,[dD]ocker[fF]ile}';
+
 export var diagnosticCollection: vscode.DiagnosticCollection;
 export var dockerExplorerProvider: DockerExplorerProvider;
-export var accountProvider: AzureAccountWrapper;
+
 export type KeyInfo = { [keyName: string]: string; };
 
 export interface ComposeVersionKeys {
     All: KeyInfo,
     v1: KeyInfo,
     v2: KeyInfo
-};
+}
 
 let client: LanguageClient;
 
@@ -82,7 +80,6 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(new Reporter(ctx));
 
     dockerExplorerProvider = new DockerExplorerProvider(azureAccount);
-    accountProvider = new AzureAccountWrapper(ctx,azureAccount);
     vscode.window.registerTreeDataProvider('dockerExplorer', dockerExplorerProvider);
     vscode.commands.registerCommand('vscode-docker.explorer.refresh', () => dockerExplorerProvider.refresh());
 
@@ -97,7 +94,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
 
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.configure', configure));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.build', buildImage));
-    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.inspect', inspectImageCommand));
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.inspect', inspectImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.remove', removeImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.push', pushImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.image.tag', tagImage));
@@ -112,8 +109,6 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.up', composeUp));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.down', composeDown));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.system.prune', systemPrune));
-    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
-    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteRegistry', deleteRegistry));
 
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createWebApp', async (context?: AzureImageNode | DockerHubImageNode) => {
         if (context) {

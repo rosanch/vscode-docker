@@ -4,7 +4,6 @@ import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
 import { AzureAccountWrapper } from '.././explorer/deploy/azureAccountWrapper';
 import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
 import { AzureAccount, AzureSession } from '../typings/azure-account.api';
-import { accountProvider } from '../dockerExtension';
 import { RegistryRootNode } from "../explorer/models/registryRootNode";
 import { ServiceClientCredentials } from 'ms-rest';
 import { RegistryNameStatus } from "azure-arm-containerregistry/lib/models";

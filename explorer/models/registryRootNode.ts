@@ -13,11 +13,10 @@ import { RegistryType } from './registryType';
 import { ServiceClientCredentials } from 'ms-rest';
 import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
 import { getCoreNodeModule } from '../utils/utils';
-import { AsyncPool } from '../utils/asyncpool';
+import { AsyncPool } from '../../utils/asyncpool';
 import { TIMEOUT } from 'dns';
+import { MAX_CONCURRENT_REQUESTS, MAX_CONCURRENT_SUBSCRIPTON_REQUESTS } from '../../utils/constants'
 const ContainerRegistryManagement = require('azure-arm-containerregistry');
-const MAX_CONCURRENT_REQUESTS = 8;
-const MAX_CONCURRENT_SUBSCRIPTON_REQUESTS = 5;
 
 export class RegistryRootNode extends NodeBase {
     private _keytar: typeof keytarType;
@@ -79,6 +78,7 @@ export class RegistryRootNode extends NodeBase {
 
         if (!id.token) {
             id = await dockerHub.dockerHubLogin();
+
             if (id && id.token) {
                 if (this._keytar) {
                     this._keytar.setPassword('vscode-docker', 'dockerhub.token', id.token);
@@ -143,7 +143,8 @@ export class RegistryRootNode extends NodeBase {
                     });
                 });
             }
-            await subPool.scheduleRun();
+            await subPool.runAll();
+
             const regPool = new AsyncPool(MAX_CONCURRENT_REQUESTS);
             for (let i = 0; i < subsAndRegistries.length; i++) {
                 const client = subsAndRegistries[i].client;
@@ -171,11 +172,12 @@ export class RegistryRootNode extends NodeBase {
                     }
                 }
             }
-            await regPool.scheduleRun();
-            function sortfunction(a: AzureRegistryNode, b: AzureRegistryNode): number {
+            await regPool.runAll();
+
+            function sortFunction(a: AzureRegistryNode, b: AzureRegistryNode): number {
                 return a.registry.loginServer.localeCompare(b.registry.loginServer);
             }
-            azureRegistryNodes.sort(sortfunction);
+            azureRegistryNodes.sort(sortFunction);
             return azureRegistryNodes;
         }
     }
@@ -185,7 +187,7 @@ export class RegistryRootNode extends NodeBase {
         const session = this._azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
 
         if (session) {
-            return session.credentials;
+            return session.credentials
         }
 
         throw new Error(`Failed to get credentials, tenant ${tenantId} not found.`);
@@ -211,5 +213,3 @@ export class RegistryRootNode extends NodeBase {
         }
     }
 }
-
-

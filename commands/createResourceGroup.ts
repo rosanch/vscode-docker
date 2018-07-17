@@ -21,25 +21,15 @@ export async function createRegistry(context?: RegistryRootNode) {
     if (azureAccount.status === 'LoggedOut') {
         return;
     }
-    let subscription: SubscriptionModels.Subscription;
-    let resourceGroup: ResourceGroup;
-    try {
-        subscription = await acquireSubscription(azureAccount);
-        resourceGroup = await acquireResourceGroup(subscription, azureAccount);
-    } catch (error) {
-        return;
-    }
-    const client = new ContainerRegistryManagementClient(getCredentialByTenantId(subscription.tenantId, azureAccount), subscription.subscriptionId);
 
-    let registryName: string;
-    try {
-        registryName = await acquireRegistryName(client);
-    } catch (error) {
-        return;
-    }
+    let subscription: SubscriptionModels.Subscription = await acquireSubscription(azureAccount);
+    let resourceGroup: ResourceGroup = await acquireResourceGroup(subscription, azureAccount);
+
+    const client = new ContainerRegistryManagementClient(getCredentialByTenantId(subscription.tenantId, azureAccount), subscription.subscriptionId);
+    let registryName: string = await acquireRegistryName(client);
 
     const sku: string = await vscode.window.showInputBox({
-        ignoreFocusOut: false,
+        ignoreFocusOut: true,
         placeHolder: 'Basic',
         value: 'Basic',
         prompt: 'SKU? '
@@ -63,8 +53,6 @@ async function acquireSubscription(azureAccount): Promise<SubscriptionModels.Sub
     let subscriptionName: string;
     do {
         subscriptionName = await vscode.window.showQuickPick(subsNames, { 'canPickMany': false, 'placeHolder': 'Choose a subscription to be used' });
-
-        if (subscriptionName === undefined) throw 'User exit';
     } while (!subscriptionName);
 
     return subs.find(sub => { return sub.displayName === subscriptionName });
@@ -75,7 +63,6 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
     const resourceClient = new ResourceManagementClient(getCredentialByTenantId(subscription.tenantId, azureAccount), subscription.subscriptionId);
     const resourceGroups = await resourceClient.resourceGroups.list();
     let resourceGroupNames: string[] = [];
-    resourceGroupNames.push('+ Create new resource group');
     for (let i = 0; i < resourceGroups.length; i++) {
         resourceGroupNames.push(resourceGroups[i].name);
     }
@@ -83,13 +70,6 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
     let resourceGroupName;
     do {
         resourceGroupName = await vscode.window.showQuickPick(resourceGroupNames, { 'canPickMany': false, 'placeHolder': 'Choose a Resource Group to be used' });
-
-        if (resourceGroupName === undefined) throw 'user Exit';
-
-        if (resourceGroupName === '+ Create new resource group') {
-
-        }
-
         resourceGroup = resourceGroups.find(resGroup => { return resGroup.name === resourceGroupName });
 
         if (!resourceGroupName) {
@@ -102,7 +82,7 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
 
 async function acquireRegistryName(client: ContainerRegistryManagementClient) {
     let opt: vscode.InputBoxOptions = {
-        ignoreFocusOut: false,
+        ignoreFocusOut: true,
         prompt: 'Registry name? '
     };
     let registryName: string = await vscode.window.showInputBox(opt);
@@ -110,13 +90,10 @@ async function acquireRegistryName(client: ContainerRegistryManagementClient) {
     let registryStatus: RegistryNameStatus = await client.registries.checkNameAvailability({ 'name': registryName });
     while (!registryStatus.nameAvailable) {
         opt = {
-            ignoreFocusOut: false,
+            ignoreFocusOut: true,
             prompt: "That registry name is unavailable. Try again: "
         }
         registryName = await vscode.window.showInputBox(opt);
-
-        if (registryName === undefined) throw 'user Exit';
-
         registryStatus = await client.registries.checkNameAvailability({ 'name': registryName });
     }
     return registryName;

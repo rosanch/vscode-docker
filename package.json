@@ -47,6 +47,11 @@
     "onCommand:vscode-docker.createWebApp",
     "onCommand:vscode-docker.system.prune",
     "onCommand:vscode-docker.dockerHubLogout",
+
+    "onCommand:vscode-docker.createRegistry",
+    "onCommand:vscode-docker.buildTask",
+    "onCommand:vscode-docker.launchAsBuildTask",
+
     "onCommand:vscode-docker.browseDockerHub",
     "onCommand:vscode-docker.browseAzurePortal",
     "onCommand:vscode-docker.explorer.refresh",
@@ -68,6 +73,11 @@
       "editor/context": [{
           "when": "editorLangId == dockerfile",
           "command": "vscode-docker.image.build",
+          "group": "docker"
+        },
+        {
+          "when": "editorLangId == dockerfile",
+          "command": "vscode-docker.launchAsBuildTask",
           "group": "docker"
         },
         {
@@ -229,6 +239,16 @@
         {
           "command": "vscode-docker.dockerHubLogout",
           "when": "view == dockerExplorer && viewItem == dockerHubRootNode"
+
+        },
+        {
+          "command": "vscode-docker.createRegistry",
+          "when": "view == dockerExplorer && viewItem == azureRegistryRootNode"
+
+        },
+        {
+          "command": "vscode-docker.buildTask",
+          "when": "view == dockerExplorer && viewItem == azureImageNode"
         },
         {
           "command": "vscode-docker.browseDockerHub",
@@ -456,6 +476,12 @@
         "category": "Docker"
       },
       {
+      "command": "vscode-docker.launchAsBuildTask",
+        "title": "Launch with automatic builds",
+        "description": "creates a build task from the workspace",
+        "category": "Docker"
+      },
+      {
         "command": "vscode-docker.image.inspect",
         "title": "Inspect Image",
         "description": "Inspect the metadata of a Docker image",
@@ -565,6 +591,18 @@
       {
         "command": "vscode-docker.dockerHubLogout",
         "title": "Docker Hub Logout",
+        "category": "Docker"
+
+      },
+      {
+        "command": "vscode-docker.createRegistry",
+        "title": "Create Registry",
+        "category": "Docker"
+
+      },
+      {
+        "command": "vscode-docker.buildTask",
+        "title": "Automate Cloud Builds",
         "category": "Docker"
       },
       {

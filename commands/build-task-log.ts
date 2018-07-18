@@ -53,7 +53,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
 
     const panel = vscode.window.createWebviewPanel('log Viewer', "Build Logs", vscode.ViewColumn.One, {});
     panel.webview.html = getWebviewContent(table);
-    pool.scheduleRun();
+    await pool.scheduleRun();
     console.log("Build items in array form: ", links);
 }
 function getWebviewContent(table) {

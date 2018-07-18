@@ -1,98 +1,141 @@
 
 import * as vscode from "vscode";
-import { AzureAccountWrapper } from '.././explorer/deploy/azureAccountWrapper';
-import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
+import { SubscriptionModels } from 'azure-arm-resource';
 import {ContainerRegistryManagementClient} from 'azure-arm-containerregistry';
-import {AzureAccount, AzureSession} from '../typings/azure-account.api';
-import {accountProvider} from '../dockerExtension';
-import { RegistryRootNode } from "../explorer/models/registryRootNode";
-import { ServiceClientCredentials } from 'ms-rest';
+import { AzureCredentialsManager } from "../out/utils/AzureCredentialsManager";
+import { ImageNode } from "../explorer/models/imageNode";
+import { DockerBuildStep } from 'azure-arm-containerregistry/lib/models/dockerBuildStep';
+//import { DockerBuildStep } from "azure-arm-containerregistry/lib/models";
 
-const teleCmdId: string = 'vscode-docker.buildTask';
 
-export async function buildTask(context ?: RegistryRootNode) {
+// This function creates a build task from an existing image, pulling the context from that image in order to limit the number of parameters.
+export async function buildTask(context ?: ImageNode) {
 
-    let opt:  vscode.InputBoxOptions = {
-        ignoreFocusOut: true,
-        prompt: 'Resource Group? '
-    };
+    //console.log(context);
 
-    const resourceGroup: string = await vscode.window.showInputBox(opt);
+    const resourceGroup: string = context['registry'].id.slice(context['registry'].id.search('resourceGroups/') + 'resourceGroups/'.length, context['registry'].id.search('/providers/'));
 
-    opt = {
-        ignoreFocusOut: true,
-        prompt: 'Container registry? '
-    };
+    const registryName: string = context['registry'].name;
 
-    
-    const registryName: string = await vscode.window.showInputBox(opt);
-
-    opt = {
-        ignoreFocusOut: true,
-        prompt: 'GitHub username? '
-    };
-
-    const username: string = await vscode.window.showInputBox(opt);
-
-    opt = {
+    let opt:  vscode.InputBoxOptions ={
         ignoreFocusOut: true,
         prompt: 'GitHub source code URL? '
     };
-
     const gitURL: string = await vscode.window.showInputBox(opt);
 
     opt = {
         ignoreFocusOut: true,
         prompt: 'repository path? '
     };
+    const repository: string = context['label'].split(':')[0]
 
+
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'BuildTask name? '
+    };
+    const buildTaskName: string = await vscode.window.showInputBox(opt);
+
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'BuildTask alias? '
+    };
+    const buildTaskAlias: string = await vscode.window.showInputBox(opt);
+
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'dockerfile path relative to source control root? '
+    };
+    const path: string = await vscode.window.showInputBox(opt);
+
+    const sourceControlType: string ='GitHub';
+
+    const client = new ContainerRegistryManagementClient (AzureCredentialsManager.getInstance().getCredentialByTenantId(context['subscription'].tenantId,context['azureAccount']), context['subscription']);
+
+    // This creates a build task from the params Resource Group, Registry, Name, Build Task Parameters.
+    client.buildTasks.create(resourceGroup, registryName, buildTaskName, {'alias':buildTaskAlias, 'sourceRepository':{'sourceControlType':sourceControlType, 'repositoryUrl':gitURL}, 'platform':{'osType':'linux'}, 'location':registryName})
+            .then(function(response){
+                console.log("Task Success!", response);
+            }, function(error){
+                console.error("Task Failed!", error);
+            });
+            //testing
+            console.log(client.buildTasks.list(resourceGroup, registryName));
+
+    let images: ImageNode[];
+    images[0] = context;
+    //const type: string = "";
+    let Docker_BuildStep = DockerBuildStep(repository, images, true, false, path )
+
+    // The API seperates the build task and the build steps for now, so once the build task is created the steps must follow to execute the build task.
+    client.buildSteps.create(resourceGroup, registryName, buildTaskName, buildTaskName, Docker_BuildStep).then(function(response){
+        console.log("Step Success!", response);
+    }, function(error){
+        console.error("Failed!", error);
+    });
+}
+
+
+// This creates and launches a build task from a workspace solution which hasn't yet been built into an image, so no context is provided.
+export async function launchAsBuildTask() {
+
+    let opt:  vscode.InputBoxOptions = {
+        ignoreFocusOut: true,
+        prompt: 'Resource Group? '
+    };
+    const resourceGroup: string = await vscode.window.showInputBox(opt);
+
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'Container registry? '
+    };
+    const registryName: string = await vscode.window.showInputBox(opt);
+
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'GitHub username? '
+    };
+    const username: string = await vscode.window.showInputBox(opt);
+
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'GitHub source code URL? '
+    };
+    const gitURL: string = await vscode.window.showInputBox(opt);
+
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'repository path? '
+    };
     const repository: string = await vscode.window.showInputBox(opt);
 
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'Build Task name? '
+    };
+    const buildTaskName: string = await vscode.window.showInputBox(opt);
 
-    let azureAccount = context.azureAccount;
-    if (!azureAccount) {
-        return; 
-    }
+    opt = {
+        ignoreFocusOut: true,
+        prompt: 'BuildTask alias? '
+    };
+    const buildTaskAlias: string = await vscode.window.showInputBox(opt);
 
-    if (azureAccount.status === 'LoggedOut') {
-        return;
-    }      
-    const testName: string ='testname';
-    const testAlias: string ='testAlias';
     const sourceControlType: string ='GitHub';
-    const subs: SubscriptionModels.Subscription[] = getFilteredSubscriptions(azureAccount);
-    const client = new ContainerRegistryManagementClient (getCredentialByTenantId(subs[0].tenantId,azureAccount), subs[0].subscriptionId);
-        await client.buildTasks.beginCreate(resourceGroup, registryName, testName, {'alias':testAlias, 'sourceRepository':{'sourceControlType':sourceControlType, 'repositoryUrl':gitURL}, 'platform':{'osType':'Windows'}, 'location':registryName}).then(function(response){
-            console.log("Success!", response);
-        }, function(error){
-            console.error("Failed!", error);
-        })
-    
-    function getFilteredSubscriptions(azureAccount:AzureAccount): SubscriptionModels.Subscription[] {
-        return azureAccount.filters.map<SubscriptionModels.Subscription>(filter => {
-            return {
-                id: filter.subscription.id,
-                session: filter.session,
-                subscriptionId: filter.subscription.subscriptionId,
-                tenantId: filter.session.tenantId,
-                displayName: filter.subscription.displayName,
-                state: filter.subscription.state,
-                subscriptionPolicies: filter.subscription.subscriptionPolicies,
-                authorizationSource: filter.subscription.authorizationSource
-            };
-        });
-    }
+
+    //const subs: SubscriptionModels.Subscription[] = AzureCredentialsManager.getInstance().getFilteredSubscriptions(context['azureAccount']);
+    const client = new ContainerRegistryManagementClient (AzureCredentialsManager.getInstance().getCredentialByTenantId(context['subscription'].tenantId,context['azureAccount']), context['subscription']);
+    client.buildTasks.create(resourceGroup, registryName, buildTaskName, {'alias':buildTaskAlias, 'sourceRepository':{'sourceControlType':sourceControlType, 'repositoryUrl':gitURL}, 'platform':{'osType':'linux'}, 'location':registryName}).then(function(response){
+        console.log("Task Success!", response);
+    }, function(error){
+        console.error("Task Failed!", error);
+    })
 
 
-    function getCredentialByTenantId(tenantId: string,azureAccount:AzureAccount): ServiceClientCredentials {
-
-        const session = azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
-
-        if (session) {
-            return session.credentials;
-        }
-
-        throw new Error(`Failed to get credentials, tenant ${tenantId} not found.`);
-    }
-
+    const type: string = 'image'
+    client.buildSteps.create(resourceGroup, registryName, buildTaskName, buildTaskName, {type}).then(function(response){
+        console.log("Step Success!", response);
+    }, function(error){
+        console.error("Failed!", error);
+    });
 }

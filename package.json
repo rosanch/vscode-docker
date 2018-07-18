@@ -49,6 +49,7 @@
     "onCommand:vscode-docker.dockerHubLogout",
     "onCommand:vscode-docker.createRegistry",
     "onCommand:vscode-docker.buildTask",
+    "onCommand:vscode-docker.launchAsBuildTask",
     "onCommand:vscode-docker.browseDockerHub",
     "onCommand:vscode-docker.browseAzurePortal",
     "onCommand:vscode-docker.explorer.refresh",
@@ -72,6 +73,11 @@
         {
           "when": "editorLangId == dockerfile",
           "command": "vscode-docker.image.build",
+          "group": "docker"
+        },
+        {
+          "when": "editorLangId == dockerfile",
+          "command": "vscode-docker.launchAsBuildTask",
           "group": "docker"
         },
         {
@@ -470,6 +476,12 @@
         "command": "vscode-docker.image.build",
         "title": "Build Image",
         "description": "Build a Docker image from a Dockerfile",
+        "category": "Docker"
+      },
+      {
+      "command": "vscode-docker.launchAsBuildTask",
+        "title": "Launch with automatic builds",
+        "description": "creates a build task from the workspace",
         "category": "Docker"
       },
       {

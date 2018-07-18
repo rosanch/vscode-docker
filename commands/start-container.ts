@@ -6,6 +6,7 @@ import os = require('os');
 import { reporter } from '../telemetry/telemetry';
 import { ImageNode } from '../explorer/models/imageNode';
 import * as fs from 'fs';
+import { createTerminal } from './utils/create-terminal';
 
 const teleCmdId: string = 'vscode-docker.container.start';
 
@@ -31,8 +32,8 @@ export async function startContainer(context?: ImageNode, interactive?: boolean)
                 const portMappings = ports.map((port) => `-p ${port}:${port}`);
                 options += ` ${portMappings.join(' ')}`;
             }
-            
-            const terminal = vscode.window.createTerminal(imageName);
+
+            const terminal = createTerminal(imageName);
             terminal.sendText(`docker run ${options} ${imageName}`);
             terminal.show();
 
@@ -56,7 +57,7 @@ export async function startContainerInteractive(context: ImageNode) {
 
 export async function startAzureCLI() {
 
-    // block of we are running windows containers... 
+    // block of we are running windows containers...
     const engineType: DockerEngineType = await docker.getEngineType();
 
     if (engineType === DockerEngineType.Windows) {

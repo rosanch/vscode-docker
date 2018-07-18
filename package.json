@@ -47,9 +47,11 @@
     "onCommand:vscode-docker.createWebApp",
     "onCommand:vscode-docker.system.prune",
     "onCommand:vscode-docker.dockerHubLogout",
+
     "onCommand:vscode-docker.createRegistry",
     "onCommand:vscode-docker.buildTask",
     "onCommand:vscode-docker.launchAsBuildTask",
+
     "onCommand:vscode-docker.browseDockerHub",
     "onCommand:vscode-docker.browseAzurePortal",
     "onCommand:vscode-docker.explorer.refresh",
@@ -59,8 +61,7 @@
   "main": "./out/dockerExtension",
   "contributes": {
     "menus": {
-      "commandPalette": [
-        {
+      "commandPalette": [{
           "command": "vscode-docker.browseDockerHub",
           "when": "false"
         },
@@ -69,8 +70,7 @@
           "when": "false"
         }
       ],
-      "editor/context": [
-        {
+      "editor/context": [{
           "when": "editorLangId == dockerfile",
           "command": "vscode-docker.image.build",
           "group": "docker"
@@ -101,8 +101,7 @@
           "group": "docker"
         }
       ],
-      "explorer/context": [
-        {
+      "explorer/context": [{
           "when": "resourceFilename =~ /[dD]ocker[fF]ile/",
           "command": "vscode-docker.image.build",
           "group": "docker"
@@ -118,8 +117,7 @@
           "group": "docker"
         }
       ],
-      "view/title": [
-        {
+      "view/title": [{
           "command": "vscode-docker.explorer.refresh",
           "when": "view == dockerExplorer",
           "group": "navigation"
@@ -130,8 +128,7 @@
           "group": "navigation"
         }
       ],
-      "view/item/context": [
-        {
+      "view/item/context": [{
           "command": "vscode-docker.container.start",
           "when": "view == dockerExplorer && viewItem == localImageNode"
         },
@@ -242,10 +239,12 @@
         {
           "command": "vscode-docker.dockerHubLogout",
           "when": "view == dockerExplorer && viewItem == dockerHubRootNode"
+
         },
         {
           "command": "vscode-docker.createRegistry",
           "when": "view == dockerExplorer && viewItem == azureRegistryRootNode"
+
         },
         {
           "command": "vscode-docker.buildTask",
@@ -277,40 +276,34 @@
         }
       ]
     },
-    "debuggers": [
-      {
-        "type": "docker",
-        "label": "Docker",
-        "configurationSnippets": [
-          {
-            "label": "Docker: Attach to Node",
-            "description": "Docker: Attach to Node",
-            "body": {
-              "type": "node",
-              "request": "attach",
-              "name": "Docker: Attach to Node",
-              "port": 9229,
-              "address": "localhost",
-              "localRoot": "^\"\\${workspaceFolder}\"",
-              "remoteRoot": "/usr/src/app",
-              "protocol": "inspector"
-            }
-          }
-        ]
-      }
-    ],
-    "languages": [
-      {
-        "id": "dockerfile",
-        "aliases": [
-          "Dockerfile"
-        ],
-        "filenamePatterns": [
-          "*.dockerfile",
-          "Dockerfile"
-        ]
-      }
-    ],
+    "debuggers": [{
+      "type": "docker",
+      "label": "Docker",
+      "configurationSnippets": [{
+        "label": "Docker: Attach to Node",
+        "description": "Docker: Attach to Node",
+        "body": {
+          "type": "node",
+          "request": "attach",
+          "name": "Docker: Attach to Node",
+          "port": 9229,
+          "address": "localhost",
+          "localRoot": "^\"\\${workspaceFolder}\"",
+          "remoteRoot": "/usr/src/app",
+          "protocol": "inspector"
+        }
+      }]
+    }],
+    "languages": [{
+      "id": "dockerfile",
+      "aliases": [
+        "Dockerfile"
+      ],
+      "filenamePatterns": [
+        "*.dockerfile",
+        "Dockerfile"
+      ]
+    }],
     "configuration": {
       "type": "object",
       "title": "Docker configuration options",
@@ -349,6 +342,11 @@
           "type": "number",
           "default": 10,
           "description": "Maximum number of characters for long registry paths in the Explorer, including elipsis."
+        },
+        "docker.host": {
+          "type": "string",
+          "default": "",
+          "description": "Host to connect to (same as setting the DOCKER_HOST environment variable)"
         },
         "docker.languageserver.diagnostics.deprecatedMaintainer": {
           "scope": "resource",
@@ -465,8 +463,7 @@
         }
       }
     },
-    "commands": [
-      {
+    "commands": [{
         "command": "vscode-docker.configure",
         "title": "Add Docker files to Workspace",
         "description": "Add Dockerfile, docker-compose.yml files",
@@ -595,11 +592,13 @@
         "command": "vscode-docker.dockerHubLogout",
         "title": "Docker Hub Logout",
         "category": "Docker"
+
       },
       {
         "command": "vscode-docker.createRegistry",
         "title": "Create Registry",
         "category": "Docker"
+
       },
       {
         "command": "vscode-docker.buildTask",
@@ -618,22 +617,18 @@
       }
     ],
     "views": {
-      "dockerView": [
-        {
-          "id": "dockerExplorer",
-          "name": "Explorer",
-          "when": "config.docker.showExplorer == true"
-        }
-      ]
+      "dockerView": [{
+        "id": "dockerExplorer",
+        "name": "Explorer",
+        "when": "config.docker.showExplorer == true"
+      }]
     },
     "viewsContainers": {
-      "activitybar": [
-        {
-          "icon": "images/docker.svg",
-          "id": "dockerView",
-          "title": "Docker"
-        }
-      ]
+      "activitybar": [{
+        "icon": "images/docker.svg",
+        "id": "dockerView",
+        "title": "Docker"
+      }]
     }
   },
   "engines": {
@@ -671,7 +666,7 @@
     "azure-arm-containerregistry": "^2.3.0",
     "azure-arm-resource": "^2.0.0-preview",
     "azure-arm-website": "^1.0.0-preview",
-    "dockerfile-language-server-nodejs": "^0.0.17",
+    "dockerfile-language-server-nodejs": "^0.0.18",
     "dockerode": "^2.5.1",
     "glob": "7.1.2",
     "gradle-to-js": "^1.0.1",
@@ -680,6 +675,6 @@
     "pom-parser": "^1.1.1",
     "request-promise": "^4.2.2",
     "vscode-extension-telemetry": "^0.0.6",
-    "vscode-languageclient": "^4.0.0"
+    "vscode-languageclient": "^4.2.1"
   }
 }

@@ -74,12 +74,11 @@ async function acquireSubscription(azureAccount): Promise<SubscriptionModels.Sub
 
 
     return subs.find(sub => { return sub.displayName === subscriptionName });
-
 }
 
 async function acquireResourceGroup(subscription: SubscriptionModels.Subscription, azureAccount): Promise<ResourceGroup> {
     //Acquire each subscription's data simultaneously
-    const resourceGroupClient = new ResourceManagementClient(this.getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
+    const resourceGroupClient = new ResourceManagementClient(AzureCredentialsManager.getInstance().getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
 
     const resourceGroups = await AzureCredentialsManager.getInstance().getResourceGroups(subscription);
     let resourceGroupNames: string[] = [];
@@ -102,19 +101,20 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
             let resourceGroupName: string = await vscode.window.showInputBox(opt);
 
             let resourceGroupStatus: boolean = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName);
+            console.log(resourceGroupStatus);
 
-            while (!resourceGroupStatus) {
+            while (resourceGroupStatus) {
                 opt = {
                     ignoreFocusOut: false,
                     prompt: "That resource group name is already in existence. Try again: "
                 }
                 resourceGroupName = await vscode.window.showInputBox(opt);
                 if (resourceGroupName === undefined) throw 'user Exit';
-                resourceGroupStatus = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName);
+                resourceGroupStatus = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName); //not working
             }
 
             let resroup: ResourceGroup = { ///added for parameter into createOrUpdate. constructor wasn't working
-                name: 'a',
+                name: resourceGroupName,
                 properties: { provisioningState: '' },
                 location: '',
                 managedBy: '',
@@ -131,6 +131,7 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
         }
 
         resourceGroup = resourceGroups.find(resGroup => { return resGroup.name === resourceGroupName });
+        console.log(resourceGroup);
 
         if (!resourceGroupName) {
             vscode.window.showErrorMessage('You must select a valid resource group');

@@ -37,9 +37,9 @@ export async function deleteRegistry(context?: AzureRegistryNode) {
     let resourceGroup: string;
     let subscriptionId: string;
     for (let i = 0; i < registries.length; i++) {
-        if (registries[i].name === context.label) {
+        if (registries[i].name === context.registry.name) {
             resourceGroup = registries[i].id.slice(registries[i].id.search('resourceGroups/') + 'resourceGroups/'.length, registries[i].id.search('/providers/'));
-            subscriptionId = registries[i].id.slice('subscriptions/'.length, registries[i].id.search('/resourceGroups/'));
+            subscriptionId = context.subscription.id; //registries[i].id.slice('subscriptions/'.length, registries[i].id.search('/resourceGroups/'));
             break;
         }
     }
@@ -50,18 +50,12 @@ export async function deleteRegistry(context?: AzureRegistryNode) {
     const subscription = subs.find(function (sub): boolean {
         return sub.subscriptionId === subscriptionId;
     });
-    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
-    await client.registries.beginDeleteMethod(resourceGroup, context.label).then(function (response) {
+    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
+    await client.registries.beginDeleteMethod(resourceGroup, context.registry.name).then(function (response) {
         console.log("Success!", response);
     }, function (error) {
         console.error("Failed!", error);
     })
-
-
-
-    //check to make sure resource group name provided actually exists
-
-    // make sure the registry name entered is possible
 
 }
 

@@ -97,8 +97,11 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
 
         if (resourceGroupName === '+ Create new resource group') {
             //TO DO
-            //getaccount
+            //getaccount from resourceClient
             const resourceGroupClient = new ResourceManagementClient(this.getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
+            //using resourceGroupClient (ResourceManagementClient class)
+            //operation group:operations.ResourceGroups;
+            //in index.d.ts, use create a resource group methods/stuff
 
         }
 

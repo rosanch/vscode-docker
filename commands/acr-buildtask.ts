@@ -1,15 +1,15 @@
 
 import * as vscode from "vscode";
 import { SubscriptionModels } from 'azure-arm-resource';
-import {ContainerRegistryManagementClient} from 'azure-arm-containerregistry';
-import { AzureCredentialsManager } from "../out/utils/AzureCredentialsManager";
+import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
+import { AzureCredentialsManager } from "../utils/AzureCredentialsManager";
 import { ImageNode } from "../explorer/models/imageNode";
 import { DockerBuildStep } from 'azure-arm-containerregistry/lib/models/dockerBuildStep';
 //import { DockerBuildStep } from "azure-arm-containerregistry/lib/models";
 
 
 // This function creates a build task from an existing image, pulling the context from that image in order to limit the number of parameters.
-export async function buildTask(context ?: ImageNode) {
+export async function buildTask(context?: ImageNode) {
 
     //console.log(context);
 
@@ -17,7 +17,7 @@ export async function buildTask(context ?: ImageNode) {
 
     const registryName: string = context['registry'].name;
 
-    let opt:  vscode.InputBoxOptions ={
+    let opt: vscode.InputBoxOptions = {
         ignoreFocusOut: true,
         prompt: 'GitHub source code URL? '
     };
@@ -48,29 +48,29 @@ export async function buildTask(context ?: ImageNode) {
     };
     const path: string = await vscode.window.showInputBox(opt);
 
-    const sourceControlType: string ='GitHub';
+    const sourceControlType: string = 'GitHub';
 
-    const client = new ContainerRegistryManagementClient (AzureCredentialsManager.getInstance().getCredentialByTenantId(context['subscription'].tenantId,context['azureAccount']), context['subscription']);
+    const client = new ContainerRegistryManagementClient(AzureCredentialsManager.getInstance().getCredentialByTenantId(context['subscription'].tenantId), context['subscription']);
 
     // This creates a build task from the params Resource Group, Registry, Name, Build Task Parameters.
-    client.buildTasks.create(resourceGroup, registryName, buildTaskName, {'alias':buildTaskAlias, 'sourceRepository':{'sourceControlType':sourceControlType, 'repositoryUrl':gitURL}, 'platform':{'osType':'linux'}, 'location':registryName})
-            .then(function(response){
-                console.log("Task Success!", response);
-            }, function(error){
-                console.error("Task Failed!", error);
-            });
-            //testing
-            console.log(client.buildTasks.list(resourceGroup, registryName));
+    client.buildTasks.create(resourceGroup, registryName, buildTaskName, { 'alias': buildTaskAlias, 'sourceRepository': { 'sourceControlType': sourceControlType, 'repositoryUrl': gitURL }, 'platform': { 'osType': 'linux' }, 'location': registryName })
+        .then(function (response) {
+            console.log("Task Success!", response);
+        }, function (error) {
+            console.error("Task Failed!", error);
+        });
+    //testing
+    console.log(client.buildTasks.list(resourceGroup, registryName));
 
     let images: ImageNode[];
     images[0] = context;
     //const type: string = "";
-    let Docker_BuildStep = DockerBuildStep(repository, images, true, false, path )
+    let Docker_BuildStep = DockerBuildStep(repository, images, true, false, path)
 
     // The API seperates the build task and the build steps for now, so once the build task is created the steps must follow to execute the build task.
-    client.buildSteps.create(resourceGroup, registryName, buildTaskName, buildTaskName, Docker_BuildStep).then(function(response){
+    client.buildSteps.create(resourceGroup, registryName, buildTaskName, buildTaskName, Docker_BuildStep).then(function (response) {
         console.log("Step Success!", response);
-    }, function(error){
+    }, function (error) {
         console.error("Failed!", error);
     });
 }
@@ -79,7 +79,7 @@ export async function buildTask(context ?: ImageNode) {
 // This creates and launches a build task from a workspace solution which hasn't yet been built into an image, so no context is provided.
 export async function launchAsBuildTask() {
 
-    let opt:  vscode.InputBoxOptions = {
+    let opt: vscode.InputBoxOptions = {
         ignoreFocusOut: true,
         prompt: 'Resource Group? '
     };
@@ -121,21 +121,21 @@ export async function launchAsBuildTask() {
     };
     const buildTaskAlias: string = await vscode.window.showInputBox(opt);
 
-    const sourceControlType: string ='GitHub';
+    const sourceControlType: string = 'GitHub';
 
     //const subs: SubscriptionModels.Subscription[] = AzureCredentialsManager.getInstance().getFilteredSubscriptions(context['azureAccount']);
-    const client = new ContainerRegistryManagementClient (AzureCredentialsManager.getInstance().getCredentialByTenantId(context['subscription'].tenantId,context['azureAccount']), context['subscription']);
-    client.buildTasks.create(resourceGroup, registryName, buildTaskName, {'alias':buildTaskAlias, 'sourceRepository':{'sourceControlType':sourceControlType, 'repositoryUrl':gitURL}, 'platform':{'osType':'linux'}, 'location':registryName}).then(function(response){
+    const client = new ContainerRegistryManagementClient(AzureCredentialsManager.getInstance().getCredentialByTenantId(context['subscription'].tenantId), context['subscription']);
+    client.buildTasks.create(resourceGroup, registryName, buildTaskName, { 'alias': buildTaskAlias, 'sourceRepository': { 'sourceControlType': sourceControlType, 'repositoryUrl': gitURL }, 'platform': { 'osType': 'linux' }, 'location': registryName }).then(function (response) {
         console.log("Task Success!", response);
-    }, function(error){
+    }, function (error) {
         console.error("Task Failed!", error);
     })
 
 
     const type: string = 'image'
-    client.buildSteps.create(resourceGroup, registryName, buildTaskName, buildTaskName, {type}).then(function(response){
+    client.buildSteps.create(resourceGroup, registryName, buildTaskName, buildTaskName, { type }).then(function (response) {
         console.log("Step Success!", response);
-    }, function(error){
+    }, function (error) {
         console.error("Failed!", error);
     });
 }

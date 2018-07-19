@@ -10,6 +10,8 @@ import { RegistryNameStatus } from "azure-arm-containerregistry/lib/models";
 const teleCmdId: string = 'vscode-docker.createRegistry';
 import { ResourceGroup, ResourceGroupListResult } from "azure-arm-resource/lib/resource/models";
 import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
+
+
 export async function createRegistry(context?: RegistryRootNode) {
 
     let azureAccount = context.azureAccount;
@@ -70,19 +72,16 @@ async function acquireSubscription(azureAccount): Promise<SubscriptionModels.Sub
         if (subscriptionName === undefined) throw 'User exit';
     } while (!subscriptionName);
 
+
     return subs.find(sub => { return sub.displayName === subscriptionName });
+
 }
 
 async function acquireResourceGroup(subscription: SubscriptionModels.Subscription, azureAccount): Promise<ResourceGroup> {
     //Acquire each subscription's data simultaneously
+    const resourceGroupClient = new ResourceManagementClient(this.getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
 
-    //const resourceClient = new ResourceManagementClient(getCredentialByTenantId(subscription.tenantId, azureAccount), subscription.subscriptionId);
-    const resourceClient = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
-
-    //const resourceGroups = await resourceClient.resourceGroups.list();
     const resourceGroups = await AzureCredentialsManager.getInstance().getResourceGroups(subscription);
-
-
     let resourceGroupNames: string[] = [];
     resourceGroupNames.push('+ Create new resource group');
     for (let i = 0; i < resourceGroups.length; i++) {
@@ -96,13 +95,39 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
         if (resourceGroupName === undefined) throw 'user Exit';
 
         if (resourceGroupName === '+ Create new resource group') {
-            //TO DO
-            //getaccount from resourceClient
-            const resourceGroupClient = new ResourceManagementClient(this.getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
-            //using resourceGroupClient (ResourceManagementClient class)
-            //operation group:operations.ResourceGroups;
-            //in index.d.ts, use create a resource group methods/stuff
+            let opt: vscode.InputBoxOptions = {
+                ignoreFocusOut: false,
+                prompt: 'Resource group name? '
+            };
+            let resourceGroupName: string = await vscode.window.showInputBox(opt);
 
+            let resourceGroupStatus: boolean = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName);
+
+            while (!resourceGroupStatus) {
+                opt = {
+                    ignoreFocusOut: false,
+                    prompt: "That resource group name is already in existence. Try again: "
+                }
+                resourceGroupName = await vscode.window.showInputBox(opt);
+                if (resourceGroupName === undefined) throw 'user Exit';
+                resourceGroupStatus = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName);
+            }
+
+            let resroup: ResourceGroup = { ///added for parameter into createOrUpdate. constructor wasn't working
+                name: 'a',
+                properties: { provisioningState: '' },
+                location: '',
+                managedBy: '',
+                tags: {}
+            };
+
+            ///HERE createOrUpdate resource group
+
+            const resourceClient = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
+
+            //resourceClient.resourceGroups.createOrUpdate(resroup);
+            ///TO DO
+            resourceGroupClient.resourceGroups.createOrUpdate(resourceGroupName, resroup);
         }
 
         resourceGroup = resourceGroups.find(resGroup => { return resGroup.name === resourceGroupName });

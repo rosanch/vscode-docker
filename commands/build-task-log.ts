@@ -24,6 +24,8 @@ import { log } from "util";
  * @param context : this is the AzureRegistryNode the user right clicks on to invoke this command
  *
  */
+const logWindow = vscode.window.createOutputChannel('Logs');
+
 export async function buildTaskLog(context?: AzureRegistryNode) {
 
     // get the resource group name from the AzureRegistryNode (the context) to be passed into other functions
@@ -72,7 +74,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
         const buildType: string = logs[i].buildType ? logs[i].buildType : '?';
         const osType: string = logs[i].platform.osType ? logs[i].platform.osType : '?';
         const name: string = logs[i].name ? logs[i].name : '?';
-        table += `<button id= "logID${i}" class="accordion">
+        table += `<button id= "${i}" class="accordion">
                     <table>
                         <tr>
                             <td class = 'widthControl'>${name}</td>
@@ -99,17 +101,24 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     const scriptFile = scriptPath.with({ scheme: 'vscode-resource' });
     const stylePath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'stylesheet.css'));
     const styleFile = stylePath.with({ scheme: 'vscode-resource' });
-    await streamContent(links[0].url);
     panel.webview.html = getWebviewContent(table, scriptFile, styleFile, context.registry.name);
+    setupCommunication(panel, links);
     //panel.webview.postMessage({ logsHtml: table });
 }
 
-async function streamContent(url) {
-    let out = vscode.window.createOutputChannel('LOG');
+function setupCommunication(panel: vscode.WebviewPanel, urlList: any[]) {
+    panel.webview.onDidReceiveMessage(message => {
+        if (message.logRequest) {
+            streamContent(urlList[+message.logRequest.id].url);
+        }
+    });
+}
+
+function streamContent(url) {
     let blobInfo = getBlobInfo(url);
 
     try {
-        var blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);// = new BlobService(blobInfo.accountName, undefined, undefined, blobInfo.sasToken, blobInfo.endpointSuffix);
+        var blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
     } catch (error) {
         console.log(error);
     }
@@ -130,7 +139,7 @@ async function streamContent(url) {
     try {
         blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {
             if (response) {
-                const logWindow = vscode.window.createOutputChannel('Log');
+                logWindow.clear();
                 logWindow.append(text);
                 logWindow.show();
             } else {
@@ -138,7 +147,7 @@ async function streamContent(url) {
             }
         });
     } catch (error) {
-        console.log('a' + error);
+        console.log(error);
     }
 }
 
@@ -154,8 +163,8 @@ function getBlobInfo(blobUrl: string) {
 }
 
 function makeBase64(str: string): string {
-    var b = new Buffer(str);
-    return b.toString('base64');
+    var buffer = new Buffer(str);
+    return buffer.toString('base64');
 }
 
 //create the table in which to push the build logs

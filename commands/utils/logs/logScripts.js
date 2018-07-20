@@ -8,7 +8,17 @@
 //         setAccordionBehaviour();
 //     }
 // });
+const vscode = acquireVsCodeApi();
+let count = 0;
 setAccordionBehaviour();
+
+function openLog(id) {
+    vscode.postMessage({
+        logRequest: {
+            'id': id
+        }
+    });
+}
 
 function setAccordionBehaviour() {
     let acc = document.getElementsByClassName("accordion");
@@ -20,6 +30,7 @@ function setAccordionBehaviour() {
                 panel.style.maxHeight = null;
             } else {
                 panel.style.maxHeight = panel.scrollHeight + "px";
+                openLog(this.id);
             }
         });
     }

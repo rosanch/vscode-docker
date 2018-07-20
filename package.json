@@ -652,24 +652,23 @@
     "vscode.yaml"
   ],
   "devDependencies": {
-    "azure-storage": "^2.8.1",
+    "@types/glob": "5.0.35",
+    "@types/keytar": "^4.0.1",
+    "@types/mocha": "^2.2.32",
+    "@types/node": "^8.0.34",
+    "azure-storage": "^2.10.0",
     "gulp": "^3.9.1",
     "mocha": "^2.3.3",
     "tslint": "^5.7.0",
     "tslint-microsoft-contrib": "5.0.1",
-    "vsce": "^1.37.5",
-    "vscode": "^1.0.0",
     "typescript": "^2.1.5",
-    "@types/mocha": "^2.2.32",
-    "@types/node": "^8.0.34",
-    "@types/keytar": "^4.0.1",
-    "@types/glob": "5.0.35"
+    "vsce": "^1.37.5",
+    "vscode": "^1.0.0"
   },
   "dependencies": {
     "azure-arm-containerregistry": "^2.3.0",
     "azure-arm-resource": "^2.0.0-preview",
     "azure-arm-website": "^1.0.0-preview",
-    "azure-storage": "^2.8.2",
     "dockerfile-language-server-nodejs": "^0.0.18",
     "dockerode": "^2.5.1",
     "glob": "7.1.2",

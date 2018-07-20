@@ -1,4 +1,3 @@
-
 import * as vscode from "vscode";
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
 import { AzureAccountWrapper } from '.././explorer/deploy/azureAccountWrapper';
@@ -8,14 +7,16 @@ import { accountProvider } from '../dockerExtension';
 import { RegistryRootNode } from "../explorer/models/registryRootNode";
 import { ServiceClientCredentials } from 'ms-rest';
 import { RegistryNameStatus, RegistryListResult, BuildTaskListResult, BuildListResult, Build, BuildGetLogResult } from "azure-arm-containerregistry/lib/models";
+import { BlobService, createBlobServiceWithSas } from "azure-storage"
 const teleCmdId: string = 'vscode-docker.buildTaskLog';
 import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
 import { AzureRegistryNode, AzureLoadingNode, AzureNotSignedInNode } from '../explorer/models/azureRegistryNodes';
-import { Stream } from "stream";
+import { Stream, Writable } from "stream";
 import { AsyncPool } from "../explorer/utils/asyncpool";
+import { IConnection, createConnection } from 'vscode-languageserver'
 import * as path from 'path';
 import * as fs from "fs";
-import { get } from "http";
+import { log } from "util";
 
 /**
  *  this command is used through a right click on an azure registry in the Docker Explorer. It is used to view the build logs of the given registry.
@@ -48,7 +49,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
         vscode.window.showErrorMessage('This registry has no associated build logs');
         return;
     }
-    //console.log(logs);
+
     let links: { url?: string, id: number }[] = [];
 
     // get all the log links asynchronously in case there are a lot of them. Most efficient way to do this!
@@ -60,7 +61,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
             links.push({ 'url': url, 'id': i });
         });
     }
-    links.sort(function (a, b) { return a.id - b.id });
+    links.sort(function (a, b) { return b.id - a.id });
     await pool.scheduleRun();
 
     let table: string = '';
@@ -98,11 +99,63 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     const scriptFile = scriptPath.with({ scheme: 'vscode-resource' });
     const stylePath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'stylesheet.css'));
     const styleFile = stylePath.with({ scheme: 'vscode-resource' });
+    await streamContent(links[0].url);
     panel.webview.html = getWebviewContent(table, scriptFile, styleFile, context.registry.name);
     //panel.webview.postMessage({ logsHtml: table });
+}
 
-    console.log(logs);
-    console.log("Build items in array form: ", links);
+async function streamContent(url) {
+    let out = vscode.window.createOutputChannel('LOG');
+    let blobInfo = getBlobInfo(url);
+
+    try {
+        var blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);// = new BlobService(blobInfo.accountName, undefined, undefined, blobInfo.sasToken, blobInfo.endpointSuffix);
+    } catch (error) {
+        console.log(error);
+    }
+    // let str = (url);
+    // let stream: Writable = new Writable();
+    // try {
+    //     blob.getBlobToStream(blobInfo.containerName, blobInfo.blobName, stream, (error, response) => {
+    //         if (response) {
+    //             console.log(response.name + 'has Completed');
+    //         } else {
+    //             console.log(error);
+    //         }
+    //     });
+    // } catch (error) {
+    //     console.log('a' + error);
+    // }
+    // console.log(stream);
+    try {
+        blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {
+            if (response) {
+                const logWindow = vscode.window.createOutputChannel('Log');
+                logWindow.append(text);
+                logWindow.show();
+            } else {
+                console.log(error);
+            }
+        });
+    } catch (error) {
+        console.log('a' + error);
+    }
+}
+
+function getBlobInfo(blobUrl: string) {
+    const items: string[] = blobUrl.slice(blobUrl.search('https://') + 'https://'.length).split('/');
+    const accountName: string = blobUrl.slice(blobUrl.search('https://') + 'https://'.length, blobUrl.search('.blob'));
+    const endpointSuffix: string = items[0].slice(items[0].search('.blob.') + '.blob.'.length);
+    const containerName: string = items[1];
+    const blobName: string = items[2] + '/' + items[3] + '/' + items[4].slice(0, items[4].search('[?]'));
+    const sasToken: string = items[4].slice(items[4].search('[?]') + 1);
+    const host: string = accountName + '.blob.' + endpointSuffix;
+    return { accountName, endpointSuffix, containerName, blobName, sasToken, host }
+}
+
+function makeBase64(str: string): string {
+    var b = new Buffer(str);
+    return b.toString('base64');
 }
 
 //create the table in which to push the build logs

@@ -7,7 +7,7 @@ import { accountProvider } from '../dockerExtension';
 import { RegistryRootNode } from "../explorer/models/registryRootNode";
 import { ServiceClientCredentials } from 'ms-rest';
 import { RegistryNameStatus, RegistryListResult, BuildTaskListResult, BuildListResult, Build, BuildGetLogResult } from "azure-arm-containerregistry/lib/models";
-import { BlobService, createBlobServiceWithSas } from "azure-storage"
+import { BlobService, createBlobServiceWithSas } from "azure-storage";
 const teleCmdId: string = 'vscode-docker.buildTaskLog';
 import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
 import { AzureRegistryNode, AzureLoadingNode, AzureNotSignedInNode } from '../explorer/models/azureRegistryNodes';
@@ -55,12 +55,13 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     let links: { url?: string, id: number }[] = [];
 
     // get all the log links asynchronously in case there are a lot of them. Most efficient way to do this!
+    //this is where it's breaking. the j starts at 96 and jumps all over the place, it doesn't increment by 1
     let pool = new AsyncPool(8);
-    for (let i = 0; i < logs.length; i++) {
+    for (let j = 0; j < logs.length; j++) {
         pool.addTask(async () => {
-            const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroup, context.registry.name, logs[i].buildId);
+            const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroup, context.registry.name, logs[j].buildId);
             let url: string = temp.logLink;
-            links.push({ 'url': url, 'id': i });
+            links.push({ 'url': url, 'id': j });
         });
     }
     links.sort(function (a, b) { return b.id - a.id });
@@ -104,19 +105,20 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     panel.webview.html = getWebviewContent(table, scriptFile, styleFile, context.registry.name);
     setupCommunication(panel, links);
     //panel.webview.postMessage({ logsHtml: table });
+
 }
 
 function setupCommunication(panel: vscode.WebviewPanel, urlList: any[]) {
     panel.webview.onDidReceiveMessage(message => {
         if (message.logRequest) {
-            streamContent(urlList[+message.logRequest.id].url);
+            let errors: string[] = streamContent(urlList[+message.logRequest.id].url);
         }
     });
 }
 
-function streamContent(url) {
+function streamContent(url): string[] {
     let blobInfo = getBlobInfo(url);
-
+    let array1: string[];
     try {
         var blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
     } catch (error) {
@@ -142,12 +144,58 @@ function streamContent(url) {
                 logWindow.clear();
                 logWindow.append(text);
                 logWindow.show();
+                array1 = getErrors(text);
+                if (array1.length !== 0) {
+                    for (let i = 0; i < array1.length; i++) {
+                        array1[i] = array1[i].substr(44); //delete this part if time stamp also desired
+                        logWindow.append(`> ` + array1[i] + `\n`);
+                    }
+
+                }
             } else {
-                console.log(error);
+                console.log(error); //no console here, this will break!
             }
         });
     } catch (error) {
         console.log(error);
+    }
+    return array1;
+}
+
+/**
+ * this function takes the log stream and searches it for error messages
+ * @param streamlog - the entire text of the build log, currently in the form of a response from getBlobToText called in streamContent
+ * @returns - an array of the unique error messages found in chronological order, currently including their time stamps
+ */
+function getErrors(streamlog: string): string[] {
+    var fail = `--- FAIL`;
+    if (streamlog.search(fail) === -1) {
+        console.log('No failures found');
+        let none: string[] = [];
+        return none;
+    } else {
+        // console.log('Found error messages!');
+        let i = streamlog.search(`error msg=`);
+        let temp = streamlog.substr(i - 34, streamlog.length); //there were 34 characters between the line beginning and 'error msg='
+        var allerrors = temp.split(`\n`);
+        var unique_errors: string[] = [];
+        // errors are often repeated in the log. This is undesirable information, so we run a quick filter to ensure each individual error
+        // is only displayed to the user once
+        for (let j = 0; j < allerrors.length; j++) {
+            //all failed logs begin with '--- FAIL' and end with 'FAIL'. This is how we know when to break
+            if (allerrors[j].includes('FAIL')) {
+                break;
+            }
+            // trim whitespace before adding to array to make it readable
+            if (!unique_errors.includes(allerrors[j].trim())) {
+                unique_errors.push(allerrors[j].trim());
+
+            }
+        }
+        //console.log('Final array found: ');
+        //console.log(unique_errors);
+        return unique_errors;
+
     }
 }
 

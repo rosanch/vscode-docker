@@ -146,6 +146,7 @@ function streamContent(url): string[] {
                 logWindow.show();
                 array1 = getErrors(text);
                 if (array1.length !== 0) {
+                    logWindow.append(`Errors found: \n`);
                     for (let i = 0; i < array1.length; i++) {
                         array1[i] = array1[i].substr(44); //delete this part if time stamp also desired
                         logWindow.append(`> ` + array1[i] + `\n`);

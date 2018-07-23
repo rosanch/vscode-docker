@@ -10,6 +10,7 @@ import { RegistryNameStatus } from "azure-arm-containerregistry/lib/models";
 const teleCmdId: string = 'vscode-docker.createRegistry';
 import { ResourceGroup, ResourceGroupListResult } from "azure-arm-resource/lib/resource/models";
 import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
+import { print } from "util";
 
 
 export async function createRegistry(context?: RegistryRootNode) {
@@ -57,8 +58,6 @@ export async function createRegistry(context?: RegistryRootNode) {
 // INPUT HELPERS
 async function acquireSubscription(azureAccount): Promise<SubscriptionModels.Subscription> {
     let subscription: SubscriptionModels.Subscription;
-
-    //const subs: SubscriptionModels.Subscription[] = getFilteredSubscriptions(azureAccount);
     const subs = AzureCredentialsManager.getInstance().getFilteredSubscriptionList();
 
     let subsNames: string[] = [];
@@ -80,7 +79,7 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
     //Acquire each subscription's data simultaneously
     const resourceGroupClient = new ResourceManagementClient(AzureCredentialsManager.getInstance().getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
 
-    const resourceGroups = await AzureCredentialsManager.getInstance().getResourceGroups(subscription);
+    let resourceGroups = await AzureCredentialsManager.getInstance().getResourceGroups(subscription);
     let resourceGroupNames: string[] = [];
     resourceGroupNames.push('+ Create new resource group');
     for (let i = 0; i < resourceGroups.length; i++) {
@@ -90,19 +89,14 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
     let resourceGroupName;
     do {
         resourceGroupName = await vscode.window.showQuickPick(resourceGroupNames, { 'canPickMany': false, 'placeHolder': 'Choose a Resource Group to be used' });
-
         if (resourceGroupName === undefined) throw 'user Exit';
-
         if (resourceGroupName === '+ Create new resource group') {
             let opt: vscode.InputBoxOptions = {
                 ignoreFocusOut: false,
                 prompt: 'Resource group name? '
             };
-            let resourceGroupName: string = await vscode.window.showInputBox(opt);
-
+            resourceGroupName = await vscode.window.showInputBox(opt);
             let resourceGroupStatus: boolean = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName);
-            console.log(resourceGroupStatus);
-
             while (resourceGroupStatus) {
                 opt = {
                     ignoreFocusOut: false,
@@ -110,28 +104,20 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
                 }
                 resourceGroupName = await vscode.window.showInputBox(opt);
                 if (resourceGroupName === undefined) throw 'user Exit';
-                resourceGroupStatus = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName); //not working
+                resourceGroupStatus = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName); ///chnage to do while loop
             }
 
-            let resroup: ResourceGroup = { ///added for parameter into createOrUpdate. constructor wasn't working
+            let newResourceGroup: ResourceGroup = {
                 name: resourceGroupName,
-                properties: { provisioningState: '' },
-                location: '',
-                managedBy: '',
-                tags: {}
+                location: 'West US', //change to not hard code
             };
-
-            ///HERE createOrUpdate resource group
-
-            const resourceClient = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
-
-            //resourceClient.resourceGroups.createOrUpdate(resroup);
-            ///TO DO
-            resourceGroupClient.resourceGroups.createOrUpdate(resourceGroupName, resroup);
+            await resourceGroupClient.resourceGroups.createOrUpdate(resourceGroupName, newResourceGroup);
         }
 
-        resourceGroup = resourceGroups.find(resGroup => { return resGroup.name === resourceGroupName });
-        console.log(resourceGroup);
+        resourceGroups = await resourceGroupClient.resourceGroups.list();
+        resourceGroup = resourceGroups.find(resGroup => {
+            return resGroup.name === resourceGroupName;
+        });
 
         if (!resourceGroupName) {
             vscode.window.showErrorMessage('You must select a valid resource group');

@@ -10,7 +10,6 @@ import { RegistryNameStatus } from "azure-arm-containerregistry/lib/models";
 const teleCmdId: string = 'vscode-docker.createRegistry';
 import { ResourceGroup, ResourceGroupListResult } from "azure-arm-resource/lib/resource/models";
 import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
-import { print } from "util";
 
 
 export async function createRegistry(context?: RegistryRootNode) {
@@ -77,16 +76,17 @@ async function acquireSubscription(azureAccount): Promise<SubscriptionModels.Sub
 
 async function acquireResourceGroup(subscription: SubscriptionModels.Subscription, azureAccount): Promise<ResourceGroup> {
     //Acquire each subscription's data simultaneously
+    let resourceGroup;
+    let resourceGroupName;
     const resourceGroupClient = new ResourceManagementClient(AzureCredentialsManager.getInstance().getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
-
     let resourceGroups = await AzureCredentialsManager.getInstance().getResourceGroups(subscription);
+
     let resourceGroupNames: string[] = [];
     resourceGroupNames.push('+ Create new resource group');
     for (let i = 0; i < resourceGroups.length; i++) {
         resourceGroupNames.push(resourceGroups[i].name);
     }
-    let resourceGroup;
-    let resourceGroupName;
+
     do {
         resourceGroupName = await vscode.window.showQuickPick(resourceGroupNames, { 'canPickMany': false, 'placeHolder': 'Choose a Resource Group to be used' });
         if (resourceGroupName === undefined) throw 'user Exit';
@@ -104,26 +104,21 @@ async function acquireResourceGroup(subscription: SubscriptionModels.Subscriptio
                 }
                 resourceGroupName = await vscode.window.showInputBox(opt);
                 if (resourceGroupName === undefined) throw 'user Exit';
-                resourceGroupStatus = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName); ///chnage to do while loop
+                resourceGroupStatus = await resourceGroupClient.resourceGroups.checkExistence(resourceGroupName);
             }
 
             let newResourceGroup: ResourceGroup = {
                 name: resourceGroupName,
-                location: 'West US', //change to not hard code
+                location: 'West US',
             };
             await resourceGroupClient.resourceGroups.createOrUpdate(resourceGroupName, newResourceGroup);
         }
 
         resourceGroups = await resourceGroupClient.resourceGroups.list();
-        resourceGroup = resourceGroups.find(resGroup => {
-            return resGroup.name === resourceGroupName;
-        });
-
-        if (!resourceGroupName) {
-            vscode.window.showErrorMessage('You must select a valid resource group');
-        }
-
+        resourceGroup = resourceGroups.find(resGroup => { return resGroup.name === resourceGroupName; });
+        if (!resourceGroupName) vscode.window.showErrorMessage('You must select a valid resource group');
     } while (!resourceGroupName);
+
     return resourceGroup;
 }
 

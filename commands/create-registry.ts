@@ -12,21 +12,12 @@ import { ResourceGroup, ResourceGroupListResult } from "azure-arm-resource/lib/r
 import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
 
 
-export async function createRegistry(context?: RegistryRootNode) {
-
-    let azureAccount = context.azureAccount;
-    if (!azureAccount) {
-        return;
-    }
-
-    if (azureAccount.status === 'LoggedOut') {
-        return;
-    }
+export async function createRegistry() {
     let subscription: SubscriptionModels.Subscription;
     let resourceGroup: ResourceGroup;
     try {
-        subscription = await acquireSubscription(azureAccount);
-        resourceGroup = await acquireResourceGroup(subscription, azureAccount);
+        subscription = await acquireSubscription();
+        resourceGroup = await acquireResourceGroup(subscription);
     } catch (error) {
         return;
     }
@@ -55,7 +46,7 @@ export async function createRegistry(context?: RegistryRootNode) {
 }
 
 // INPUT HELPERS
-async function acquireSubscription(azureAccount): Promise<SubscriptionModels.Subscription> {
+async function acquireSubscription(): Promise<SubscriptionModels.Subscription> {
     let subscription: SubscriptionModels.Subscription;
     const subs = AzureCredentialsManager.getInstance().getFilteredSubscriptionList();
 
@@ -74,7 +65,7 @@ async function acquireSubscription(azureAccount): Promise<SubscriptionModels.Sub
     return subs.find(sub => { return sub.displayName === subscriptionName });
 }
 
-async function acquireResourceGroup(subscription: SubscriptionModels.Subscription, azureAccount): Promise<ResourceGroup> {
+async function acquireResourceGroup(subscription: SubscriptionModels.Subscription): Promise<ResourceGroup> {
     //Acquire each subscription's data simultaneously
     let resourceGroup;
     let resourceGroupName;

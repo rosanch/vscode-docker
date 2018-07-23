@@ -40,8 +40,8 @@ import { AzureAccount } from './typings/azure-account.api';
 import * as opn from 'opn';
 import { DockerDebugConfigProvider } from './configureWorkspace/configDebugProvider';
 import { browseAzurePortal } from './explorer/utils/azureUtils';
-import { AzureCredentialsManager } from './utils/AzureCredentialsManager';
-
+import { AzureCredentialsManager } from './utils/azureCredentialsManager';
+import { LogContentProvider } from './commands/utils/logs/logProvider';
 
 export const FROM_DIRECTIVE_PATTERN = /^\s*FROM\s*([\w-\/:]*)(\s*AS\s*[a-z][a-z0-9-_\\.]*)?$/i;
 export const COMPOSE_FILE_GLOB_PATTERN = '**/[dD]ocker-[cC]ompose*.{yaml,yml}';
@@ -145,6 +145,13 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('docker', new DockerDebugConfigProvider()));
     if (azureAccount) {
         AzureCredentialsManager.getInstance().setAccount(azureAccount);
+        // instantiate LogProvider
+        const logProvider = new LogContentProvider();
+
+        const providerRegistrations = vscode.Disposable.from(
+            vscode.workspace.registerTextDocumentContentProvider(LogContentProvider.scheme, logProvider),
+        );
+        ctx.subscriptions.push(providerRegistrations);
     }
     activateLanguageClient(ctx);
 }

@@ -9,7 +9,7 @@ import { RegistryRootNode } from "../explorer/models/registryRootNode";
 import { ServiceClientCredentials } from 'ms-rest';
 import { RegistryNameStatus, RegistryListResult } from "azure-arm-containerregistry/lib/models";
 const teleCmdId: string = 'vscode-docker.deleteRegistry';
-import { AzureCredentialsManager } from '../utils/AzureCredentialsManager'
+import { AzureCredentialsManager } from '../utils/azureCredentialsManager'
 import { AzureRegistryNode, AzureLoadingNode, AzureNotSignedInNode } from '../explorer/models/azureRegistryNodes';
 
 

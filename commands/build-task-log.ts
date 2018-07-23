@@ -9,11 +9,11 @@ import { ServiceClientCredentials } from 'ms-rest';
 import { RegistryNameStatus, RegistryListResult, BuildTaskListResult, BuildListResult, Build, BuildGetLogResult } from "azure-arm-containerregistry/lib/models";
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
 const teleCmdId: string = 'vscode-docker.buildTaskLog';
-import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
+import { AzureCredentialsManager } from '../utils/azureCredentialsManager';
 import { AzureRegistryNode, AzureLoadingNode, AzureNotSignedInNode } from '../explorer/models/azureRegistryNodes';
 import { Stream, Writable } from "stream";
 import { AsyncPool } from "../explorer/utils/asyncpool";
-import { IConnection, createConnection } from 'vscode-languageserver'
+import { IConnection, createConnection, DiagnosticSeverity } from 'vscode-languageserver'
 import * as path from 'path';
 import * as fs from "fs";
 import { log } from "util";
@@ -68,29 +68,61 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     await pool.scheduleRun();
 
     let table: string = '';
-    for (let i = 0; i < logs.length; i++) {
-        const buildTask: string = logs[i].buildTask ? logs[i].buildTask : '?';
-        const startTime: string = logs[i].startTime ? logs[i].startTime.toLocaleString() : '?';
-        const finishTime: string = logs[i].finishTime ? logs[i].finishTime.toLocaleString() : '?';
-        const buildType: string = logs[i].buildType ? logs[i].buildType : '?';
-        const osType: string = logs[i].platform.osType ? logs[i].platform.osType : '?';
-        const name: string = logs[i].name ? logs[i].name : '?';
-        table += `<button id= "${i}" class="accordion">
-                    <table>
-                        <tr>
-                            <td class = 'widthControl'>${name}</td>
-                            <td class = 'widthControl'>${buildTask}</td>
-                            <td class ='status widthControl ${logs[i].status}'> ${logs[i].status}</td>
-                            <td class = 'widthControl'>${startTime}</td>
-                            <td class = 'widthControl'>${finishTime}</td>
-                            <td class = 'widthControl'>${osType}</td>
-                            <td class = 'widthControl'>${buildType}</td>
-                        </tr>
-                    </table>
-                </button>
-                <div class="panel">
-                    ${links[i].url}
-                </div>`
+
+
+    try {
+        for (let i = 0; i < logs.length; i++) {
+            const buildTask: string = logs[i].buildTask ? logs[i].buildTask : '?';
+            const startTime: string = logs[i].startTime ? logs[i].startTime.toLocaleString() : '?';
+            const finishTime: string = logs[i].finishTime ? logs[i].finishTime.toLocaleString() : '?';
+            const buildType: string = logs[i].buildType ? logs[i].buildType : '?';
+            const osType: string = logs[i].platform.osType ? logs[i].platform.osType : '?';
+            const name: string = logs[i].name ? logs[i].name : '?';
+            let imageOutput: string = '';
+
+            if (logs[i].outputImages) {
+                for (let j = 0; j < logs[i].outputImages.length; j++) {
+                    const tag: string = logs[i].outputImages[j].tag ? logs[i].outputImages[j].tag : '?';
+                    const repository: string = logs[i].outputImages[j].repository ? logs[i].outputImages[j].repository : '?';
+                    const registry: string = logs[i].outputImages[j].registry ? logs[i].outputImages[j].registry : '?';
+                    const digest: string = logs[i].outputImages[j].digest ? logs[i].outputImages[j].digest : '?';
+                    imageOutput += `<tr>
+                                    <td>${tag}</td>
+                                    <td>${repository}</td>
+                                    <td>${registry}</td>
+                                    <td>${digest}</td>
+                                </tr>`;
+                }
+            }
+
+            table += `<button id= "${i}" class="accordion">
+                        <table>
+                            <tr>
+                                <td class = 'widthControl'>${name}</td>
+                                <td class = 'widthControl'>${buildTask}</td>
+                                <td class ='status widthControl ${logs[i].status}'> ${logs[i].status}</td>
+                                <td class = 'widthControl'>${startTime}</td>
+                                <td class = 'widthControl'>${finishTime}</td>
+                                <td class = 'widthControl'>${osType}</td>
+                                <td class = 'widthControl'>${buildType}</td>
+                            </tr>
+                        </table>
+                    </button>
+                    <div class="panel">
+                        <table class="imageOutputTable">
+                            <tr>
+                                <th>Tag</th>
+                                <th>Repository</th>
+                                <th>Registry</th>
+                                <th>Digest</th>
+                            </tr>
+                            ${imageOutput}
+                        </table>
+                    </div>`
+        }
+
+    } catch (error) {
+
     }
 
     //creating the panel in which to show the logs
@@ -111,12 +143,12 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
 function setupCommunication(panel: vscode.WebviewPanel, urlList: any[]) {
     panel.webview.onDidReceiveMessage(message => {
         if (message.logRequest) {
-            let errors: string[] = streamContent(urlList[+message.logRequest.id].url);
+            streamContent(urlList[+message.logRequest.id].url);
         }
     });
 }
 
-function streamContent(url): string[] {
+function streamContent(url) {
     let blobInfo = getBlobInfo(url);
     let array1: string[];
     try {
@@ -124,7 +156,7 @@ function streamContent(url): string[] {
     } catch (error) {
         console.log(error);
     }
-    // let str = (url);
+    //let str = (url);
     // let stream: Writable = new Writable();
     // try {
     //     blob.getBlobToStream(blobInfo.containerName, blobInfo.blobName, stream, (error, response) => {
@@ -138,6 +170,7 @@ function streamContent(url): string[] {
     //     console.log('a' + error);
     // }
     // console.log(stream);
+    // stream.addListener
     try {
         blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {
             if (response) {
@@ -145,12 +178,11 @@ function streamContent(url): string[] {
                 logWindow.append(text);
                 logWindow.show();
                 array1 = getErrors(text);
-                if (array1.length !== 0) {
+                if (array1.length != 0) {
                     for (let i = 0; i < array1.length; i++) {
-                        array1[i] = array1[i].substr(44); //delete this part if time stamp also desired
+                        array1[i] = array1[i]; //delete this part if time stamp also desired
                         logWindow.append(`> ` + array1[i] + `\n`);
                     }
-
                 }
             } else {
                 console.log(error); //no console here, this will break!
@@ -159,7 +191,7 @@ function streamContent(url): string[] {
     } catch (error) {
         console.log(error);
     }
-    return array1;
+    createLogView();
 }
 
 /**
@@ -208,6 +240,17 @@ function getBlobInfo(blobUrl: string) {
     const sasToken: string = items[4].slice(items[4].search('[?]') + 1);
     const host: string = accountName + '.blob.' + endpointSuffix;
     return { accountName, endpointSuffix, containerName, blobName, sasToken, host }
+}
+
+function createLogView() {
+
+    const uri = vscode.Uri.parse('logsProvider');
+    vscode.workspace.openTextDocument(uri).then(
+        doc => {
+            vscode.window.showTextDocument(doc, 2);
+        }
+    );
+    //vscode.workspace.openTextDocument(uri).then(doc c=> vscode.window.showTextDocument(doc).then(editor => { editor.viewColumn + 1 }));
 }
 
 function makeBase64(str: string): string {

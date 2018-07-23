@@ -2,8 +2,8 @@
     background-color: transparent;
     color: rgb(218, 211, 211);
     cursor: pointer;
-    padding: 18px;
     margin: 0px;
+    padding: 5px;
     width: 100%;
     border: none;
     text-align: left;
@@ -19,7 +19,7 @@
 }
 
 .panel {
-    padding: 0 18px;
+    padding: 0 10px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.2s ease-out;
@@ -83,7 +83,15 @@ body {
 }
 
 .logConsole {
-    width: 200px;
-    height: 300px;
+    height: 100px;
     overflow-y: auto;
+}
+
+.imageOutputTable {
+    padding: 10px;
+    width: 45%;
+}
+
+.imageOutputTable th {
+    font-size: 12px;
 }

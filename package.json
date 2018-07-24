@@ -47,7 +47,6 @@
     "onCommand:vscode-docker.createWebApp",
     "onCommand:vscode-docker.system.prune",
     "onCommand:vscode-docker.dockerHubLogout",
-    "onCommand:vscode-docker.createRegistry",
     "onCommand:vscode-docker.deleteRegistry",
     "onCommand:vscode-docker.buildTaskLog",
     "onCommand:vscode-docker.browseDockerHub",
@@ -237,10 +236,6 @@
         {
           "command": "vscode-docker.dockerHubLogout",
           "when": "view == dockerExplorer && viewItem == dockerHubRootNode"
-        },
-        {
-          "command": "vscode-docker.createRegistry",
-          "when": "view == dockerExplorer && viewItem == azureRegistryRootNode"
         },
         {
           "command": "vscode-docker.deleteRegistry",
@@ -587,11 +582,6 @@
       {
         "command": "vscode-docker.dockerHubLogout",
         "title": "Docker Hub Logout",
-        "category": "Docker"
-      },
-      {
-        "command": "vscode-docker.createRegistry",
-        "title": "Create Registry",
         "category": "Docker"
       },
       {

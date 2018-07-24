@@ -1,4 +1,3 @@
-
 import * as vscode from "vscode";
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
 import { AzureAccountWrapper } from '.././explorer/deploy/azureAccountWrapper';
@@ -21,14 +20,21 @@ export async function deleteRegistry(context?: AzureRegistryNode) {
         deleteRegistryNoContext();
         return;
     }
+    else {
+        deleteRegistryContextAvailable(context);
+        return;
+    }
+}
+
+async function deleteRegistryContextAvailable(context: AzureRegistryNode) {
     let opt: vscode.InputBoxOptions = {
         ignoreFocusOut: true,
         placeHolder: 'No',
         value: 'No',
-        prompt: 'Are you sure you want to delete this registry and its associated images? Enter Y or N: '
+        prompt: 'Are you sure you want to delete this registry and its associated images? Enter Yes or No: '
     };
     let answer = await vscode.window.showInputBox(opt);
-    if (answer == 'N' || answer == 'n') { return };
+    if (answer !== 'Yes') { return };
 
     let azureAccount = context.azureAccount;
     if (!azureAccount) {
@@ -45,7 +51,7 @@ export async function deleteRegistry(context?: AzureRegistryNode) {
     for (let i = 0; i < registries.length; i++) {
         if (registries[i].name === context.registry.name) {
             resourceGroup = registries[i].id.slice(registries[i].id.search('resourceGroups/') + 'resourceGroups/'.length, registries[i].id.search('/providers/'));
-            subscriptionId = context.subscription.id; //registries[i].id.slice('subscriptions/'.length, registries[i].id.search('/resourceGroups/'));
+            subscriptionId = context.subscription.id;
             break;
         }
     }
@@ -57,12 +63,11 @@ export async function deleteRegistry(context?: AzureRegistryNode) {
         return sub.subscriptionId === subscriptionId;
     });
     const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
-    await client.registries.beginDeleteMethod(resourceGroup, context.registry.name).then(function (response) {
-        console.log("Success!", response);
+    client.registries.beginDeleteMethod(resourceGroup, context.registry.name).then(function (response) {
+        console.log("Success!");
     }, function (error) {
         console.error("Failed!", error);
     })
-
 }
 
 /**
@@ -77,7 +82,7 @@ async function deleteRegistryNoContext() {
         reg.push(registries[i].name);
     }
     let desired = await vscode.window.showQuickPick(reg, { 'canPickMany': false, 'placeHolder': 'Choose a Registry to delete' });
-    if (desired === undefined) throw 'user Exit';
+    if (desired === undefined) return;
     let registry = registries.find(reg => { return desired === reg.name });
 
     let opt: vscode.InputBoxOptions = {
@@ -119,7 +124,7 @@ async function deleteRegistryNoContext() {
         return sub.subscriptionId === subscriptionId;
     });
     const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
-    await client.registries.beginDeleteMethod(resourceGroup, registry.name).then(function (response) {
+    client.registries.beginDeleteMethod(resourceGroup, registry.name).then(function (response) {
         console.log("Success!");
     }, function (error) {
         console.error("Failed!", error);

@@ -117,7 +117,6 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteRegistry', deleteRegistry));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.buildTaskLog', buildTaskLog));
 
-
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createWebApp', async (context?: AzureImageNode | DockerHubImageNode) => {
         if (context) {
             if (azureAccount) {

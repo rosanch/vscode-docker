@@ -15,6 +15,9 @@ import { DockerHubImageNode } from '../models/dockerHubNodes';
 import { AzureAccountWrapper } from './azureAccountWrapper';
 import * as util from './util';
 import { QuickPickItemWithData, SubscriptionStepBase, UserCancelledError, WizardBase, WizardResult, WizardStep } from './wizard';
+import { Subscription } from 'azure-arm-resource/lib/subscription/models';
+import { Registry } from 'azure-arm-containerregistry/lib/models';
+import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
 
 const teleCmdId: string = 'vscode-docker.deploy.azureAppService';
 
@@ -408,13 +411,21 @@ class WebsiteStep extends WebAppCreatorStepBase {
     private _serverUserName: string;
     private _serverPassword: string;
     private _imageName: string;
+    private _subscription: Subscription;
+    private _registry: Registry;
 
     constructor(wizard: WizardBase, azureAccount: AzureAccountWrapper, context: AzureImageNode | DockerHubImageNode) {
         super(wizard, 'Create Web App', azureAccount);
 
         this._serverUrl = context.serverUrl;
-        this._serverPassword = context.password;
-        this._serverUserName = context.userName;
+        if (context instanceof DockerHubImageNode) {
+            this._serverPassword = context.password;
+            this._serverUserName = context.userName;
+        }
+        if (context instanceof AzureImageNode) {
+            this._subscription = context.subscription;
+        }
+
         this._imageName = context.label;
 
     }
@@ -543,4 +554,18 @@ class WebsiteStep extends WebAppCreatorStepBase {
         }
     }
 
+    async loginCredentials() {
+        if (this._serverPassword && this._serverUserName) return;
+        const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(this._subscription);
+        const resourceGroup: string = this._registry.id.slice(this._registry.id.search('resourceGroups/') + 'resourceGroups/'.length, this._registry.id.search('/providers/'));
+
+        if (this._registry.adminUserEnabled) {
+            let creds = await client.registries.listCredentials(resourceGroup, this._registry.name);
+            this._serverPassword = creds.passwords[0].value;
+            this._serverUserName = creds.username;
+        } else {
+
+        }
+
+    }
 }

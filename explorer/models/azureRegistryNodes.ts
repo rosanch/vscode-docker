@@ -23,11 +23,9 @@ export class AzureRegistryNode extends NodeBase {
         this._azureAccount = azureAccount;
     }
 
-    public password: string;
     public registry: ContainerModels.Registry;
     public subscription: SubscriptionModels.Subscription;
     public type: RegistryType;
-    public userName: string;
 
     public getTreeItem(): vscode.TreeItem {
         return {
@@ -96,12 +94,10 @@ export class AzureRegistryNode extends NodeBase {
                         node = new AzureRepositoryNode(repositories[i], "azureRepositoryNode");
                         node.accessTokenARC = accessTokenARC;
                         node.azureAccount = element.azureAccount;
-                        node.password = element.password;
                         node.refreshTokenARC = refreshTokenARC;
                         node.registry = element.registry;
                         node.repository = element.label;
                         node.subscription = element.subscription;
-                        node.userName = element.userName;
                         repoNodes.push(node);
                     }
                 }
@@ -127,12 +123,10 @@ export class AzureRepositoryNode extends NodeBase {
 
     public accessTokenARC: string;
     public azureAccount: AzureAccount
-    public password: string;
     public refreshTokenARC: string;
     public registry: ContainerModels.Registry;
     public repository: string;
     public subscription: SubscriptionModels.Subscription;
-    public userName: string;
 
     public getTreeItem(): vscode.TreeItem {
         return {
@@ -212,11 +206,9 @@ export class AzureRepositoryNode extends NodeBase {
                     let manifest = JSON.parse(data);
                     node = new AzureImageNode(`${element.label}:${tags[i]}`, 'azureImageNode');
                     node.azureAccount = element.azureAccount;
-                    node.password = element.password;
                     node.registry = element.registry;
                     node.serverUrl = element.repository;
                     node.subscription = element.subscription;
-                    node.userName = element.userName;
                     node.created = moment(new Date(JSON.parse(manifest.history[0].v1Compatibility).created)).fromNow();
                     imageNodes.push(node);
                 });
@@ -242,11 +234,9 @@ export class AzureImageNode extends NodeBase {
 
     public azureAccount: AzureAccount
     public created: string;
-    public password: string;
     public registry: ContainerModels.Registry;
     public serverUrl: string;
     public subscription: SubscriptionModels.Subscription;
-    public userName: string;
 
     public getTreeItem(): vscode.TreeItem {
         let displayName: string = this.label;

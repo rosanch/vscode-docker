@@ -105,6 +105,7 @@ export class RegistryRootNode extends NodeBase {
             node.password = id.password;
             node.token = id.token;
             orgNodes.push(node);
+            orgNodes.push(node); ///pushed again to
         });
 
         return orgNodes;

@@ -147,10 +147,11 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
         // instantiate LogProvider
         const logProvider = new LogContentProvider();
 
-        const providerRegistrations = vscode.Disposable.from(
-            vscode.workspace.registerTextDocumentContentProvider(LogContentProvider.scheme, logProvider),
-        );
-        ctx.subscriptions.push(providerRegistrations);
+        const scheme = 'purejs';
+        const customUri = vscode.Uri.parse(`${scheme}://authority/CustomContent`);
+        const registration = vscode.workspace.registerTextDocumentContentProvider(LogContentProvider.scheme, logProvider);
+
+        ctx.subscriptions.push(registration);
     }
     activateLanguageClient(ctx);
 }

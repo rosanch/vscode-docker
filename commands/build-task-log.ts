@@ -28,20 +28,16 @@ const logWindow = vscode.window.createOutputChannel('Logs');
 
 export async function buildTaskLog(context?: AzureRegistryNode) {
 
-    // get the resource group name from the AzureRegistryNode (the context) to be passed into other functions
     let resourceGroup: string = context.registry.id.slice(context.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, context.registry.id.search('/providers/'));
-    let subscriptionId: string = context.registry.id.slice('subscriptions/'.length, context.registry.id.search('/resourceGroups/')); //this isn't necessary after all
+    let subscriptionId: string = context.registry.id.slice('subscriptions/'.length, context.registry.id.search('/resourceGroups/'));
 
     if (!resourceGroup || !subscriptionId) {
         throw 'Something went wrong, this registry may no longer exist'
     }
 
-    //const subs: SubscriptionModels.Subscription[] = AzureCredentialsManager.getInstance().getFilteredSubscriptionList();
-
-    // build the client by passing in the desired subscription, a property of the AzureRegistryNode (context)
     const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
     let logs: Build[];
-    // get all the builds for a given registry
+
     try {
         logs = await client.builds.list(resourceGroup, context.registry.name);
     } catch (error) {
@@ -54,8 +50,6 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
 
     let links: { url?: string, id: number }[] = [];
 
-    // get all the log links asynchronously in case there are a lot of them. Most efficient way to do this!
-    //this is where it's breaking. the j starts at 96 and jumps all over the place, it doesn't increment by 1
     let pool = new AsyncPool(8);
     for (let j = 0; j < logs.length; j++) {
         pool.addTask(async () => {
@@ -64,38 +58,36 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
             links.push({ 'url': url, 'id': j });
         });
     }
-    links.sort(function (a, b) { return b.id - a.id });
     await pool.scheduleRun();
+    links.sort(function (a, b) { return b.id - a.id });
 
     let table: string = '';
 
+    for (let i = 0; i < logs.length; i++) {
+        const buildTask: string = logs[i].buildTask ? logs[i].buildTask : '?';
+        const startTime: string = logs[i].startTime ? logs[i].startTime.toLocaleString() : '?';
+        const finishTime: string = logs[i].finishTime ? logs[i].finishTime.toLocaleString() : '?';
+        const buildType: string = logs[i].buildType ? logs[i].buildType : '?';
+        const osType: string = logs[i].platform.osType ? logs[i].platform.osType : '?';
+        const name: string = logs[i].name ? logs[i].name : '?';
+        let imageOutput: string = '';
 
-    try {
-        for (let i = 0; i < logs.length; i++) {
-            const buildTask: string = logs[i].buildTask ? logs[i].buildTask : '?';
-            const startTime: string = logs[i].startTime ? logs[i].startTime.toLocaleString() : '?';
-            const finishTime: string = logs[i].finishTime ? logs[i].finishTime.toLocaleString() : '?';
-            const buildType: string = logs[i].buildType ? logs[i].buildType : '?';
-            const osType: string = logs[i].platform.osType ? logs[i].platform.osType : '?';
-            const name: string = logs[i].name ? logs[i].name : '?';
-            let imageOutput: string = '';
-
-            if (logs[i].outputImages) {
-                for (let j = 0; j < logs[i].outputImages.length; j++) {
-                    const tag: string = logs[i].outputImages[j].tag ? logs[i].outputImages[j].tag : '?';
-                    const repository: string = logs[i].outputImages[j].repository ? logs[i].outputImages[j].repository : '?';
-                    const registry: string = logs[i].outputImages[j].registry ? logs[i].outputImages[j].registry : '?';
-                    const digest: string = logs[i].outputImages[j].digest ? logs[i].outputImages[j].digest : '?';
-                    imageOutput += `<tr>
+        if (logs[i].outputImages) {
+            for (let j = 0; j < logs[i].outputImages.length; j++) {
+                const tag: string = logs[i].outputImages[j].tag ? logs[i].outputImages[j].tag : '?';
+                const repository: string = logs[i].outputImages[j].repository ? logs[i].outputImages[j].repository : '?';
+                const registry: string = logs[i].outputImages[j].registry ? logs[i].outputImages[j].registry : '?';
+                const digest: string = logs[i].outputImages[j].digest ? logs[i].outputImages[j].digest : '?';
+                imageOutput += `<tr>
                                     <td>${tag}</td>
                                     <td>${repository}</td>
                                     <td>${registry}</td>
                                     <td>${digest}</td>
                                 </tr>`;
-                }
             }
+        }
 
-            table += `<button id= "${i}" class="accordion">
+        table += `<button id= "${i}" class="accordion">
                         <table>
                             <tr>
                                 <td class = 'widthControl'>${name}</td>
@@ -119,17 +111,14 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
                             ${imageOutput}
                         </table>
                     </div>`
-        }
-
-    } catch (error) {
-
     }
+
 
     //creating the panel in which to show the logs
     const panel = vscode.window.createWebviewPanel('log Viewer', "Build Logs", vscode.ViewColumn.One, { enableScripts: true });
 
-    let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
     // Get path to resource on disk
+    let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
     const scriptPath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'logScripts.js'));
     const scriptFile = scriptPath.with({ scheme: 'vscode-resource' });
     const stylePath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'stylesheet.css'));
@@ -156,78 +145,16 @@ function streamContent(url) {
     } catch (error) {
         console.log(error);
     }
-    //let str = (url);
-    // let stream: Writable = new Writable();
-    // try {
-    //     blob.getBlobToStream(blobInfo.containerName, blobInfo.blobName, stream, (error, response) => {
-    //         if (response) {
-    //             console.log(response.name + 'has Completed');
-    //         } else {
-    //             console.log(error);
-    //         }
-    //     });
-    // } catch (error) {
-    //     console.log('a' + error);
-    // }
-    // console.log(stream);
-    // stream.addListener
     try {
         blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {
             if (response) {
-                logWindow.clear();
-                logWindow.append(text);
-                logWindow.show();
-                array1 = getErrors(text);
-                if (array1.length != 0) {
-                    for (let i = 0; i < array1.length; i++) {
-                        array1[i] = array1[i]; //delete this part if time stamp also desired
-                        logWindow.append(`> ` + array1[i] + `\n`);
-                    }
-                }
+                createLogView(text, blobInfo.containerName);
             } else {
-                console.log(error); //no console here, this will break!
+                console.log(error);
             }
         });
     } catch (error) {
         console.log(error);
-    }
-    createLogView();
-}
-
-/**
- * this function takes the log stream and searches it for error messages
- * @param streamlog - the entire text of the build log, currently in the form of a response from getBlobToText called in streamContent
- * @returns - an array of the unique error messages found in chronological order, currently including their time stamps
- */
-function getErrors(streamlog: string): string[] {
-    var fail = `--- FAIL`;
-    if (streamlog.search(fail) === -1) {
-        console.log('No failures found');
-        let none: string[] = [];
-        return none;
-    } else {
-        // console.log('Found error messages!');
-        let i = streamlog.search(`error msg=`);
-        let temp = streamlog.substr(i - 34, streamlog.length); //there were 34 characters between the line beginning and 'error msg='
-        var allerrors = temp.split(`\n`);
-        var unique_errors: string[] = [];
-        // errors are often repeated in the log. This is undesirable information, so we run a quick filter to ensure each individual error
-        // is only displayed to the user once
-        for (let j = 0; j < allerrors.length; j++) {
-            //all failed logs begin with '--- FAIL' and end with 'FAIL'. This is how we know when to break
-            if (allerrors[j].includes('FAIL')) {
-                break;
-            }
-            // trim whitespace before adding to array to make it readable
-            if (!unique_errors.includes(allerrors[j].trim())) {
-                unique_errors.push(allerrors[j].trim());
-
-            }
-        }
-        //console.log('Final array found: ');
-        //console.log(unique_errors);
-        return unique_errors;
-
     }
 }
 
@@ -242,15 +169,15 @@ function getBlobInfo(blobUrl: string) {
     return { accountName, endpointSuffix, containerName, blobName, sasToken, host }
 }
 
-function createLogView() {
-
-    const uri = vscode.Uri.parse('logsProvider');
-    vscode.workspace.openTextDocument(uri).then(
-        doc => {
-            vscode.window.showTextDocument(doc, 2);
-        }
-    );
-    //vscode.workspace.openTextDocument(uri).then(doc c=> vscode.window.showTextDocument(doc).then(editor => { editor.viewColumn + 1 }));
+function createLogView(text: string, title: string) {
+    const scheme = 'purejs';
+    const uri = vscode.Uri.parse(`${scheme}://authority/WelpPlease`);
+    vscode.workspace.openTextDocument(uri).then(function (doc) {
+        return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
+    });
+    // vscode.commands.executeCommand('vscode.previewHtml', uri, vscode.ViewColumn.Two, title).then(_ => { }, _ => {
+    //     vscode.window.showErrorMessage('Cant open!');
+    // });
 }
 
 function makeBase64(str: string): string {
@@ -292,5 +219,55 @@ function getWebviewContent(table, scriptFile, stylesheet, registryName) {
 `;
 }
 
+/**
+ * this function takes the log stream and searches it for error messages
+ * @param streamlog - the entire text of the build log, currently in the form of a response from getBlobToText called in streamContent
+ * @returns - an array of the unique error messages found in chronological order, currently including their time stamps
+ */
+function getErrors(streamlog: string): string[] {
+    var fail = `--- FAIL`;
+    if (streamlog.search(fail) === -1) {
+        console.log('No failures found');
+        let none: string[] = [];
+        return none;
+    } else {
+        // console.log('Found error messages!');
+        let i = streamlog.search(`error msg=`);
+        let temp = streamlog.substr(i - 34, streamlog.length); //there were 34 characters between the line beginning and 'error msg='
+        var allerrors = temp.split(`\n`);
+        var unique_errors: string[] = [];
+        // errors are often repeated in the log. This is undesirable information, so we run a quick filter to ensure each individual error
+        // is only displayed to the user once
+        for (let j = 0; j < allerrors.length; j++) {
+            //all failed logs begin with '--- FAIL' and end with 'FAIL'. This is how we know when to break
+            if (allerrors[j].includes('FAIL')) {
+                break;
+            }
+            // trim whitespace before adding to array to make it readable
+            if (!unique_errors.includes(allerrors[j].trim())) {
+                unique_errors.push(allerrors[j].trim());
 
+            }
+        }
+        //console.log('Final array found: ');
+        //console.log(unique_errors);
+        return unique_errors;
 
+    }
+}
+
+//let str = (url);
+// let stream: Writable = new Writable();
+// try {
+//     blob.getBlobToStream(blobInfo.containerName, blobInfo.blobName, stream, (error, response) => {
+//         if (response) {
+//             console.log(response.name + 'has Completed');
+//         } else {
+//             console.log(error);
+//         }
+//     });
+// } catch (error) {
+//     console.log('a' + error);
+// }
+// console.log(stream);
+// stream.addListener

@@ -8,7 +8,7 @@
     border: none;
     text-align: left;
     outline: none;
-    font-size: inherit;
+    font-size: medium;
     transition: 0.4s;
     text-align: center;
 }
@@ -74,7 +74,7 @@ h2 {
 
 #headerTable {
     background-color: rgb(73, 68, 68);
-    font-size: inherit;
+    font-size: medium;
 }
 
 body {
@@ -88,10 +88,10 @@ body {
 }
 
 .imageOutputTable {
-    padding: 10px;
-    width: 45%;
+    padding: 8%;
+    width: 70%;
 }
 
 .imageOutputTable th {
-    font-size: inherit;
+    font-size: medium;
 }

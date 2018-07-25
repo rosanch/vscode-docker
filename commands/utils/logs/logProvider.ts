@@ -10,8 +10,8 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
     constructor() {
         this.content = 'This is some custom content. ';
     }
-    provideTextDocumentContent(uri) {
-        return this.content;
+    provideTextDocumentContent(uri: vscode.Uri) {
+        return JSON.parse(uri.query).log;
     }
     get onDidChange() {
         return this.onDidChangeEvent.event;

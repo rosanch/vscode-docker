@@ -72,20 +72,20 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
         const name: string = logs[i].name ? logs[i].name : '?';
         let imageOutput: string = '';
 
-        if (logs[i].outputImages) {
-            for (let j = 0; j < logs[i].outputImages.length; j++) {
-                const tag: string = logs[i].outputImages[j].tag ? logs[i].outputImages[j].tag : '?';
-                const repository: string = logs[i].outputImages[j].repository ? logs[i].outputImages[j].repository : '?';
-                const registry: string = logs[i].outputImages[j].registry ? logs[i].outputImages[j].registry : '?';
-                const digest: string = logs[i].outputImages[j].digest ? logs[i].outputImages[j].digest : '?';
-                imageOutput += `<tr>
-                                    <td>${tag}</td>
-                                    <td>${repository}</td>
-                                    <td>${registry}</td>
-                                    <td>${digest}</td>
-                                </tr>`;
-            }
-        }
+        // if (logs[i].outputImages) {
+        //     for (let j = 0; j < logs[i].outputImages.length; j++) {
+        //         const tag: string = logs[i].outputImages[j].tag ? logs[i].outputImages[j].tag : '?';
+        //         const repository: string = logs[i].outputImages[j].repository ? logs[i].outputImages[j].repository : '?';
+        //         const registry: string = logs[i].outputImages[j].registry ? logs[i].outputImages[j].registry : '?';
+        //         const digest: string = logs[i].outputImages[j].digest ? logs[i].outputImages[j].digest : '?';
+        //         imageOutput += `<tr>
+        //                             <td>${tag}</td>
+        //                             <td>${repository}</td>
+        //                             <td>${registry}</td>
+        //                             <td>${digest}</td>
+        //                         </tr>`;
+        //     }
+        // }
 
         table += `<button id= "${i}" class="accordion">
                         <table>
@@ -139,7 +139,6 @@ function setupCommunication(panel: vscode.WebviewPanel, urlList: any[]) {
 
 function streamContent(url) {
     let blobInfo = getBlobInfo(url);
-    let array1: string[];
     try {
         var blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
     } catch (error) {
@@ -171,7 +170,13 @@ function getBlobInfo(blobUrl: string) {
 
 function createLogView(text: string, title: string) {
     const scheme = 'purejs';
-    const uri = vscode.Uri.parse(`${scheme}://authority/WelpPlease`);
+    try {
+        let query = JSON.stringify({ 'log': text });
+        var uri = vscode.Uri.parse(`${scheme}://authority/${title}?${query}#idk`);
+    } catch (error) {
+        console.log(error);
+    }
+
     vscode.workspace.openTextDocument(uri).then(function (doc) {
         return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
     });

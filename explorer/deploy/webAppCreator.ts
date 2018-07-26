@@ -411,7 +411,7 @@ class WebsiteStep extends WebAppCreatorStepBase {
     private _serverUserName: string;
     private _serverPassword: string;
     private _imageName: string;
-    private _subscription: Subscription;
+    private _imageSubscription: Subscription;
     private _registry: Registry;
 
     constructor(wizard: WizardBase, azureAccount: AzureAccountWrapper, context: AzureImageNode | DockerHubImageNode) {
@@ -423,7 +423,8 @@ class WebsiteStep extends WebAppCreatorStepBase {
             this._serverUserName = context.userName;
         }
         if (context instanceof AzureImageNode) {
-            this._subscription = context.subscription;
+            this._imageSubscription = context.subscription;
+            this._registry = context.registry;
         }
 
         this._imageName = context.label;
@@ -458,6 +459,12 @@ class WebsiteStep extends WebAppCreatorStepBase {
                 await vscode.window.showWarningMessage(nameAvailability.message);
             }
         }
+        try {
+            await this.loginCredentials();
+        } catch (error) {
+            //User stopped providing input, exiting in some way (esc, click outside, etc)
+            return;
+        }
 
         let linuxFXVersion: string;
         if (this._serverUrl.length > 0) {
@@ -487,7 +494,6 @@ class WebsiteStep extends WebAppCreatorStepBase {
         const subscription = this.getSelectedSubscription();
         const rg = this.getSelectedResourceGroup();
         const websiteClient = new WebSiteManagementClient(this.azureAccount.getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
-
         // If the plan is also newly created, its resource ID won't be available at this step's prompt stage, but should be available now.
         if (!this._website.serverFarmId) {
             this._website.serverFarmId = this.getSelectedAppServicePlan().id;
@@ -516,7 +522,6 @@ class WebsiteStep extends WebAppCreatorStepBase {
                     "DOCKER_REGISTRY_SERVER_PASSWORD": this._serverPassword
                 }
             };
-
         }
 
         await websiteClient.webApps.updateApplicationSettings(rg.name, this._website.name, appSettings);
@@ -554,9 +559,10 @@ class WebsiteStep extends WebAppCreatorStepBase {
         }
     }
 
+    //Implements new Service principal model for ACR container registries while maintaining old admin enabled use
     async loginCredentials() {
         if (this._serverPassword && this._serverUserName) return;
-        const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(this._subscription);
+        const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(this._imageSubscription);
         const resourceGroup: string = this._registry.id.slice(this._registry.id.search('resourceGroups/') + 'resourceGroups/'.length, this._registry.id.search('/providers/'));
 
         if (this._registry.adminUserEnabled) {
@@ -564,7 +570,20 @@ class WebsiteStep extends WebAppCreatorStepBase {
             this._serverPassword = creds.passwords[0].value;
             this._serverUserName = creds.username;
         } else {
+            let opt: vscode.InputBoxOptions = {
+                ignoreFocusOut: false,
+                prompt: 'Service Principal ID ?'
+            };
 
+            this._serverUserName = await vscode.window.showInputBox(opt);
+            if (!this._serverUserName) throw ('No input from user received for Service Principal ID');
+            opt = {
+                ignoreFocusOut: false,
+                prompt: 'Service Principal Password ?'
+            };
+
+            this._serverPassword = await vscode.window.showInputBox(opt);
+            if (!this._serverPassword) throw ('No input from user received for Service Principal Password');
         }
 
     }

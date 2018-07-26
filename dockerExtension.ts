@@ -11,6 +11,7 @@ import { DockerComposeParser } from './dockerCompose/dockerComposeParser';
 import vscode = require('vscode');
 import { buildImage } from './commands/build-image';
 import { deleteRegistry } from './commands/delete-registry';
+import { deleteRepository } from './commands/delete-repository';
 import { buildTaskLog } from './commands/build-task-log';
 import inspectImageCommand from './commands/inspect-image';
 import { removeImage } from './commands/remove-image';
@@ -113,6 +114,8 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.down', composeDown));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.system.prune', systemPrune));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteRegistry', deleteRegistry));
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteRepository', deleteRepository));
+
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.buildTaskLog', buildTaskLog));
 
 

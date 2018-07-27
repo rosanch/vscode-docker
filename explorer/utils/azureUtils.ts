@@ -4,6 +4,7 @@ import { AzureSession } from '../../typings/azure-account.api';
 import { Registry } from 'azure-arm-containerregistry/lib/models';
 import * as vscode from "vscode";
 import request = require('request-promise');
+import { AzureCredentialsManager } from '../../utils/AzureCredentialsManager';
 
 
 
@@ -57,7 +58,7 @@ export async function getAzureRepositories(Authorization: string, registry: Regi
 
     let options = {
         method: 'GET',
-        uri: `https://${registry.name}/v2/users/${username}/repositories/`,
+        uri: `https://${registry.name}/v2/users/${Authorization}/repositories/`,
         headers: {
             Authorization: 'JWT ' + _token.token
         },
@@ -95,4 +96,73 @@ export async function getRepositoryInfo(repository: Repository): Promise<any> {
     }
 
     return res;
+}
+
+export async function getAccessCredentials(context: AzureRepositoryNode) {
+    const repoNodes: AzureRepositoryNode[] = [];
+    let node: AzureRepositoryNode;
+    let azureAccount = AzureCredentialsManager.getInstance().getAccount();
+    const tenantId: string = context.subscription.tenantId;
+    if (!this._azureAccount) {
+        return [];
+    }
+
+    const session: AzureSession = azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
+    const { accessToken, refreshToken } = await acquireToken(session);
+
+    if (accessToken && refreshToken) {
+        let refreshTokenARC;
+        let accessTokenARC;
+
+        await request.post('https://' + context.registry.name + '/oauth2/exchange', {
+            form: {
+                grant_type: 'access_token_refresh_token',
+                service: context.registry.name,
+                tenant: tenantId,
+                refresh_token: refreshToken,
+                access_token: accessToken
+            }
+        }, (err, httpResponse, body) => {
+            if (body.length > 0) {
+                refreshTokenARC = JSON.parse(body).refresh_token;
+            } else {
+                return [];
+            }
+        });
+
+        await request.post('https://' + context.registry.name + '/oauth2/token', {
+            form: {
+                grant_type: 'refresh_token',
+                service: context.registry.name,
+                scope: 'registry:catalog:*',
+                refresh_token: refreshTokenARC
+            }
+        }, (err, httpResponse, body) => {
+            if (body.length > 0) {
+                accessTokenARC = JSON.parse(body).access_token;
+            } else {
+                return [];
+            }
+        });
+    }
+}
+
+
+
+
+async function acquireToken(session: AzureSession) {
+    return new Promise<{ accessToken: string; refreshToken: string; }>((resolve, reject) => {
+        const credentials: any = session.credentials;
+        const environment: any = session.environment;
+        credentials.context.acquireToken(environment.activeDirectoryResourceId, credentials.username, credentials.clientId, function (err: any, result: any) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve({
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken
+                });
+            }
+        });
+    });
 }

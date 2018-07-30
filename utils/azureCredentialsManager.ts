@@ -1,10 +1,10 @@
-import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
-import { AzureAccount } from '../typings/azure-account.api';
-import { ServiceClientCredentials } from 'ms-rest';
-import { AsyncPool } from '../utils/asyncpool';
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
-import * as ContainerModels from '../node_modules/azure-arm-containerregistry/lib/models';
+import { ResourceManagementClient, SubscriptionClient, SubscriptionModels } from 'azure-arm-resource';
 import { ResourceGroup, ResourceGroupListResult } from "azure-arm-resource/lib/resource/models";
+import { ServiceClientCredentials } from 'ms-rest';
+import * as ContainerModels from '../node_modules/azure-arm-containerregistry/lib/models';
+import { AzureAccount } from '../typings/azure-account.api';
+import { AsyncPool } from '../utils/asyncpool';
 import { MAX_CONCURRENT_SUBSCRIPTON_REQUESTS } from './constants';
 
 /* Singleton for facilitating communication with Azure account services by providing extended shared
@@ -36,8 +36,8 @@ export class AzureCredentialsManager {
 
     //GETTERS
     public getAccount() {
-        if (this.azureAccount) return this.azureAccount;
-        throw ('Azure account is not present, you may have forgotten to call setAccount');
+        if (this.azureAccount) { return this.azureAccount; }
+        throw new Error(('Azure account is not present, you may have forgotten to call setAccount'));
     }
 
     public getFilteredSubscriptionList(): SubscriptionModels.Subscription[] {

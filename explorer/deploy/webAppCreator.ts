@@ -3,21 +3,23 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
+import { Registry } from 'azure-arm-containerregistry/lib/models';
 import { ResourceManagementClient, ResourceModels, SubscriptionModels } from 'azure-arm-resource';
+import { Subscription } from 'azure-arm-resource/lib/subscription/models';
 import WebSiteManagementClient = require('azure-arm-website');
 import * as fs from 'fs';
 import * as path from 'path';
+import * as request from 'request-promise';
 import * as vscode from 'vscode';
 import * as WebSiteModels from '../../node_modules/azure-arm-website/lib/models';
 import { reporter } from '../../telemetry/telemetry';
+import { AzureAccount, AzureLoginStatus, AzureSession } from '../../typings/azure-account.api';
 import { AzureImageNode } from '../models/azureRegistryNodes';
 import { DockerHubImageNode } from '../models/dockerHubNodes';
 import { AzureAccountWrapper } from './azureAccountWrapper';
 import * as util from './util';
 import { QuickPickItemWithData, SubscriptionStepBase, UserCancelledError, WizardBase, WizardResult, WizardStep } from './wizard';
-import { Subscription } from 'azure-arm-resource/lib/subscription/models';
-import { Registry } from 'azure-arm-containerregistry/lib/models';
-import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
 
 const teleCmdId: string = 'vscode-docker.deploy.azureAppService';
 
@@ -560,9 +562,10 @@ class WebsiteStep extends WebAppCreatorStepBase {
     }
 
     //Implements new Service principal model for ACR container registries while maintaining old admin enabled use
-    async loginCredentials() {
-        if (this._serverPassword && this._serverUserName) return;
-        const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(this._imageSubscription);
+    private async loginCredentials(): Promise<void> {
+        if (this._serverPassword && this._serverUserName) { return; }
+
+        const client = new ContainerRegistryManagementClient(this.azureAccount.getCredentialByTenantId(this._imageSubscription.tenantId), this._imageSubscription.subscriptionId);
         const resourceGroup: string = this._registry.id.slice(this._registry.id.search('resourceGroups/') + 'resourceGroups/'.length, this._registry.id.search('/providers/'));
 
         if (this._registry.adminUserEnabled) {
@@ -570,21 +573,55 @@ class WebsiteStep extends WebAppCreatorStepBase {
             this._serverPassword = creds.passwords[0].value;
             this._serverUserName = creds.username;
         } else {
-            let opt: vscode.InputBoxOptions = {
-                ignoreFocusOut: false,
-                prompt: 'Service Principal ID ?'
-            };
-
-            this._serverUserName = await vscode.window.showInputBox(opt);
-            if (!this._serverUserName) throw ('No input from user received for Service Principal ID');
-            opt = {
-                ignoreFocusOut: false,
-                prompt: 'Service Principal Password ?'
-            };
-
-            this._serverPassword = await vscode.window.showInputBox(opt);
-            if (!this._serverPassword) throw ('No input from user received for Service Principal Password');
+            let convertedCredentials: { password: string, username: string } = await this.getSessionCredentials();
+            this._serverUserName = convertedCredentials.password;
+            this._serverPassword = convertedCredentials.username;
         }
 
     }
+
+    private async getSessionCredentials(): Promise<{ password: string, username: string }> {
+        const tenantId: string = this._imageSubscription.tenantId;
+        const session: AzureSession = this.azureAccount.getAzureSessions().find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
+        const { accessToken, refreshToken } = await this.acquireToken(session);
+
+        if (accessToken && refreshToken) {
+            let refreshTokenARC: string;
+            let accessTokenARC: any;
+
+            await request.post('https://' + this._registry.name + '/oauth2/exchange', {
+                form: {
+                    grant_type: 'access_token_refresh_token',
+                    service: this._registry.name,
+                    tenant: tenantId,
+                    refresh_token: refreshToken,
+                    access_token: accessToken
+                }
+            }, (err, httpResponse, body) => {
+                if (body.length > 0) {
+                    refreshTokenARC = JSON.parse(body).refresh_token;
+                }
+            });
+            const nullGUID: string = "00000000-0000-0000-0000-000000000000"
+            return { 'username': nullGUID, 'password': refreshTokenARC }
+        }
+    }
+
+    private async acquireToken(session: AzureSession): Promise<{ accessToken: string; refreshToken: string; }> {
+        return new Promise<{ accessToken: string; refreshToken: string; }>((resolve, reject) => {
+            const credentials: any = session.credentials;
+            const environment: any = session.environment;
+            credentials.context.acquireToken(environment.activeDirectoryResourceId, credentials.username, credentials.clientId, (err: any, result: { accessToken: string; refreshToken: string; }): void => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({
+                        accessToken: result.accessToken,
+                        refreshToken: result.refreshToken
+                    });
+                }
+            });
+        });
+    }
+
 }

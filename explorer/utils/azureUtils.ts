@@ -51,6 +51,8 @@ export function browseAzurePortal(context?: AzureRegistryNode | AzureRepositoryN
 
 }
 
+
+/*
 export async function getAzureRepositories(Authorization: string, registry: Registry): Promise<Repository[]> {
 
 
@@ -97,14 +99,13 @@ export async function getRepositoryInfo(repository: Repository): Promise<any> {
 
     return res;
 }
+*/
+export async function getAccessCredentials(context: AzureRepositoryNode): Promise<{ refreshToken: any, accessToken: any }> {
 
-export async function getAccessCredentials(context: AzureRepositoryNode) {
-    const repoNodes: AzureRepositoryNode[] = [];
-    let node: AzureRepositoryNode;
     let azureAccount = AzureCredentialsManager.getInstance().getAccount();
     const tenantId: string = context.subscription.tenantId;
     if (!this._azureAccount) {
-        return [];
+        return;
     }
 
     const session: AzureSession = azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
@@ -126,7 +127,7 @@ export async function getAccessCredentials(context: AzureRepositoryNode) {
             if (body.length > 0) {
                 refreshTokenARC = JSON.parse(body).refresh_token;
             } else {
-                return [];
+                return;
             }
         });
 
@@ -141,10 +142,14 @@ export async function getAccessCredentials(context: AzureRepositoryNode) {
             if (body.length > 0) {
                 accessTokenARC = JSON.parse(body).access_token;
             } else {
-                return [];
+                return;
             }
         });
+        if (refreshTokenARC && accessTokenARC) {
+            return { 'refreshToken': refreshTokenARC, 'accessToken': accessTokenARC };
+        }
     }
+    return { refreshToken, accessToken }
 }
 
 

@@ -24,6 +24,7 @@ import { Repository, getRepositories, getRepositoryInfo } from "../explorer/util
 export async function deleteRepository(context?: AzureRepositoryNode) {
     if (!context) {
         //deleteRepositoryNoContext();
+        vscode.window.showErrorMessage('You must right click on a valid repository to delete it');
         return;
     }
     else {
@@ -62,28 +63,36 @@ async function deleteRepositoryContextAvailable(context: AzureRepositoryNode) {
         throw 'Something went wrong, could not find resource group and/or subscription id';
     }
     //  const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
-    let path = `/v2/_acr/${repoName}/`;
-    return request_data_from_registry('delete', loginserver, path, creds.username, creds.password);
-
-    console.log(context);
+    let path = `/v2/_acr/${repoName}/repository`;
+    let r = await request_data_from_registry('delete', loginserver, path, creds.username, creds.password);
+    console.log(r);
 
 }
 
 async function request_data_from_registry(http_method: string, login_server: string, path: string, username: string, password: string) {
     let url: string = `https://${login_server}${path}`;
     let header = _get_authorization_header(username, password);
-    let response = request(http_method, url, header);
+    let opt = {
+        headers: { 'Authorization': header },
+        http_method: http_method,
+        url: url
+    }
+    try {
+        let response = await request.delete(opt);
+    } catch (error) {
+        console.log(error);
+    }
+
+    //does this need params, json, and verify?
 }
 
-function _get_authorization_header(username: string, password: string) {
+function _get_authorization_header(username: string, password: string): string {
     let auth = ('Basic ' + (encode(username + ':' + password).trim()));
-    return ('Authorization:' + auth);
-
+    return (auth);
 }
 
 
 //Implements new Service principal model for ACR container registries while maintaining old admin enabled use
-
 async function loginCredentials(subscription, registry): Promise<{ password: string, username: string }> {
     let username: string;
     let password: string;

@@ -177,9 +177,15 @@ class ResourceGroupStep extends WebAppCreatorStepBase {
             resourceGroups = results[0];
             locations = results[1];
             resourceGroups.forEach(rg => {
+                try {
+                    let s = `(${locations.find(l => l.name.toLowerCase() === rg.location.toLowerCase())})`;
+                } catch (error) {
+                    console.log(error);
+                    console.log(rg);
+                }
                 quickPickItems.push({
                     label: rg.name,
-                    description: `(${locations.find(l => l.name.toLowerCase() === rg.location.toLowerCase()).displayName})`,
+                    description: `(${locations.find(l => l.name.toLowerCase() === rg.location.toLowerCase())})`,
                     detail: '',
                     data: rg
                 });
@@ -464,7 +470,7 @@ class WebsiteStep extends WebAppCreatorStepBase {
         try {
             await this.loginCredentials();
         } catch (error) {
-            //User stopped providing input, exiting in some way (esc, click outside, etc)
+            //Admin was not enabled, cannot proceed
             return;
         }
 
@@ -569,17 +575,25 @@ class WebsiteStep extends WebAppCreatorStepBase {
         const resourceGroup: string = this._registry.id.slice(this._registry.id.search('resourceGroups/') + 'resourceGroups/'.length, this._registry.id.search('/providers/'));
 
         if (this._registry.adminUserEnabled) {
-            let creds = await client.registries.listCredentials(resourceGroup, this._registry.name);
-            this._serverPassword = creds.passwords[0].value;
-            this._serverUserName = creds.username;
-        } else {
-            let convertedCredentials: { password: string, username: string } = await this.getSessionCredentials();
-            this._serverUserName = convertedCredentials.password;
-            this._serverPassword = convertedCredentials.username;
+            try {
+                let creds = await client.registries.listCredentials(resourceGroup, this._registry.name);
+                this._serverPassword = creds.passwords[0].value;
+                this._serverUserName = creds.username;
+                return;
+            } catch (error) {
+                vscode.window.showErrorMessage(error);
+                throw new Error(('Admin not enabled'));
+            }
         }
-
+        vscode.window.showErrorMessage('Azure App service can only run images from Azure Container Registries with admin enabled');
+        throw new Error(('Admin not enabled'));
+        // Un-Comment when Admin enabled is not required
+        // let convertedCredentials: { password: string, username: string } = await this.getSessionCredentials();
+        // this._serverUserName = convertedCredentials.password;
+        // this._serverPassword = convertedCredentials.username;
     }
 
+    //For future non-admin enabled support
     private async getSessionCredentials(): Promise<{ password: string, username: string }> {
         const tenantId: string = this._imageSubscription.tenantId;
         const session: AzureSession = this.azureAccount.getAzureSessions().find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
@@ -589,10 +603,10 @@ class WebsiteStep extends WebAppCreatorStepBase {
             let refreshTokenARC: string;
             let accessTokenARC: any;
 
-            await request.post('https://' + this._registry.name + '/oauth2/exchange', {
+            await request.post('https://' + this._registry.loginServer + '/oauth2/exchange', {
                 form: {
                     grant_type: 'access_token_refresh_token',
-                    service: this._registry.name,
+                    service: this._registry.loginServer,
                     tenant: tenantId,
                     refresh_token: refreshToken,
                     access_token: accessToken

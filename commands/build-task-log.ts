@@ -32,7 +32,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     let subscriptionId: string = context.registry.id.slice('subscriptions/'.length, context.registry.id.search('/resourceGroups/'));
 
     if (!resourceGroup || !subscriptionId) {
-        throw 'Something went wrong, this registry may no longer exist'
+        throw new Error('Something went wrong, this registry may no longer exist');
     }
 
     const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
@@ -61,7 +61,19 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     await pool.scheduleRun();
     links.sort(function (a, b) { return b.id - a.id });
 
-    let table: string = '';
+    let table: string[] = [];
+
+    //creating the panel in which to show the logs
+    const panel = vscode.window.createWebviewPanel('log Viewer', "Build Logs", vscode.ViewColumn.One, { enableScripts: true });
+    // Get path to resource on disk
+
+    let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
+    const scriptPath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'logScripts.js'));
+    const scriptFile = scriptPath.with({ scheme: 'vscode-resource' });
+    const stylePath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'stylesheet.css'));
+    const styleFile = stylePath.with({ scheme: 'vscode-resource' });
+    panel.webview.html = getWebviewContent(table, scriptFile, styleFile, context.registry.name);
+    setupCommunication(panel, links);
 
     for (let i = 0; i < logs.length; i++) {
         const buildTask: string = logs[i].buildTask ? logs[i].buildTask : '?';
@@ -72,22 +84,24 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
         const name: string = logs[i].name ? logs[i].name : '?';
         let imageOutput: string = '';
 
-        // if (logs[i].outputImages) {
-        //     for (let j = 0; j < logs[i].outputImages.length; j++) {
-        //         const tag: string = logs[i].outputImages[j].tag ? logs[i].outputImages[j].tag : '?';
-        //         const repository: string = logs[i].outputImages[j].repository ? logs[i].outputImages[j].repository : '?';
-        //         const registry: string = logs[i].outputImages[j].registry ? logs[i].outputImages[j].registry : '?';
-        //         const digest: string = logs[i].outputImages[j].digest ? logs[i].outputImages[j].digest : '?';
-        //         imageOutput += `<tr>
-        //                             <td>${tag}</td>
-        //                             <td>${repository}</td>
-        //                             <td>${registry}</td>
-        //                             <td>${digest}</td>
-        //                         </tr>`;
-        //     }
-        // }
-
-        table += `<button id= "${i}" class="accordion">
+        if (logs[i].outputImages) {
+            for (let j = 0; j < logs[i].outputImages.length; j++) {
+                const tag: string = logs[i].outputImages[j].tag ? logs[i].outputImages[j].tag : '?';
+                const repository: string = logs[i].outputImages[j].repository ? logs[i].outputImages[j].repository : '?';
+                const registry: string = logs[i].outputImages[j].registry ? logs[i].outputImages[j].registry : '?';
+                const digest: string = logs[i].outputImages[j].digest ? logs[i].outputImages[j].digest : '?';
+                imageOutput += `<tr>
+                                    <td>${tag}</td>
+                                    <td>${repository}</td>
+                                    <td>${registry}</td>
+                                    <td>${digest}</td>
+                                </tr>`;
+            }
+        }
+        panel.webview.postMessage({
+            'type': 'populate',
+            'id': `log${i}`,
+            'logComponent': `<button id= "log${i}" class="accordion">
                         <table>
                             <tr>
                                 <td class = 'widthControl'>${name}</td>
@@ -111,22 +125,9 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
                             ${imageOutput}
                         </table>
                     </div>`
+        });
     }
-
-
-    //creating the panel in which to show the logs
-    const panel = vscode.window.createWebviewPanel('log Viewer', "Build Logs", vscode.ViewColumn.One, { enableScripts: true });
-
-    // Get path to resource on disk
-    let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
-    const scriptPath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'logScripts.js'));
-    const scriptFile = scriptPath.with({ scheme: 'vscode-resource' });
-    const stylePath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'stylesheet.css'));
-    const styleFile = stylePath.with({ scheme: 'vscode-resource' });
-    panel.webview.html = getWebviewContent(table, scriptFile, styleFile, context.registry.name);
-    setupCommunication(panel, links);
-    //panel.webview.postMessage({ logsHtml: table });
-
+    panel.webview.postMessage({ 'type': 'end' });
 }
 
 function setupCommunication(panel: vscode.WebviewPanel, urlList: any[]) {
@@ -217,7 +218,6 @@ function getWebviewContent(table, scriptFile, stylesheet, registryName) {
             </table>
         </div>
         <div id = 'core'>
-            ${table}
         </div>
         <script src= "${scriptFile}"></script>
     </body>

@@ -2,34 +2,38 @@ import * as opn from 'opn';
 import { AzureRepositoryNode, AzureImageNode, AzureRegistryNode } from '../models/azureRegistryNodes';
 import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { Registry } from 'azure-arm-containerregistry/lib/models';
-import * as vscode from "vscode";
 import request = require('request-promise');
 import { AzureCredentialsManager } from '../../utils/AzureCredentialsManager';
 import { SubscriptionModels } from 'azure-arm-resource';
 
 
+/**
+ * class Repository: used locally as of August 2018, primarily for functions within azureUtils.ts and new commands such as delete Repository
+ * accessToken can be used like a password, and the username can be '00000000-0000-0000-0000-000000000000'
+ */
 export class Repository {
-    accessToken: string;
     azureAccount: AzureAccount;
-    //password: string;
-    refreshToken: string;
     registry: Registry;
     name: string;
     subscription: SubscriptionModels.Subscription;
-    //username: string;
     resourceGroupName: string;
+    accessToken?: string;
+    refreshToken?: string;
+    password?: string;
+    username?: string;
 
-    constructor(accessToken: string, AzureAccount: AzureAccount, refreshToken: string, registry: Registry, repository: string, subscription:
-        SubscriptionModels.Subscription, resourceGroupName: string) {
-        this.accessToken = accessToken;
+    constructor(AzureAccount: AzureAccount, registry: Registry, repository: string, subscription:
+        SubscriptionModels.Subscription, resourceGroupName: string, accessToken?: string, refreshToken?: string, password?: string, username?: string) {
+
         this.azureAccount = AzureAccount;
-        // this.password=password;
-        this.refreshToken = refreshToken;
         this.registry = registry;
         this.name = repository;
         this.subscription = subscription;
         this.resourceGroupName = resourceGroupName;
-        // this.username=username;
+        if (accessToken) { this.accessToken = accessToken; }
+        if (refreshToken) { this.refreshToken = refreshToken; }
+        if (password) { this.password = password; }
+        if (username) { this.username = username; }
     }
 }
 
@@ -48,7 +52,11 @@ export function browseAzurePortal(context?: AzureRegistryNode | AzureRepositoryN
 }
 
 
-
+/**
+ * Developers can use this to visualize and list repositories on a given Registry. This is not a command, just a developer tool.
+ * @param registry : the registry whose repositories you want to see
+ * @returns allRepos : an array of Repository objects that exist within the given registry
+ */
 export async function getAzureRepositories(registry: Registry): Promise<Repository[]> {
     const allRepos: Repository[] = [];
     let repo: Repository;
@@ -60,11 +68,11 @@ export async function getAzureRepositories(registry: Registry): Promise<Reposito
         return sub.subscriptionId === subscriptionId;
     });
     let azureAccount: AzureAccount = AzureCredentialsManager.getInstance().getAccount();
-    if (!this._azureAccount) {
+    if (!azureAccount) {
         return [];
     }
 
-    const { accessToken, refreshToken } = await getAccessCredentials(registry);
+    const { accessToken, refreshToken } = await getTokens(registry);
 
     if (accessToken && refreshToken) {
 
@@ -76,7 +84,7 @@ export async function getAzureRepositories(registry: Registry): Promise<Reposito
             if (body.length > 0) {
                 const repositories = JSON.parse(body).repositories;
                 for (let i = 0; i < repositories.length; i++) {
-                    repo = new Repository(accessToken, azureAccount, refreshToken, registry, repositories[i], subscription, resourceGroup);
+                    repo = new Repository(azureAccount, registry, repositories[i], subscription, resourceGroup, accessToken, refreshToken);
                     allRepos.push(repo);
                 }
             }
@@ -86,7 +94,12 @@ export async function getAzureRepositories(registry: Registry): Promise<Reposito
     return allRepos;
 }
 
-export async function getAccessCredentials(registry: Registry): Promise<{ refreshToken: any, accessToken: any }> {
+/**
+ * this function gets the refresh and access tokens for a given registry
+ * @param registry : the registry to get credentials for
+ * @returns : the updated refresh and access tokens which can be used to generate a header for an API call
+ */
+export async function getTokens(registry: Registry): Promise<{ refreshToken: any, accessToken: any }> {
     let subscriptionId = registry.id.slice('/subscriptions/'.length, registry.id.search('/resourceGroups/'));
     const subs = AzureCredentialsManager.getInstance().getFilteredSubscriptionList();
     //get the actual subscription object by using the id found on the registry id above
@@ -95,13 +108,14 @@ export async function getAccessCredentials(registry: Registry): Promise<{ refres
     });
     const tenantId: string = subscription.tenantId;
     let azureAccount: AzureAccount = AzureCredentialsManager.getInstance().getAccount()
-    if (!this._azureAccount) {
+    if (!azureAccount) {
         return;
     }
 
     const session: AzureSession = azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
     const { accessToken, refreshToken } = await acquireToken(session);
 
+    //regenerates in case they have expired
     if (accessToken && refreshToken) {
         let refreshTokenARC;
         let accessTokenARC;

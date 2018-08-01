@@ -24,8 +24,6 @@ import { log } from "util";
  * @param context : this is the AzureRegistryNode the user right clicks on to invoke this command
  *
  */
-const logWindow = vscode.window.createOutputChannel('Logs');
-
 export async function buildTaskLog(context?: AzureRegistryNode) {
 
     let resourceGroup: string = context.registry.id.slice(context.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, context.registry.id.search('/providers/'));
@@ -178,12 +176,12 @@ function createLogView(text: string, title: string) {
         console.log(error);
     }
 
-    vscode.workspace.openTextDocument(uri).then(function (doc) {
-        return vscode.window.showTextDocument(doc, vscode.ViewColumn.Two, true);
-    });
-    // vscode.commands.executeCommand('vscode.previewHtml', uri, vscode.ViewColumn.Two, title).then(_ => { }, _ => {
-    //     vscode.window.showErrorMessage('Cant open!');
+    // vscode.workspace.openTextDocument(uri).then(function (doc) {
+    //     return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
     // });
+    vscode.commands.executeCommand('vscode.previewHtml', uri, undefined, title).then(_ => { }, _ => {
+        vscode.window.showErrorMessage('Cant open!');
+    });
 }
 
 function makeBase64(str: string): string {

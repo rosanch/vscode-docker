@@ -8,7 +8,8 @@
     border: none;
     text-align: left;
     outline: none;
-    font-size: medium;
+    font-size: var(--vscode-editor-font-size);
+    font-family: var(--vscode-editor-font-family);
     transition: 0.4s;
     text-align: center;
 }
@@ -74,7 +75,8 @@ h2 {
 
 #headerTable {
     background-color: rgb(73, 68, 68);
-    font-size: medium;
+    font-size: var(--vscode-editor-font-size);
+    font-family: var(--vscode-editor-font-family);
 }
 
 body {
@@ -93,5 +95,6 @@ body {
 }
 
 .imageOutputTable th {
-    font-size: medium;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
 }

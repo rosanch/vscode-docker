@@ -62,7 +62,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     let table: string[] = [];
 
     //creating the panel in which to show the logs
-    const panel = vscode.window.createWebviewPanel('log Viewer', "Build Logs", vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
+    const panel = vscode.window.createWebviewPanel('log Viewer', `${context.registry.name} Build Logs`, vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
     // Get path to resource on disk
 
     let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;

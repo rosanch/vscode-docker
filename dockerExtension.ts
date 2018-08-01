@@ -38,7 +38,6 @@ import * as opn from 'opn';
 import { DockerDebugConfigProvider } from './configureWorkspace/configDebugProvider';
 import { browseAzurePortal } from './explorer/utils/azureUtils';
 
-
 export const FROM_DIRECTIVE_PATTERN = /^\s*FROM\s*([\w-\/:]*)(\s*AS\s*[a-z][a-z0-9-_\\.]*)?$/i;
 export const COMPOSE_FILE_GLOB_PATTERN = '**/[dD]ocker-[cC]ompose*.{yaml,yml}';
 export const DOCKERFILE_GLOB_PATTERN = '**/{*.dockerfile,[dD]ocker[fF]ile}';
@@ -52,8 +51,7 @@ export interface ComposeVersionKeys {
     All: KeyInfo,
     v1: KeyInfo,
     v2: KeyInfo
-};
-
+}
 let client: LanguageClient;
 
 const DOCUMENT_SELECTOR: DocumentSelector = [
@@ -135,7 +133,6 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     }));
 
     ctx.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('docker', new DockerDebugConfigProvider()));
-
 
     activateLanguageClient(ctx);
 }

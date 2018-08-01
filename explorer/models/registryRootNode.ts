@@ -57,7 +57,11 @@ export class RegistryRootNode extends NodeBase {
 
     async getChildren(element: RegistryRootNode): Promise<NodeBase[]> {
         if (element.contextValue === 'azureRegistryRootNode') {
-            return this.getAzureRegistries();
+            ///to do: make new list, add a taskNode first, then append getAzureRegistries here
+            let children: NodeBase[];
+            children.push(this.getAzureRegistries());
+
+            return children;
         } else if (element.contextValue === 'dockerHubRootNode') {
             return this.getDockerHubOrgs();
         } else {
@@ -105,7 +109,6 @@ export class RegistryRootNode extends NodeBase {
             node.password = id.password;
             node.token = id.token;
             orgNodes.push(node);
-            orgNodes.push(node); ///pushed again to
         });
 
         return orgNodes;

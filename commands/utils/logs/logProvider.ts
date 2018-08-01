@@ -11,7 +11,7 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
         this.content = 'This is some custom content. ';
     }
     provideTextDocumentContent(uri: vscode.Uri) {
-        return JSON.parse(uri.query).log;
+        return this.reverseBase64(JSON.parse(uri.query).log);
     }
     get onDidChange() {
         return this.onDidChangeEvent.event;
@@ -20,7 +20,13 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
         if (message) this.content += `${message} `;
         this.onDidChangeEvent.fire(uri);
     }
+
+    private reverseBase64(str: string): string {
+        return Buffer.from(str, 'base64').toString('ascii');
+    }
 }
+
+
 
 
 //     // Event emitter which invokes document updates

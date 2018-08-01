@@ -64,7 +64,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     let table: string[] = [];
 
     //creating the panel in which to show the logs
-    const panel = vscode.window.createWebviewPanel('log Viewer', "Build Logs", vscode.ViewColumn.One, { enableScripts: true });
+    const panel = vscode.window.createWebviewPanel('log Viewer', "Build Logs", vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
     // Get path to resource on disk
 
     let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
@@ -73,7 +73,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     const stylePath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'stylesheet.css'));
     const styleFile = stylePath.with({ scheme: 'vscode-resource' });
     panel.webview.html = getWebviewContent(table, scriptFile, styleFile, context.registry.name);
-    setupCommunication(panel, links);
+    setupCommunication(panel, links, logs);
 
     for (let i = 0; i < logs.length; i++) {
         const buildTask: string = logs[i].buildTask ? logs[i].buildTask : '?';
@@ -130,15 +130,15 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     panel.webview.postMessage({ 'type': 'end' });
 }
 
-function setupCommunication(panel: vscode.WebviewPanel, urlList: any[]) {
+function setupCommunication(panel: vscode.WebviewPanel, urlList: { url?: string, id: number }[], logList: Build[]) {
     panel.webview.onDidReceiveMessage(message => {
         if (message.logRequest) {
-            streamContent(urlList[+message.logRequest.id].url);
+            streamContent(urlList[+message.logRequest.id].url, logList[+message.logRequest.id].buildId);
         }
     });
 }
 
-function streamContent(url) {
+function streamContent(url, title) {
     let blobInfo = getBlobInfo(url);
     try {
         var blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
@@ -148,7 +148,7 @@ function streamContent(url) {
     try {
         blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {
             if (response) {
-                createLogView(text, blobInfo.containerName);
+                createLogView(text, title);
             } else {
                 console.log(error);
             }
@@ -172,14 +172,14 @@ function getBlobInfo(blobUrl: string) {
 function createLogView(text: string, title: string) {
     const scheme = 'purejs';
     try {
-        let query = JSON.stringify({ 'log': text });
+        let query = JSON.stringify({ 'log': makeBase64(text) });
         var uri = vscode.Uri.parse(`${scheme}://authority/${title}?${query}#idk`);
     } catch (error) {
         console.log(error);
     }
 
     vscode.workspace.openTextDocument(uri).then(function (doc) {
-        return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
+        return vscode.window.showTextDocument(doc, vscode.ViewColumn.Two, true);
     });
     // vscode.commands.executeCommand('vscode.previewHtml', uri, vscode.ViewColumn.Two, title).then(_ => { }, _ => {
     //     vscode.window.showErrorMessage('Cant open!');

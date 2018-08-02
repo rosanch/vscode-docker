@@ -7,6 +7,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { AzureUserInput } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { viewBuildLogs } from './commands/azureCommands/acr-build-logs'
+import { LogContentProvider } from './commands/azureCommands/acr-build-logs-utils/logProvider';
 import { createRegistry } from './commands/azureCommands/create-registry';
 import { deleteAzureImage } from './commands/azureCommands/delete-azure-image';
 import { buildImage } from './commands/build-image';
@@ -43,7 +45,6 @@ import { ext } from "./extensionVariables";
 import { Reporter } from './telemetry/telemetry';
 import { AzureAccount } from './typings/azure-account.api';
 import { AzureCredentialsManager } from './utils/azureCredentialsManager';
-
 export const FROM_DIRECTIVE_PATTERN = /^\s*FROM\s*([\w-\/:]*)(\s*AS\s*[a-z][a-z0-9-_\\.]*)?$/i;
 export const COMPOSE_FILE_GLOB_PATTERN = '**/[dD]ocker-[cC]ompose*.{yaml,yml}';
 export const DOCKERFILE_GLOB_PATTERN = '**/{*.dockerfile,[dD]ocker[fF]ile}';
@@ -118,9 +119,6 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.down', composeDown));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.compose.restart', composeRestart));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.system.prune', systemPrune));
-    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteAzureImage', deleteAzureImage));
-    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
-
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createWebApp', async (context?: AzureImageNode | DockerHubImageNode) => {
         if (context) {
             if (azureAccount) {
@@ -147,8 +145,18 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
 
     ctx.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('docker', new DockerDebugConfigProvider()));
 
+    //If ms-vscode.azure-account extension is present
     if (azureAccount) {
         AzureCredentialsManager.getInstance().setAccount(azureAccount);
+        //Azure account dependent commands
+        ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.acrBuildLogs', viewBuildLogs));
+        ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
+        ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteAzureImage', deleteAzureImage));
+
+        // instantiate LogProvider
+        const logProvider = new LogContentProvider();
+        const registration = vscode.workspace.registerTextDocumentContentProvider(LogContentProvider.scheme, logProvider);
+        ctx.subscriptions.push(registration);
     }
 
     activateLanguageClient(ctx);

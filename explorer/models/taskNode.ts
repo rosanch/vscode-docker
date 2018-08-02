@@ -9,6 +9,9 @@ import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { RegistryType } from './registryType';
 import { AsyncPool } from '../../utils/asyncpool';
 import { MAX_CONCURRENT_REQUESTS } from '../../utils/constants'
+import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
+import { BuildTasks } from '../../node_modules/azure-arm-containerregistry/lib/operations';
+import { AzureRegistryNode } from './azureRegistryNodes';
 
 export class TaskRootNode extends NodeBase { ///starting class of simple with just name attribute
     constructor(
@@ -20,6 +23,7 @@ export class TaskRootNode extends NodeBase { ///starting class of simple with ju
     }
 
     public name: string;
+    public subscription: SubscriptionModels.Subscription;
 
     getTreeItem(): vscode.TreeItem {
         return {
@@ -29,17 +33,44 @@ export class TaskRootNode extends NodeBase { ///starting class of simple with ju
             iconPath: this.iconPath
         }
     }
+
+    async getChildren(element: TaskRootNode): Promise<BuildTaskNode[]> {
+        console.log("get children of TaskRootNode");
+        const buildTaskNodes: BuildTaskNode[] = [];
+        console.log(element); //TaskRootNode
+
+        console.log(this.subscription); //undefined here
+
+        const tenantId: string = element.subscription.tenantId;
+        console.log(tenantId);
+
+        const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(element.subscription);
+        console.log("just made client");
+
+        let buildTasks: ContainerModels.BuildTask[] = [];
+        console.log(buildTasks);
+
+        //const resourceGroup: string = element.registry.id.slice(element.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, element.registry.id.search('/providers/'));
+        //buildTasks = await client.buildTasks.list(resourceGroup, element.registry.name);
+
+        console.log("buildTasks filled in:");
+        console.log(buildTasks);
+
+        for (let buildTask of buildTasks) {
+            let node = new BuildTaskNode(buildTask.name, "buildTaskNode");
+            buildTaskNodes.push(node);
+        }
+
+        console.log(buildTaskNodes);
+        return buildTaskNodes;
+    }
 }
 
-export class AzureRepositoryNode extends NodeBase {
+export class BuildTaskNode extends NodeBase {
 
     constructor(
         public readonly label: string,
         public readonly contextValue: string,
-        public readonly iconPath = {
-            light: path.join(__filename, '..', '..', '..', '..', 'images', 'light', 'Repository_16x.svg'),
-            dark: path.join(__filename, '..', '..', '..', '..', 'images', 'dark', 'Repository_16x.svg')
-        }
     ) {
         super(label);
     }
@@ -58,141 +89,6 @@ export class AzureRepositoryNode extends NodeBase {
             label: this.label,
             collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
             contextValue: this.contextValue,
-            iconPath: this.iconPath
         }
     }
-
-    async getChildren(element: AzureRepositoryNode): Promise<AzureImageNode[]> {
-        const imageNodes: AzureImageNode[] = [];
-        let node: AzureImageNode;
-        let created: string = '';
-        let refreshTokenARC;
-        let accessTokenARC;
-        let tags;
-
-        const tenantId: string = element.subscription.tenantId;
-        const session: AzureSession = element.azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
-        const { accessToken, refreshToken } = await acquireToken(session);
-
-        if (accessToken && refreshToken) {
-            await request.post('https://' + element.repository + '/oauth2/exchange', {
-                form: {
-                    grant_type: 'access_token_refresh_token',
-                    service: element.repository,
-                    tenant: tenantId,
-                    refresh_token: refreshToken,
-                    access_token: accessToken
-                }
-            }, (err, httpResponse, body) => {
-                if (body.length > 0) {
-                    refreshTokenARC = JSON.parse(body).refresh_token;
-                } else {
-                    return [];
-                }
-            });
-
-            await request.post('https://' + element.repository + '/oauth2/token', {
-                form: {
-                    grant_type: 'refresh_token',
-                    service: element.repository,
-                    scope: 'repository:' + element.label + ':pull',
-                    refresh_token: refreshTokenARC
-                }
-            }, (err, httpResponse, body) => {
-                if (body.length > 0) {
-                    accessTokenARC = JSON.parse(body).access_token;
-                } else {
-                    return [];
-                }
-            });
-
-            await request.get('https://' + element.repository + '/v2/' + element.label + '/tags/list', {
-                auth: {
-                    bearer: accessTokenARC
-                }
-            }, (err, httpResponse, body) => {
-                if (err) { return []; }
-                if (body.length > 0) {
-                    tags = JSON.parse(body).tags;
-                }
-            });
-
-            const pool = new AsyncPool(MAX_CONCURRENT_REQUESTS);
-            for (let i = 0; i < tags.length; i++) {
-                pool.addTask(async () => {
-                    let data = await request.get('https://' + element.repository + '/v2/' + element.label + `/manifests/${tags[i]}`, {
-                        auth: {
-                            bearer: accessTokenARC
-                        }
-                    });
-
-                    //Acquires each image's manifest to acquire build time.
-                    let manifest = JSON.parse(data);
-                    node = new AzureImageNode(`${element.label}:${tags[i]}`, 'azureImageNode');
-                    node.azureAccount = element.azureAccount;
-                    node.password = element.password;
-                    node.registry = element.registry;
-                    node.serverUrl = element.repository;
-                    node.subscription = element.subscription;
-                    node.userName = element.userName;
-                    node.created = moment(new Date(JSON.parse(manifest.history[0].v1Compatibility).created)).fromNow();
-                    imageNodes.push(node);
-                });
-            }
-            await pool.runAll();
-
-        }
-        function sortFunction(a: AzureImageNode, b: AzureImageNode): number {
-            return a.created.localeCompare(b.created);
-        }
-        imageNodes.sort(sortFunction);
-        return imageNodes;
-    }
-}
-
-export class AzureImageNode extends NodeBase {
-    constructor(
-        public readonly label: string,
-        public readonly contextValue: string
-    ) {
-        super(label);
-    }
-
-    public azureAccount: AzureAccount
-    public created: string;
-    public password: string;
-    public registry: ContainerModels.Registry;
-    public serverUrl: string;
-    public subscription: SubscriptionModels.Subscription;
-    public userName: string;
-
-    getTreeItem(): vscode.TreeItem {
-        let displayName: string = this.label;
-
-        displayName = `${displayName} (${this.created})`;
-
-        return {
-            label: `${displayName}`,
-            collapsibleState: vscode.TreeItemCollapsibleState.None,
-            contextValue: this.contextValue
-        }
-    }
-}
-
-async function acquireToken(session: AzureSession) {
-    return new Promise<{ accessToken: string; refreshToken: string; }>((resolve, reject) => {
-        const credentials: any = session.credentials;
-        const environment: any = session.environment;
-        // tslint:disable-next-line:no-function-expression // Grandfathered in
-        credentials.context.acquireToken(environment.activeDirectoryResourceId, credentials.username, credentials.clientId, function (err: any, result: any) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve({
-                    accessToken: result.accessToken,
-                    refreshToken: result.refreshToken
-                });
-            }
-        });
-    });
 }

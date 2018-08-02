@@ -9,6 +9,8 @@ import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { RegistryType } from './registryType';
 import { AsyncPool } from '../../utils/asyncpool';
 import { MAX_CONCURRENT_REQUESTS } from '../../utils/constants'
+import { CodeLensResolveRequest } from '../../node_modules/vscode-languageclient/lib/main';
+import { TaskRootNode } from './taskNode';
 
 export class AzureRegistryNode extends NodeBase {
     private _azureAccount: AzureAccount;
@@ -38,8 +40,17 @@ export class AzureRegistryNode extends NodeBase {
         }
     }
 
-    async getChildren(element: AzureRegistryNode): Promise<AzureRepositoryNode[]> {
-        const repoNodes: AzureRepositoryNode[] = [];
+    async getChildren(element: AzureRegistryNode): Promise<NodeBase[]> {
+        const repoNodes: NodeBase[] = []; ///to do: rename it
+
+        let iconPath = {
+            light: path.join(__filename, '..', '..', '..', '..', 'images', 'light', 'wrench-2-16.png'),
+            dark: path.join(__filename, '..', '..', '..', '..', 'images', 'dark', 'wrench-2-16.png')
+        };
+
+        let taskNode = new TaskRootNode("Build Tasks", "taskRootNode", iconPath);
+        repoNodes.push(taskNode);
+
         let node: AzureRepositoryNode;
 
         const tenantId: string = element.subscription.tenantId;
@@ -226,6 +237,7 @@ export class AzureRepositoryNode extends NodeBase {
             return a.created.localeCompare(b.created);
         }
         imageNodes.sort(sortFunction);
+        //console.log(imageNodes); ///the list view of image. want to have the same in taskNode class
         return imageNodes;
     }
 }

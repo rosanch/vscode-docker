@@ -56,12 +56,11 @@ export class RegistryRootNode extends NodeBase {
     }
 
     async getChildren(element: RegistryRootNode): Promise<NodeBase[]> {
-        if (element.contextValue === 'azureRegistryRootNode') {
+        if (element.contextValue === 'azureRegistryRootNode') { ///use this context value thing
             ///to do: make new list, add a taskNode first, then append getAzureRegistries here
-            let children: NodeBase[];
-            children.push(this.getAzureRegistries());
-
-            return children;
+            //let children: NodeBase[];
+            //children.push(this.getAzureRegistries());
+            return this.getAzureRegistries();
         } else if (element.contextValue === 'dockerHubRootNode') {
             return this.getDockerHubOrgs();
         } else {

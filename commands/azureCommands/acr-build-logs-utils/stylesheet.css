@@ -64,7 +64,11 @@ table {
 
 .widthControl {
     text-align: center;
+<<<<<<< HEAD
     width: 16.45%;
+=======
+    width: 14.2%;
+>>>>>>> Refactored everything
 }
 
 #header {
@@ -89,7 +93,10 @@ h2 {
 #headerTable {
     font-size: var(--vscode-editor-font-size);
     font-family: var(--vscode-editor-font-family);
+<<<<<<< HEAD
     cursor: pointer;
+=======
+>>>>>>> Refactored everything
 }
 
 body {
@@ -146,6 +153,7 @@ table {
     align-items: center;
 }
 
+<<<<<<< HEAD
 .loadMoreBtn {
     display: flex;
     justify-content: center;
@@ -174,3 +182,8 @@ table {
     -webkit-transform: rotate(225deg);
     transform: rotate(225deg);
 }
+=======
+.viewLog:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+>>>>>>> Refactored everything

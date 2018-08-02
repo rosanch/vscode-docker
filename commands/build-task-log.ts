@@ -70,7 +70,7 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     const scriptFile = scriptPath.with({ scheme: 'vscode-resource' });
     const stylePath = vscode.Uri.file(path.join(extensionPath, 'commands', 'utils', 'logs', 'stylesheet.css'));
     const styleFile = stylePath.with({ scheme: 'vscode-resource' });
-    panel.webview.html = getWebviewContent(table, scriptFile, styleFile, context.registry.name);
+    panel.webview.html = getWebviewContent(scriptFile, styleFile);
     setupCommunication(panel, links, logs);
 
     for (let i = 0; i < logs.length; i++) {
@@ -95,11 +95,19 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
                                     <td>${digest}</td>
                                 </tr>`;
             }
+            if (logs[i].outputImages.length === 0) {
+                imageOutput += `<tr>
+                <td>NA</td>
+                    <td>NA</td>
+                    <td>NA</td>
+                    <td>NA</td>
+                </tr>`;
+            }
         }
         panel.webview.postMessage({
             'type': 'populate',
-            'id': `log${i}`,
-            'logComponent': `<button id= "log${i}" class="accordion">
+            'id': i,
+            'logComponent': `<button id= "btn${i}" class="accordion">
                         <table>
                             <tr>
                                 <td class = 'widthControl'>${name}</td>
@@ -113,15 +121,21 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
                         </table>
                     </button>
                     <div class="panel">
-                        <table class="imageOutputTable">
+                        <table class="overallTable">
                             <tr>
-                                <th>Tag</th>
-                                <th>Repository</th>
-                                <th>Registry</th>
-                                <th>Digest</th>
+                                <td colspan="4">Output Images</td>
+                            </tr>
+                            <tr>
+                                <td>Tag</th>
+                                <td>Repository</td>
+                                <td>Registry</td>
+                                <td>Digest</td>
                             </tr>
                             ${imageOutput}
                         </table>
+                            <div class = 'button-holder'>
+                                <button id= "log${i}" class="viewLog">Open Logs</button>
+                            </div>
                     </div>`
         });
     }
@@ -190,7 +204,7 @@ function makeBase64(str: string): string {
 }
 
 //create the table in which to push the build logs
-function getWebviewContent(table, scriptFile, stylesheet, registryName) {
+function getWebviewContent(scriptFile, stylesheet) {
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -203,8 +217,6 @@ function getWebviewContent(table, scriptFile, stylesheet, registryName) {
 
     <body>
         <div id = "header">
-            <h2>Build Logs for ${registryName}</h2>
-
             <table id="headerTable">
                 <th class = 'widthControl'>Build Name </th>
                 <th class = 'widthControl'>BuildTask </th>

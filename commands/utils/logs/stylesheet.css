@@ -15,6 +15,7 @@
 }
 
 .accordion:hover {
+    cursor: pointer;
     background-color: var(--vscode-list-hoverBackground);
 }
 
@@ -27,10 +28,13 @@
 }
 
 .panel {
+    width: 100%;
+    display: flex;
     padding: 0 10px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.2s ease-out;
+    background-color: var(--vscode-list-hoverBackground);
 }
 
 .status.Failed {
@@ -98,12 +102,49 @@ body {
     overflow-y: auto;
 }
 
-.imageOutputTable {
-    padding: 8%;
-    width: 70%;
+.overallTable {
+    width: 90%;
+    align-content: center;
+    text-align: center;
 }
 
-.imageOutputTable th {
+.overallTable td {
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
+    border-bottom: 1px solid var(--vscode-editor-foreground);
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.overallTable td,
+.overallTable th {
+    text-align: center;
+}
+
+.button-holder {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    width: 10%;
+}
+
+.viewLog {
+    background-color: var(--vscode-button-background);
+    border: none;
+    color: var(--vscode-button-foreground);
+    padding: 5px 13px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: var(--vscode-editor-font-size);
+    cursor: pointer;
+    align-items: center;
+}
+
+.viewLog:hover {
+    background-color: var(--vscode-button-hoverBackground);
 }

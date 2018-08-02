@@ -27,29 +27,9 @@ export async function deleteRepository(context?: AzureRepositoryNode): Promise<v
     let username: string;
     let password: string;
     if (!context) {
-        //first get desired registry
-        let registries = await AzureCredentialsManager.getInstance().getRegistries();
-        let regStrings: string[] = [];
-        for (let item of registries) {
-            regStrings.push(item.name);
-        }
-        let desired = await vscode.window.showQuickPick(regStrings, { 'canPickMany': false, 'placeHolder': 'Choose the Registry from which your desired repository exists' });
-        if (desired === undefined) { return; }
-        registry = registries.find(reg => { return desired === reg.name });
-
-        //get the subscription object by using the id found on the registry id
+        registry = await AzureCredentialsManager.getInstance().getRegistry();
         subscription = azureUtils.getSub(registry);
-
-        //get the desired repository to delete
-        const myRepos: azureUtils.Repository[] = await AzureCredentialsManager.getInstance().getAzureRepositories(registry);
-        let repoStrings: string[] = [];
-        for (let repo of myRepos) {
-            repoStrings.push(repo.name);
-        }
-        let desiredRepo = await vscode.window.showQuickPick(repoStrings, { 'canPickMany': false, 'placeHolder': 'Choose the repository you want to delete' });
-        if (desiredRepo === undefined) { return; }
-        let repository = myRepos.find((rep): boolean => { return desiredRepo === rep.name });
-        if (repository === undefined) { return; }
+        let repository: azureUtils.Repository = await AzureCredentialsManager.getInstance().getRepository(registry);
         repoName = repository.name;
     }
 

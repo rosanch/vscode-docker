@@ -38,14 +38,10 @@ export async function deleteRepository(context?: AzureRepositoryNode): Promise<v
         registry = registries.find(reg => { return desired === reg.name });
 
         //get the subscription object by using the id found on the registry id
-        let subscriptionId = registry.id.slice('/subscriptions/'.length, registry.id.search('/resourceGroups/'));
-        const subs = AzureCredentialsManager.getInstance().getFilteredSubscriptionList();
-        subscription = subs.find((sub): boolean => {
-            return sub.subscriptionId === subscriptionId;
-        });
+        subscription = azureUtils.getSub(registry);
 
         //get the desired repository to delete
-        const myRepos: azureUtils.Repository[] = await azureUtils.getAzureRepositories(registry);
+        const myRepos: azureUtils.Repository[] = await AzureCredentialsManager.getInstance().getAzureRepositories(registry);
         let repoStrings: string[] = [];
         for (let repo of myRepos) {
             repoStrings.push(repo.name);
@@ -76,88 +72,10 @@ export async function deleteRepository(context?: AzureRepositoryNode): Promise<v
         subscription = context.subscription;
         registry = context.registry;
     } else { //this is separated from !context above so it only calls loginCredentials once user has assured they want to delete the repository
-        let creds = await loginCredentials(subscription, registry);
+        let creds = await AzureCredentialsManager.getInstance().loginCredentials(subscription, registry);
         username = creds.username;
         password = creds.password;
     }
     let path = `/v2/_acr/${repoName}/repository`;
-    await request_data_from_registry('delete', registry.loginServer, path, username, password);
-}
-
-/**
- *
- * @param http_method : the http method, this function currently only uses delete
- * @param login_server: the login server of the registry
- * @param path : the URL path
- * @param username : registry username, can be in generic form of 0's, used to generate authorization header
- * @param password : registry password, can be in form of accessToken, used to generate authorization header
- */
-async function request_data_from_registry(http_method: string, login_server: string, path: string, username: string, password: string): Promise<void> {
-    let url: string = `https://${login_server}${path}`;
-    let header = _get_authorization_header(username, password);
-    let opt = {
-        headers: { 'Authorization': header },
-        http_method: http_method,
-        url: url
-    }
-    let err = false;
-    try {
-        let response = await request.delete(opt);
-    } catch (error) {
-        err = true;
-        console.log(error);
-    }
-    if (!err) {
-        vscode.window.showInformationMessage('Successfully deleted repository');
-    }
-}
-
-/**
- *
- * @param username : username for creating header
- * @param password : password for creating header
- */
-function _get_authorization_header(username: string, password: string): string {
-    let auth = ('Basic ' + (encode(username + ':' + password).trim()));
-    return (auth);
-}
-
-//Implements new Service principal model for ACR container registries while maintaining old admin enabled use
-/**
- * this function implements a new Service principal model for ACR and gets the valid login credentials to make an API call
- * @param subscription : the subscription the registry is on
- * @param registry : the registry to get login credentials for
- * @param context : if command is invoked through a right click on an AzureRepositoryNode. This context has a password and username
- */
-async function loginCredentials(subscription: SubscriptionModels.Subscription, registry: Registry, context?: AzureRepositoryNode): Promise<{ password: string, username: string }> {
-    let username: string;
-    let password: string;
-    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
-    const resourceGroup: string = registry.id.slice(registry.id.search('resourceGroups/') + 'resourceGroups/'.length, registry.id.search('/providers/'));
-    if (context) {
-        username = context.userName;
-        password = context.password;
-    } else if (registry.adminUserEnabled) {
-        let creds = await client.registries.listCredentials(resourceGroup, registry.name);
-        password = creds.passwords[0].value;
-        username = creds.username;
-    } else {
-        //grab the access token to be used as a password, and a generic username
-        let creds = await azureUtils.getTokens(registry);
-        password = creds.accessToken;
-        username = '00000000-0000-0000-0000-000000000000';
-    }
-    return { password, username };
-}
-
-/**
- * first encodes to base 64, and then to latin1. See online documentation to see typescript encoding capabilities
- * see https://nodejs.org/api/buffer.html#buffer_buf_tostring_encoding_start_end for details {Buffers and Character Encodings}
- * current character encodings include: ascii, utf8, utf16le, ucs2, base64, latin1, binary, hex. Version v6.4.0
- * @param str : the string to encode for api URL purposes
- */
-function encode(str: string): string {
-    let bufferB64 = new Buffer(str);
-    let bufferLat1 = new Buffer(bufferB64.toString('base64'));
-    return bufferLat1.toString('latin1');
+    await azureUtils.request_data_from_registry('delete', registry.loginServer, path, username, password);
 }

@@ -1,11 +1,4 @@
 import * as vscode from "vscode";
-import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
-import { AzureAccountWrapper } from '.././explorer/deploy/azureAccountWrapper';
-import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
-import { AzureAccount, AzureSession } from '../typings/azure-account.api';
-import { accountProvider } from '../dockerExtension';
-import { RegistryRootNode } from "../explorer/models/registryRootNode";
-import { ServiceClientCredentials } from 'ms-rest';
 import { RegistryNameStatus, RegistryListResult, BuildTaskListResult, BuildListResult, Build, BuildGetLogResult } from "azure-arm-containerregistry/lib/models";
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
 const teleCmdId: string = 'vscode-docker.buildTaskLog';
@@ -58,8 +51,6 @@ export async function buildTaskLog(context?: AzureRegistryNode) {
     }
     await pool.scheduleRun();
     links.sort(function (a, b) { return b.id - a.id });
-
-    let table: string[] = [];
 
     //creating the panel in which to show the logs
     const panel = vscode.window.createWebviewPanel('log Viewer', `${context.registry.name} Build Logs`, vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
@@ -232,43 +223,6 @@ function getWebviewContent(scriptFile, stylesheet) {
         <script src= "${scriptFile}"></script>
     </body>
 `;
-}
-
-/**
- * this function takes the log stream and searches it for error messages
- * @param streamlog - the entire text of the build log, currently in the form of a response from getBlobToText called in streamContent
- * @returns - an array of the unique error messages found in chronological order, currently including their time stamps
- */
-function getErrors(streamlog: string): string[] {
-    var fail = `--- FAIL`;
-    if (streamlog.search(fail) === -1) {
-        console.log('No failures found');
-        let none: string[] = [];
-        return none;
-    } else {
-        // console.log('Found error messages!');
-        let i = streamlog.search(`error msg=`);
-        let temp = streamlog.substr(i - 34, streamlog.length); //there were 34 characters between the line beginning and 'error msg='
-        var allerrors = temp.split(`\n`);
-        var unique_errors: string[] = [];
-        // errors are often repeated in the log. This is undesirable information, so we run a quick filter to ensure each individual error
-        // is only displayed to the user once
-        for (let j = 0; j < allerrors.length; j++) {
-            //all failed logs begin with '--- FAIL' and end with 'FAIL'. This is how we know when to break
-            if (allerrors[j].includes('FAIL')) {
-                break;
-            }
-            // trim whitespace before adding to array to make it readable
-            if (!unique_errors.includes(allerrors[j].trim())) {
-                unique_errors.push(allerrors[j].trim());
-
-            }
-        }
-        //console.log('Final array found: ');
-        //console.log(unique_errors);
-        return unique_errors;
-
-    }
 }
 
 //let str = (url);

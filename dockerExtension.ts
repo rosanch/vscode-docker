@@ -7,6 +7,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, registerCommand, registerUIExtensionVariables } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { viewBuildLogs } from './commands/azureCommands/acr-build-logs'
+import { LogContentProvider } from './commands/azureCommands/acr-build-logs-utils/logProvider';
 import { createRegistry } from './commands/azureCommands/create-registry';
 import { deleteAzureImage } from './commands/azureCommands/delete-azure-image';
 import { buildImage } from './commands/build-image';
@@ -63,7 +65,7 @@ let client: LanguageClient;
 const DOCUMENT_SELECTOR: DocumentSelector = [
     { language: 'dockerfile', scheme: 'file' }
 ];
-
+// tslint:disable-next-line:max-func-body-length
 export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     const installedExtensions: any[] = vscode.extensions.all;
     const outputChannel = util.getOutputChannel();
@@ -152,10 +154,18 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
 
     ctx.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('docker', new DockerDebugConfigProvider()));
 
+    //If ms-vscode.azure-account extension is present
     if (azureAccount) {
+        //Azure account dependent commands
         registerCommand('vscode-docker.deleteAzureImage', deleteAzureImage);
         registerCommand('vscode-docker.createRegistry', createRegistry);
+        registerCommand('vscode-docker.acrBuildLogs', viewBuildLogs);
         AzureUtilityManager.getInstance().setAccount(azureAccount);
+
+        // instantiate LogProvider
+        const logProvider = new LogContentProvider();
+        const registration = vscode.workspace.registerTextDocumentContentProvider(LogContentProvider.scheme, logProvider);
+        ctx.subscriptions.push(registration);
     }
 
     activateLanguageClient(ctx);

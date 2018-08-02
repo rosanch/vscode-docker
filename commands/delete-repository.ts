@@ -1,18 +1,17 @@
-import * as vscode from "vscode";
-import request = require('request-promise');
-import * as azureUtils from '../explorer/utils/azureUtils';
-import { SubscriptionModels } from 'azure-arm-resource';
 import { Registry } from "azure-arm-containerregistry/lib/models";
-import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
+import { SubscriptionModels } from 'azure-arm-resource';
+import request = require('request-promise');
+import * as vscode from "vscode";
 import { AzureRepositoryNode } from '../explorer/models/AzureRegistryNodes';
+import * as azureUtils from '../explorer/utils/azureUtils';
+import { AzureCredentialsManager } from '../utils/AzureCredentialsManager';
 const teleCmdId: string = 'vscode-docker.deleteRepository';
-
 
 /**
  * function to delete an Azure repository and its associated images
  * @param context : if called through right click on AzureRepositoryNode, the node object will be passed in. See azureRegistryNodes.ts for more info
  */
-export async function deleteRepository(context?: AzureRepositoryNode) {
+export async function deleteRepository(context?: AzureRepositoryNode): Promise<void> {
 
     let azureAccount = await AzureCredentialsManager.getInstance().getAccount();
     if (!azureAccount) {
@@ -30,31 +29,31 @@ export async function deleteRepository(context?: AzureRepositoryNode) {
     if (!context) {
         //first get desired registry
         let registries = await AzureCredentialsManager.getInstance().getRegistries();
-        let reg: string[] = [];
-        for (let i = 0; i < registries.length; i++) {
-            reg.push(registries[i].name);
+        let regStrings: string[] = [];
+        for (let item of registries) {
+            regStrings.push(item.name);
         }
-        let desired = await vscode.window.showQuickPick(reg, { 'canPickMany': false, 'placeHolder': 'Choose the Registry from which your desired repository exists' });
-        if (desired === undefined) return;
+        let desired = await vscode.window.showQuickPick(regStrings, { 'canPickMany': false, 'placeHolder': 'Choose the Registry from which your desired repository exists' });
+        if (desired === undefined) { return; }
         registry = registries.find(reg => { return desired === reg.name });
 
         //get the subscription object by using the id found on the registry id
         let subscriptionId = registry.id.slice('/subscriptions/'.length, registry.id.search('/resourceGroups/'));
         const subs = AzureCredentialsManager.getInstance().getFilteredSubscriptionList();
-        subscription = subs.find(function (sub): boolean {
+        subscription = subs.find((sub): boolean => {
             return sub.subscriptionId === subscriptionId;
         });
 
         //get the desired repository to delete
         const myRepos: azureUtils.Repository[] = await azureUtils.getAzureRepositories(registry);
-        let rep: string[] = [];
-        for (let j = 0; j < myRepos.length; j++) {
-            rep.push(myRepos[j].name);
+        let repoStrings: string[] = [];
+        for (let repo of myRepos) {
+            repoStrings.push(repo.name);
         }
-        let desiredRepo = await vscode.window.showQuickPick(rep, { 'canPickMany': false, 'placeHolder': 'Choose the repository you want to delete' });
-        if (desiredRepo === undefined) return;
-        let repository = myRepos.find(rep => { return desiredRepo === rep.name });
-        if (repository === undefined) return;
+        let desiredRepo = await vscode.window.showQuickPick(repoStrings, { 'canPickMany': false, 'placeHolder': 'Choose the repository you want to delete' });
+        if (desiredRepo === undefined) { return; }
+        let repository = myRepos.find((rep): boolean => { return desiredRepo === rep.name });
+        if (repository === undefined) { return; }
         repoName = repository.name;
     }
 
@@ -66,7 +65,8 @@ export async function deleteRepository(context?: AzureRepositoryNode) {
         prompt: 'Are you sure you want to delete this repository and its associated images? Enter Yes or No: '
     };
     let answer = await vscode.window.showInputBox(opt);
-    if (answer !== 'Yes') return;
+    answer = answer.toLowerCase();
+    if (answer !== 'Yes') { return; }
 
     // generate credentials before requesting a delete.
     if (context) {
@@ -75,16 +75,14 @@ export async function deleteRepository(context?: AzureRepositoryNode) {
         repoName = context.label;
         subscription = context.subscription;
         registry = context.registry;
-    }
-    else { //this is separated from !context above so it only calls loginCredentials once user has assured they want to delete the repository
+    } else { //this is separated from !context above so it only calls loginCredentials once user has assured they want to delete the repository
         let creds = await loginCredentials(subscription, registry);
         username = creds.username;
         password = creds.password;
     }
     let path = `/v2/_acr/${repoName}/repository`;
-    let r = await request_data_from_registry('delete', registry.loginServer, path, username, password);
+    await request_data_from_registry('delete', registry.loginServer, path, username, password);
 }
-
 
 /**
  *
@@ -94,7 +92,7 @@ export async function deleteRepository(context?: AzureRepositoryNode) {
  * @param username : registry username, can be in generic form of 0's, used to generate authorization header
  * @param password : registry password, can be in form of accessToken, used to generate authorization header
  */
-async function request_data_from_registry(http_method: string, login_server: string, path: string, username: string, password: string) {
+async function request_data_from_registry(http_method: string, login_server: string, path: string, username: string, password: string): Promise<void> {
     let url: string = `https://${login_server}${path}`;
     let header = _get_authorization_header(username, password);
     let opt = {
@@ -124,7 +122,6 @@ function _get_authorization_header(username: string, password: string): string {
     return (auth);
 }
 
-
 //Implements new Service principal model for ACR container registries while maintaining old admin enabled use
 /**
  * this function implements a new Service principal model for ACR and gets the valid login credentials to make an API call
@@ -132,7 +129,7 @@ function _get_authorization_header(username: string, password: string): string {
  * @param registry : the registry to get login credentials for
  * @param context : if command is invoked through a right click on an AzureRepositoryNode. This context has a password and username
  */
-async function loginCredentials(subscription, registry, context?: AzureRepositoryNode): Promise<{ password: string, username: string }> {
+async function loginCredentials(subscription: SubscriptionModels.Subscription, registry: Registry, context?: AzureRepositoryNode): Promise<{ password: string, username: string }> {
     let username: string;
     let password: string;
     const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
@@ -140,8 +137,7 @@ async function loginCredentials(subscription, registry, context?: AzureRepositor
     if (context) {
         username = context.userName;
         password = context.password;
-    }
-    else if (registry.adminUserEnabled) {
+    } else if (registry.adminUserEnabled) {
         let creds = await client.registries.listCredentials(resourceGroup, registry.name);
         password = creds.passwords[0].value;
         username = creds.username;

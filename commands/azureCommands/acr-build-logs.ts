@@ -24,9 +24,11 @@ export async function viewBuildLogs(context?: AzureRegistryNode | AzureRepositor
     let logData: LogData = new LogData(client, context.registry, resourceGroup);
 
     try {
-        logData.addLogs(await client.builds.list(resourceGroup, context.registry.name));
+        await logData.loadMoreLogs();
     } catch (error) {
-        throw error;
+        if (error.code !== "NoRegisteredProviderFound") {
+            throw error;
+        }
     }
 
     if (logData.logs.length === 0) {
@@ -73,25 +75,27 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData): void {
 
         if (logData.logs[i].outputImages) {
             for (const img of log.outputImages) {
-                const tag: string = img.tag ? img.tag : '?';
-                const repository: string = img.repository ? img.repository : '?';
-                const registry: string = img.registry ? img.registry : '?';
-                const digest: string = img.digest ? img.digest : '?';
-                imageOutput += `<tr>
+                if (img) {
+                    const tag: string = img.tag ? img.tag : '?';
+                    const repository: string = img.repository ? img.repository : '?';
+                    const registry: string = img.registry ? img.registry : '?';
+                    const digest: string = img.digest ? img.digest : '?';
+                    imageOutput += `<tr>
                                     <td>${tag}</td>
                                     <td>${repository}</td>
                                     <td>${registry}</td>
                                     <td>${digest}</td>
                                 </tr>`;
+                }
             }
-            if (log.outputImages.length === 0) {
-                imageOutput += `<tr>
-                <td>NA</td>
-                    <td>NA</td>
-                    <td>NA</td>
-                    <td>NA</td>
-                </tr>`;
-            }
+        }
+        if (log.outputImages.length === 0 || !log.outputImages[0]) {
+            imageOutput += `<tr>
+                                <td>NA</td>
+                                <td>NA</td>
+                                <td>NA</td>
+                                <td>NA</td>
+                            </tr>`;
         }
         panel.webview.postMessage({
             'type': 'populate',
@@ -264,7 +268,7 @@ class LogData {
     }
 
     public async loadMoreLogs(): Promise<void> {
-
+        this.addLogs(await this.client.builds.list(this.resourceGroup, this.registry.name, { 'top': 100 }));
     }
 
     public addLogs(logs: Build[]): void {

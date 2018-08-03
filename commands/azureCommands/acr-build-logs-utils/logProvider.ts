@@ -31,7 +31,8 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
         for (let line of lines) {
             if (line.toLowerCase().search('error') !== -1 || line.toLowerCase().search('fail') !== -1) {
                 processedLog += `<span class = 'r'>${line}\n </span>`
-            } else if (line.toLowerCase().search('success') !== -1 || line.toLowerCase().search('succeeded') !== -1 || line.toLowerCase().search('completed') !== -1) {
+            } else if (line.toLowerCase().search('success') !== -1 || line.toLowerCase().search('succeeded') !== -1 || line.toLowerCase().search('complete') !== -1 ||
+                line.toLowerCase().search('0 warning(s)') !== -1 || line.toLowerCase().search('0 error(s)') !== -1) {
                 processedLog += `<span class = 'g'>${line}\n </span>`
             } else {
                 processedLog += `${line}\n`

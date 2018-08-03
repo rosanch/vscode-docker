@@ -17,13 +17,15 @@ export class TaskRootNode extends NodeBase { ///starting class of simple with ju
     constructor(
         public readonly label: string,
         public readonly contextValue: string,
-        public readonly iconPath: any = {},
+        public subscription: SubscriptionModels.Subscription,
+        public readonly azureAccount: AzureAccount,
+        public registry: ContainerModels.Registry,
+        public readonly iconPath: any = {}
     ) {
         super(label);
     }
 
     public name: string;
-    public subscription: SubscriptionModels.Subscription;
 
     getTreeItem(): vscode.TreeItem {
         return {
@@ -35,33 +37,21 @@ export class TaskRootNode extends NodeBase { ///starting class of simple with ju
     }
 
     async getChildren(element: TaskRootNode): Promise<BuildTaskNode[]> {
+
         console.log("get children of TaskRootNode");
         const buildTaskNodes: BuildTaskNode[] = [];
-        console.log(element); //TaskRootNode
-
-        console.log(this.subscription); //undefined here
-
-        const tenantId: string = element.subscription.tenantId;
-        console.log(tenantId);
-
         const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(element.subscription);
-        console.log("just made client");
 
         let buildTasks: ContainerModels.BuildTask[] = [];
-        console.log(buildTasks);
 
-        //const resourceGroup: string = element.registry.id.slice(element.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, element.registry.id.search('/providers/'));
-        //buildTasks = await client.buildTasks.list(resourceGroup, element.registry.name);
+        const resourceGroup: string = element.registry.id.slice(element.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, element.registry.id.search('/providers/'));
 
-        console.log("buildTasks filled in:");
-        console.log(buildTasks);
+        buildTasks = await client.buildTasks.list(resourceGroup, element.registry.name);
 
         for (let buildTask of buildTasks) {
             let node = new BuildTaskNode(buildTask.name, "buildTaskNode");
             buildTaskNodes.push(node);
         }
-
-        console.log(buildTaskNodes);
         return buildTaskNodes;
     }
 }
@@ -73,22 +63,5 @@ export class BuildTaskNode extends NodeBase {
         public readonly contextValue: string,
     ) {
         super(label);
-    }
-
-    public accessTokenARC: string;
-    public azureAccount: AzureAccount
-    public password: string;
-    public refreshTokenARC: string;
-    public registry: ContainerModels.Registry;
-    public repository: string;
-    public subscription: SubscriptionModels.Subscription;
-    public userName: string;
-
-    getTreeItem(): vscode.TreeItem {
-        return {
-            label: this.label,
-            collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
-            contextValue: this.contextValue,
-        }
     }
 }

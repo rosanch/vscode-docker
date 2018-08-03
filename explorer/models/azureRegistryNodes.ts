@@ -48,7 +48,7 @@ export class AzureRegistryNode extends NodeBase {
             dark: path.join(__filename, '..', '..', '..', '..', 'images', 'dark', 'wrench-2-16.png')
         };
 
-        let taskNode = new TaskRootNode("Build Tasks", "taskRootNode", iconPath);
+        let taskNode = new TaskRootNode("Build Tasks", "taskRootNode", element.subscription, element.azureAccount, element.registry, iconPath);
         repoNodes.push(taskNode);
 
         let node: AzureRepositoryNode;

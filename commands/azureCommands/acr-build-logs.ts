@@ -73,6 +73,7 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData): void {
         const name: string = log.name ? log.name : '?';
         let imageOutput: string = '';
 
+        let needsNA: boolean = false;
         if (logData.logs[i].outputImages) {
             for (const img of log.outputImages) {
                 if (img) {
@@ -88,15 +89,21 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData): void {
                                 </tr>`;
                 }
             }
+            if (!log.outputImages[0]) {
+                needsNA = true;
+            }
+        } else {
+            needsNA = true;
         }
-        if (log.outputImages.length === 0 || !log.outputImages[0]) {
+        if (needsNA) {
             imageOutput += `<tr>
-                                <td>NA</td>
-                                <td>NA</td>
-                                <td>NA</td>
-                                <td>NA</td>
-                            </tr>`;
+                <td>NA</td>
+                <td>NA</td>
+                <td>NA</td>
+                <td>NA</td>
+            </tr>`;
         }
+
         panel.webview.postMessage({
             'type': 'populate',
             'id': i,

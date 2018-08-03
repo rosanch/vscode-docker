@@ -1,10 +1,12 @@
-import { Build, BuildGetLogResult, BuildListResult, BuildTaskListResult, RegistryListResult, RegistryNameStatus } from "azure-arm-containerregistry/lib/models";
+import { Build, BuildGetLogResult, BuildListResult, BuildTaskListResult, Registry, RegistryListResult, RegistryNameStatus } from "azure-arm-containerregistry/lib/models";
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
 import * as vscode from "vscode";
 const teleCmdId: string = 'vscode-docker.buildTaskLog';
 import * as fs from "fs";
 import * as path from 'path';
 import { AzureImageNode, AzureLoadingNode, AzureNotSignedInNode, AzureRegistryNode, AzureRepositoryNode } from '../../explorer/models/azureRegistryNodes';
+import ContainerRegistryManagementClient from "../../node_modules/azure-arm-containerregistry";
+import { Subscription } from "../../node_modules/azure-arm-resource/lib/subscription/models";
 import { AsyncPool } from "../../utils/asyncpool";
 import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
 
@@ -19,37 +21,29 @@ export async function viewBuildLogs(context?: AzureRegistryNode | AzureRepositor
     }
 
     const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
-    let logs: Build[];
+    let logData: LogData = new LogData(client, context.registry, resourceGroup);
 
     try {
-        logs = await client.builds.list(resourceGroup, context.registry.name);
+        logData.addLogs(await client.builds.list(resourceGroup, context.registry.name));
     } catch (error) {
         throw error;
     }
-    if (logs.length === 0) {
+
+    if (logData.logs.length === 0) {
         vscode.window.showErrorMessage('This registry has no associated build logs');
         return;
     }
 
     let links: { url?: string, id: number }[] = [];
 
-    let pool = new AsyncPool(8);
-    for (let j = 0; j < logs.length; j++) {
-        pool.addTask(async () => {
-            const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroup, context.registry.name, logs[j].buildId);
-            let url: string = temp.logLink;
-            links.push({ 'url': url, 'id': j });
-        });
-    }
-    await pool.runAll();
     links.sort((a, b): number => { return a.id - b.id });
-    createWebview(context.registry.name, links, logs);
+    createWebview(context.registry.name, logData);
 
 }
 
 //# WEBVIEW COMPONENTS
 /** Generate the webview to display the logs */
-function createWebview(webviewName: string, links: { url?: string, id: number }[], logs: Build[]): void {
+function createWebview(webviewName: string, logData: LogData): void {
     //Creating the panel in which to show the logs
     const panel = vscode.window.createWebviewPanel('log Viewer', `${webviewName} Build Logs`, vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
 
@@ -62,22 +56,23 @@ function createWebview(webviewName: string, links: { url?: string, id: number }[
 
     //Populate Webview
     panel.webview.html = getWebviewContent(scriptFile, styleFile);
-    addLogsToWebView(panel, links, logs);
+    addLogsToWebView(panel, logData);
 }
 /** Communicates with the webview javascript file through post requests to populate the log table */
-function addLogsToWebView(panel: vscode.WebviewPanel, links: { url?: string, id: number }[], logs: Build[]): void {
-    setupCommunication(panel, links, logs);
-    for (let i = 0; i < logs.length; i++) {
-        const buildTask: string = logs[i].buildTask ? logs[i].buildTask : '?';
-        const startTime: string = logs[i].startTime ? logs[i].startTime.toLocaleString() : '?';
-        const finishTime: string = logs[i].finishTime ? logs[i].finishTime.toLocaleString() : '?';
-        const buildType: string = logs[i].buildType ? logs[i].buildType : '?';
-        const osType: string = logs[i].platform.osType ? logs[i].platform.osType : '?';
-        const name: string = logs[i].name ? logs[i].name : '?';
+function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData): void {
+    setupCommunication(panel, logData);
+    for (let i = 0; i < logData.logs.length; i++) {
+        const log = logData.logs[i];
+        const buildTask: string = log.buildTask ? log.buildTask : '?';
+        const startTime: string = log.startTime ? log.startTime.toLocaleString() : '?';
+        const finishTime: string = log.finishTime ? log.finishTime.toLocaleString() : '?';
+        const buildType: string = log.buildType ? log.buildType : '?';
+        const osType: string = log.platform.osType ? log.platform.osType : '?';
+        const name: string = log.name ? log.name : '?';
         let imageOutput: string = '';
 
-        if (logs[i].outputImages) {
-            for (let img of logs[i].outputImages) {
+        if (logData.logs[i].outputImages) {
+            for (const img of log.outputImages) {
                 const tag: string = img.tag ? img.tag : '?';
                 const repository: string = img.repository ? img.repository : '?';
                 const registry: string = img.registry ? img.registry : '?';
@@ -89,7 +84,7 @@ function addLogsToWebView(panel: vscode.WebviewPanel, links: { url?: string, id:
                                     <td>${digest}</td>
                                 </tr>`;
             }
-            if (logs[i].outputImages.length === 0) {
+            if (log.outputImages.length === 0) {
                 imageOutput += `<tr>
                 <td>NA</td>
                     <td>NA</td>
@@ -106,7 +101,7 @@ function addLogsToWebView(panel: vscode.WebviewPanel, links: { url?: string, id:
                             <tr>
                                 <td class = 'widthControl'>${name}</td>
                                 <td class = 'widthControl'>${buildTask}</td>
-                                <td class ='status widthControl ${logs[i].status}'> ${logs[i].status}</td>
+                                <td class ='status widthControl ${log.status}'> ${log.status}</td>
                                 <td class = 'widthControl'>${startTime}</td>
                                 <td class = 'widthControl'>${finishTime}</td>
                                 <td class = 'widthControl'>${osType}</td>
@@ -166,10 +161,15 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
 `;
 }
 /** Setup communication with the webview sorting out received mesages from its javascript file */
-function setupCommunication(panel: vscode.WebviewPanel, urlList: { url?: string, id: number }[], logList: Build[]): void {
+function setupCommunication(panel: vscode.WebviewPanel, logData: LogData): void {
     panel.webview.onDidReceiveMessage(message => {
         if (message.logRequest) {
-            openLog(urlList[+message.logRequest.id].url, logList[+message.logRequest.id].buildId);
+            const itemNumber: number = +message.logRequest.id;
+            logData.getLink(itemNumber).then((url) => {
+                if (url !== 'requesting') {
+                    openLog(url, logData.logs[itemNumber].buildId);
+                }
+            })
         }
     });
 }
@@ -227,4 +227,52 @@ function getBlobInfo(blobUrl: string): { accountName: string, endpointSuffix: st
 function makeBase64(str: string): string {
     let buffer = new Buffer(str);
     return buffer.toString('base64');
+}
+
+class LogData {
+    public registry: Registry;
+    public resourceGroup: string;
+    public links: { requesting: boolean, url?: string }[];
+    public logs: Build[];
+    public client: ContainerRegistryManagementClient;
+
+    constructor(client: ContainerRegistryManagementClient, registry: Registry, resourceGroup: string) {
+        this.registry = registry;
+        this.resourceGroup = resourceGroup;
+        this.client = client;
+        this.logs = [];
+        this.links = [];
+    }
+
+    public async getLink(itemNumber: number): Promise<string> {
+        if (itemNumber >= this.links.length) {
+            throw new Error('Log for which the link was requested has not been added');
+        }
+
+        if (this.links[itemNumber].url) {
+            return this.links[itemNumber].url;
+        }
+
+        //If user is simply clicking many times impatiently it makes sense to only have one request at once
+        if (this.links[itemNumber].requesting) { return 'requesting' }
+
+        this.links[itemNumber].requesting = true;
+        const temp: BuildGetLogResult = await this.client.builds.getLogLink(this.resourceGroup, this.registry.name, this.logs[itemNumber].buildId);
+        this.links[itemNumber].url = temp.logLink;
+        this.links[itemNumber].requesting = false;
+        return this.links[itemNumber].url
+    }
+
+    public async loadMoreLogs(): Promise<void> {
+
+    }
+
+    public addLogs(logs: Build[]): void {
+        this.logs = this.logs.concat(logs);
+
+        const itemCount = logs.length;
+        for (let i = 0; i < itemCount; i++) {
+            this.links.push({ 'requesting': false });
+        }
+    }
 }

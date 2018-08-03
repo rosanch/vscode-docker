@@ -1,15 +1,13 @@
-import ContainerRegistryManagementClient = require('azure-arm-containerregistry');
-import { ResourceManagementClient, SubscriptionClient, SubscriptionModels } from 'azure-arm-resource';
+import { SubscriptionModels } from 'azure-arm-resource';
 import { TIMEOUT } from 'dns';
 import * as keytarType from 'keytar';
 import { ServiceClientCredentials } from 'ms-rest';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ContainerModels from '../../node_modules/azure-arm-containerregistry/lib/models';
-import * as ContainerOps from '../../node_modules/azure-arm-containerregistry/lib/operations';
 import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { AsyncPool } from '../../utils/asyncpool';
-import { MAX_CONCURRENT_REQUESTS, MAX_CONCURRENT_SUBSCRIPTON_REQUESTS } from '../../utils/constants'
+import { MAX_CONCURRENT_SUBSCRIPTON_REQUESTS } from '../../utils/constants'
 import * as dockerHub from '../utils/dockerHubUtils'
 import { getCoreNodeModule } from '../utils/utils';
 import { AzureLoadingNode, AzureNotSignedInNode, AzureRegistryNode } from './azureRegistryNodes';
@@ -153,31 +151,26 @@ export class RegistryRootNode extends NodeBase {
             }
             await subPool.runAll();
 
-            const regPool = new AsyncPool(MAX_CONCURRENT_REQUESTS);
             // tslint:disable-next-line:prefer-for-of // Grandfathered in
             for (let i = 0; i < subsAndRegistries.length; i++) {
                 const registries = subsAndRegistries[i].registries;
                 const subscription = subsAndRegistries[i].subscription;
 
-                //Go through the registries and add them to the async pool
                 // tslint:disable-next-line:prefer-for-of // Grandfathered in
                 for (let j = 0; j < registries.length; j++) {
                     if (!registries[j].sku.tier.includes('Classic')) {
-                        regPool.addTask(async () => {
-                            let iconPath = {
-                                light: path.join(__filename, '..', '..', '..', '..', 'images', 'light', 'Registry_16x.svg'),
-                                dark: path.join(__filename, '..', '..', '..', '..', 'images', 'dark', 'Registry_16x.svg')
-                            };
-                            let node = new AzureRegistryNode(registries[j].loginServer, 'azureRegistryNode', iconPath, this._azureAccount);
-                            node.type = RegistryType.Azure;
-                            node.subscription = subscription;
-                            node.registry = registries[j];
-                            azureRegistryNodes.push(node);
-                        });
+                        let iconPath = {
+                            light: path.join(__filename, '..', '..', '..', '..', 'images', 'light', 'Registry_16x.svg'),
+                            dark: path.join(__filename, '..', '..', '..', '..', 'images', 'dark', 'Registry_16x.svg')
+                        };
+                        let node = new AzureRegistryNode(registries[j].loginServer, 'azureRegistryNode', iconPath, this._azureAccount);
+                        node.type = RegistryType.Azure;
+                        node.subscription = subscription;
+                        node.registry = registries[j];
+                        azureRegistryNodes.push(node);
                     }
                 }
             }
-            await regPool.runAll();
 
             function sortFunction(a: AzureRegistryNode, b: AzureRegistryNode): number {
                 return a.registry.loginServer.localeCompare(b.registry.loginServer);

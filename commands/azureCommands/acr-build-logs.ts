@@ -109,11 +109,11 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
         }
         if (needsNA) {
             imageOutput += `<tr>
-                                <td>NA</td>
-                                <td>NA</td>
-                                <td>NA</td>
-                                <td>NA</td>
-                            </tr>`;
+                <td>NA</td>
+                <td>NA</td>
+                <td>NA</td>
+                <td>NA</td>
+            </tr>`;
         }
 
         panel.webview.postMessage({

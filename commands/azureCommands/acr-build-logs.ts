@@ -61,14 +61,14 @@ function createWebview(webviewName: string, logData: LogData): void {
     addLogsToWebView(panel, logData);
 }
 /** Communicates with the webview javascript file through post requests to populate the log table */
-function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData): void {
-    setupCommunication(panel, logData);
-    for (let i = 0; i < logData.logs.length; i++) {
+function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startItem?: number): void {
+    const begin = startItem ? startItem : 0;
+    if (!startItem) { setupCommunication(panel, logData); }
+    for (let i = begin; i < logData.logs.length; i++) {
         const log = logData.logs[i];
         const buildTask: string = log.buildTask ? log.buildTask : '?';
         const startTime: string = log.startTime ? log.startTime.toLocaleString() : '?';
         const finishTime: string = log.finishTime ? log.finishTime.toLocaleString() : '?';
-        const buildType: string = log.buildType ? log.buildType : '?';
         const osType: string = log.platform.osType ? log.platform.osType : '?';
         const name: string = log.name ? log.name : '?';
         let imageOutput: string = '';
@@ -116,7 +116,6 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData): void {
                                 <td class = 'widthControl'>${startTime}</td>
                                 <td class = 'widthControl'>${finishTime}</td>
                                 <td class = 'widthControl'>${osType}</td>
-                                <td class = 'widthControl'>${buildType}</td>
                             </tr>
                         </table>
                     </button>
@@ -162,10 +161,12 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
                 <th class = 'widthControl'>Start Time </th>
                 <th class = 'widthControl'>Finish Time </th>
                 <th class = 'widthControl'>Platform </th>
-                <th class = 'widthControl'>Build Type </th>
             </table>
         </div>
         <div id = 'core'>
+        </div>
+        <div class = 'loadMoreBtn'>
+            <button id= "loadBtn" class="viewLog">Load More Logs</button>
         </div>
         <script src= "${scriptFile}"></script>
     </body>
@@ -173,7 +174,7 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
 }
 /** Setup communication with the webview sorting out received mesages from its javascript file */
 function setupCommunication(panel: vscode.WebviewPanel, logData: LogData): void {
-    panel.webview.onDidReceiveMessage(message => {
+    panel.webview.onDidReceiveMessage(async (message) => {
         if (message.logRequest) {
             const itemNumber: number = +message.logRequest.id;
             logData.getLink(itemNumber).then((url) => {
@@ -181,6 +182,14 @@ function setupCommunication(panel: vscode.WebviewPanel, logData: LogData): void 
                     openLog(url, logData.logs[itemNumber].buildId);
                 }
             })
+        } else if (message.loadMore) {
+            try {
+                await logData.loadMoreLogs();
+            } catch (error) {
+                vscode.window.showErrorMessage(error.message);
+            }
+
+            addLogsToWebView(panel, logData, logData.logs.length);
         }
     });
 }
@@ -246,6 +255,7 @@ class LogData {
     public links: { requesting: boolean, url?: string }[];
     public logs: Build[];
     public client: ContainerRegistryManagementClient;
+    private nextLink: string;
 
     constructor(client: ContainerRegistryManagementClient, registry: Registry, resourceGroup: string) {
         this.registry = registry;
@@ -275,7 +285,18 @@ class LogData {
     }
 
     public async loadMoreLogs(): Promise<void> {
-        this.addLogs(await this.client.builds.list(this.resourceGroup, this.registry.name, { 'top': 100 }));
+        let buildListResult: BuildListResult;
+        if (this.logs.length === 0) {
+            buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name);
+            this.nextLink = buildListResult.nextLink;
+        } else if (!this.nextLink) {
+            throw new Error('No more logs to show');
+        } else {
+            let options = { 'skipToken': this.nextLink };
+            buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name, options);
+            this.nextLink = buildListResult.nextLink;
+        }
+        this.addLogs(buildListResult);
     }
 
     public addLogs(logs: Build[]): void {

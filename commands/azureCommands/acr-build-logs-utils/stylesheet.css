@@ -64,7 +64,7 @@ table {
 
 .widthControl {
     text-align: center;
-    width: 14.2%;
+    width: 16.66%;
 }
 
 #header {
@@ -143,6 +143,14 @@ table {
     font-size: var(--vscode-editor-font-size);
     cursor: pointer;
     align-items: center;
+}
+
+.loadMoreBtn {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    width: 100%;
 }
 
 .viewLog:hover {

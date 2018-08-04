@@ -1,19 +1,13 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as moment from 'moment';
-import * as request from 'request-promise';
+import * as opn from 'opn';
 import * as ContainerModels from '../../node_modules/azure-arm-containerregistry/lib/models';
 import { NodeBase } from './nodeBase';
 import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
 import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
-import { RegistryType } from './registryType';
-import { AsyncPool } from '../../utils/asyncpool';
-import { MAX_CONCURRENT_REQUESTS } from '../../utils/constants'
 import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
-import { BuildTasks } from '../../node_modules/azure-arm-containerregistry/lib/operations';
-import { AzureRegistryNode } from './azureRegistryNodes';
 
-export class TaskRootNode extends NodeBase { ///starting class of simple with just name attribute
+/*Single TaskRootNode under each Repository. Labeled "Build Tasks" */
+export class TaskRootNode extends NodeBase {
     constructor(
         public readonly label: string,
         public readonly contextValue: string,
@@ -36,17 +30,22 @@ export class TaskRootNode extends NodeBase { ///starting class of simple with ju
         }
     }
 
+    /*Making a list view of BuildTaskNodes, or the Build Tasks of the current registry */
     async getChildren(element: TaskRootNode): Promise<BuildTaskNode[]> {
-
-        console.log("get children of TaskRootNode");
         const buildTaskNodes: BuildTaskNode[] = [];
-        const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(element.subscription);
-
         let buildTasks: ContainerModels.BuildTask[] = [];
 
+        const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(element.subscription);
         const resourceGroup: string = element.registry.id.slice(element.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, element.registry.id.search('/providers/'));
 
         buildTasks = await client.buildTasks.list(resourceGroup, element.registry.name);
+        if (buildTasks.length === 0) {
+            vscode.window.showErrorMessage(`You do not have any Build Tasks in '${element.registry.name}'. You can create one with ACR Build. `, "Learn More").then(val => {
+                if (val === "Learn More") {
+                    opn('https://docs.microsoft.com/en-us/azure/container-registry/container-registry-tutorial-build-task');
+                }
+            })
+        }
 
         for (let buildTask of buildTasks) {
             let node = new BuildTaskNode(buildTask.name, "buildTaskNode");

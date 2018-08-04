@@ -107,9 +107,6 @@ export class RootNode extends NodeBase {
     }
 
     async getChildren(element): Promise<NodeBase[]> {
-        console.log("get children of rootNode");
-        console.log(element.contextValue);
-
         if (element.contextValue === 'imagesRootNode') {
             return this.getImages();
         }
@@ -257,13 +254,11 @@ export class RootNode extends NodeBase {
     private async getRegistries(): Promise<RegistryRootNode[]> {
         const registryRootNodes: RegistryRootNode[] = [];
 
-        registryRootNodes.push(new RegistryRootNode('Docker Hub', "dockerHubRootNode", null)); ///adding Docker and Azure nodes
+        registryRootNodes.push(new RegistryRootNode('Docker Hub', "dockerHubRootNode", null));
 
         if (this._azureAccount) {
             registryRootNodes.push(new RegistryRootNode('Azure', "azureRegistryRootNode", this.eventEmitter, this._azureAccount));
         }
-
-        //registryRootNodes.push(new RegistryRootNode('Docker Hub', "dockerHubRootNode", null)); ///adding Docker and Azure nodes
 
         return registryRootNodes;
     }

@@ -9,7 +9,6 @@ import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { RegistryType } from './registryType';
 import { AsyncPool } from '../../utils/asyncpool';
 import { MAX_CONCURRENT_REQUESTS } from '../../utils/constants'
-import { CodeLensResolveRequest } from '../../node_modules/vscode-languageclient/lib/main';
 import { TaskRootNode } from './taskNode';
 
 export class AzureRegistryNode extends NodeBase {
@@ -41,17 +40,16 @@ export class AzureRegistryNode extends NodeBase {
     }
 
     async getChildren(element: AzureRegistryNode): Promise<NodeBase[]> {
-        const repoNodes: NodeBase[] = []; ///to do: rename it
+        const registryChildNodes: NodeBase[] = [];
 
         let iconPath = {
             light: path.join(__filename, '..', '..', '..', '..', 'images', 'light', 'wrench-2-16.png'),
             dark: path.join(__filename, '..', '..', '..', '..', 'images', 'dark', 'wrench-2-16.png')
         };
 
+        //Pushing single TaskRootNode under the current registry. All the following nodes added to registryNodes are type AzureRepositoryNode
         let taskNode = new TaskRootNode("Build Tasks", "taskRootNode", element.subscription, element.azureAccount, element.registry, iconPath);
-        repoNodes.push(taskNode);
-
-        let node: AzureRepositoryNode;
+        registryChildNodes.push(taskNode);
 
         const tenantId: string = element.subscription.tenantId;
         if (!this._azureAccount) {
@@ -60,6 +58,8 @@ export class AzureRegistryNode extends NodeBase {
 
         const session: AzureSession = this._azureAccount.sessions.find((s, i, array) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
         const { accessToken, refreshToken } = await acquireToken(session);
+
+        let node: AzureRepositoryNode;
 
         if (accessToken && refreshToken) {
             let refreshTokenARC;
@@ -112,13 +112,13 @@ export class AzureRegistryNode extends NodeBase {
                         node.repository = element.label;
                         node.subscription = element.subscription;
                         node.userName = element.userName;
-                        repoNodes.push(node);
+                        registryChildNodes.push(node);
                     }
                 }
             });
         }
         //Note these are ordered by default in alphabetical order
-        return repoNodes;
+        return registryChildNodes;
     }
 }
 
@@ -237,7 +237,6 @@ export class AzureRepositoryNode extends NodeBase {
             return a.created.localeCompare(b.created);
         }
         imageNodes.sort(sortFunction);
-        //console.log(imageNodes); ///the list view of image. want to have the same in taskNode class
         return imageNodes;
     }
 }

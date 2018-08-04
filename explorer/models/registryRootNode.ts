@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as dockerHub from '../utils/dockerHubUtils'
 import * as keytarType from 'keytar';
 import * as ContainerModels from '../../node_modules/azure-arm-containerregistry/lib/models';
-import * as ContainerOps from '../../node_modules/azure-arm-containerregistry/lib/operations';
 import ContainerRegistryManagementClient = require('azure-arm-containerregistry');
 import { AzureAccount, AzureSession } from '../../typings/azure-account.api';
 import { AzureRegistryNode, AzureLoadingNode, AzureNotSignedInNode } from './azureRegistryNodes';
@@ -14,7 +13,6 @@ import { ServiceClientCredentials } from 'ms-rest';
 import { SubscriptionClient, ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource';
 import { getCoreNodeModule } from '../utils/utils';
 import { AsyncPool } from '../../utils/asyncpool';
-import { TIMEOUT } from 'dns';
 import { MAX_CONCURRENT_REQUESTS, MAX_CONCURRENT_SUBSCRIPTON_REQUESTS } from '../../utils/constants'
 const ContainerRegistryManagement = require('azure-arm-containerregistry');
 
@@ -56,10 +54,7 @@ export class RegistryRootNode extends NodeBase {
     }
 
     async getChildren(element: RegistryRootNode): Promise<NodeBase[]> {
-        if (element.contextValue === 'azureRegistryRootNode') { ///use this context value thing
-            ///to do: make new list, add a taskNode first, then append getAzureRegistries here
-            //let children: NodeBase[];
-            //children.push(this.getAzureRegistries());
+        if (element.contextValue === 'azureRegistryRootNode') {
             return this.getAzureRegistries();
         } else if (element.contextValue === 'dockerHubRootNode') {
             return this.getDockerHubOrgs();

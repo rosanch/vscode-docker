@@ -97,11 +97,11 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
         }
         if (needsNA) {
             imageOutput += `<tr>
-                <td>NA</td>
-                <td>NA</td>
-                <td>NA</td>
-                <td>NA</td>
-            </tr>`;
+                                <td>NA</td>
+                                <td>NA</td>
+                                <td>NA</td>
+                                <td>NA</td>
+                            </tr>`;
         }
 
         panel.webview.postMessage({
@@ -112,7 +112,7 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
                             <tr>
                                 <td class = 'widthControl'>${name}</td>
                                 <td class = 'widthControl'>${buildTask}</td>
-                                <td class ='status widthControl ${log.status}'> ${log.status}</td>
+                                <td class ='status widthControl ${log.status}'>${log.status}</td>
                                 <td class = 'widthControl'>${startTime}</td>
                                 <td class = 'widthControl'>${finishTime}</td>
                                 <td class = 'widthControl'>${osType}</td>
@@ -138,7 +138,11 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
                     </div>`
         });
     }
-    panel.webview.postMessage({ 'type': 'end' });
+    if (startItem) {
+        panel.webview.postMessage({ 'type': 'endContinued' });
+    } else {
+        panel.webview.postMessage({ 'type': 'end' });
+    }
 }
 /** Create the table in which to push the build logs */
 function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): string {

@@ -5,5 +5,12 @@ package-lock.json
 
 # Artifacts from running vscode extension tests
 .vscode-test
+<<<<<<< HEAD
 testOutput
 .vs
+=======
+.vs
+commands/acr-buildtask.ts
+commands/acr-buildtask.ts
+commands/acr-buildtask.ts
+>>>>>>> Jackson/acr-build

@@ -11,7 +11,15 @@ import { deleteAzureImage } from './commands/azureCommands/delete-azure-image';
 import { buildImage } from './commands/build-image';
 import { composeDown, composeRestart, composeUp } from './commands/docker-compose';
 import inspectImage from './commands/inspect-image';
+<<<<<<< HEAD
 import { openShellContainer } from './commands/open-shell-container';
+=======
+//import { createRegistry } from './commands/create-registry';
+import { buildTask } from './commands/acr-buildtask';
+import { launchAsBuildTask } from './commands/acr-buildtask';
+import inspectImageCommand from './commands/inspect-image';
+import { removeImage } from './commands/remove-image';
+>>>>>>> Jackson/acr-build
 import { pushImage } from './commands/push-image';
 import { removeContainer } from './commands/remove-container';
 import { removeImage } from './commands/remove-image';
@@ -38,11 +46,16 @@ import { DockerExplorerProvider } from './explorer/dockerExplorer';
 import { AzureImageNode, AzureRegistryNode, AzureRepositoryNode } from './explorer/models/azureRegistryNodes';
 import { DockerHubImageNode, DockerHubOrgNode, DockerHubRepositoryNode } from './explorer/models/dockerHubNodes';
 import { browseAzurePortal } from './explorer/utils/azureUtils';
+<<<<<<< HEAD
 import { browseDockerHub, dockerHubLogout } from './explorer/utils/dockerHubUtils';
 import { ext } from "./extensionVariables";
 import { Reporter } from './telemetry/telemetry';
 import { AzureAccount } from './typings/azure-account.api';
 import { AzureCredentialsManager } from './utils/azureCredentialsManager';
+=======
+import { AzureCredentialsManager } from './utils/AzureCredentialsManager';
+import { docker } from './commands/utils/docker-endpoint';
+>>>>>>> Jackson/acr-build
 
 export const FROM_DIRECTIVE_PATTERN = /^\s*FROM\s*([\w-\/:]*)(\s*AS\s*[a-z][a-z0-9-_\\.]*)?$/i;
 export const COMPOSE_FILE_GLOB_PATTERN = '**/[dD]ocker-[cC]ompose*.{yaml,yml}';
@@ -121,6 +134,11 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.deleteAzureImage', deleteAzureImage));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
 
+    //ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
+
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.buildTask', buildTask));
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.launchAsBuildTask', launchAsBuildTask));
+
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createWebApp', async (context?: AzureImageNode | DockerHubImageNode) => {
         if (context) {
             if (azureAccount) {
@@ -146,11 +164,17 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     }));
 
     ctx.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('docker', new DockerDebugConfigProvider()));
+<<<<<<< HEAD
 
     if (azureAccount) {
         AzureCredentialsManager.getInstance().setAccount(azureAccount);
     }
 
+=======
+    if (azureAccount) {
+        AzureCredentialsManager.getInstance().setAccount(azureAccount);
+    }
+>>>>>>> Jackson/acr-build
     activateLanguageClient(ctx);
 }
 

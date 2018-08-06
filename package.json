@@ -49,6 +49,9 @@
     "onCommand:vscode-docker.createRegistry",
     "onCommand:vscode-docker.system.prune",
     "onCommand:vscode-docker.dockerHubLogout",
+    "onCommand:vscode-docker.createRegistry",
+    "onCommand:vscode-docker.buildTask",
+    "onCommand:vscode-docker.launchAsBuildTask",
     "onCommand:vscode-docker.browseDockerHub",
     "onCommand:vscode-docker.browseAzurePortal",
     "onCommand:vscode-docker.explorer.refresh",
@@ -73,6 +76,11 @@
         {
           "when": "editorLangId == dockerfile",
           "command": "vscode-docker.image.build",
+          "group": "docker"
+        },
+        {
+          "when": "editorLangId == dockerfile",
+          "command": "vscode-docker.launchAsBuildTask",
           "group": "docker"
         },
         {
@@ -258,7 +266,11 @@
           "when": "view == dockerExplorer && viewItem == dockerHubRootNode"
         },
         {
+<<<<<<< HEAD
           "command": "vscode-docker.deleteAzureImage",
+=======
+        },
+>>>>>>> Jackson/acr-build
           "when": "view == dockerExplorer && viewItem == azureImageNode"
         },
         {
@@ -272,6 +284,10 @@
         {
           "command": "vscode-docker.browseDockerHub",
           "when": "view == dockerExplorer && viewItem == dockerHubNamespace"
+        },
+        {
+          "command": "vscode-docker.queueBuild",
+          "when": "view == dockerExplorer && viewItem == localImageNode"
         },
         {
           "command": "vscode-docker.browseAzurePortal",
@@ -494,6 +510,12 @@
         "category": "Docker"
       },
       {
+        "command": "vscode-docker.launchAsBuildTask",
+        "title": "Launch with automatic builds",
+        "description": "creates a build task from the workspace",
+        "category": "Docker"
+      },
+      {
         "command": "vscode-docker.image.inspect",
         "title": "Inspect Image",
         "description": "Inspect the metadata of a Docker image",
@@ -617,6 +639,16 @@
         "category": "Docker"
       },
       {
+        "command": "vscode-docker.createRegistry",
+        "title": "Create Registry",
+        "category": "Docker"
+      },
+      {
+        "command": "vscode-docker.buildTask",
+        "title": "Automate Cloud Builds",
+        "category": "Docker"
+      },
+      {
         "command": "vscode-docker.browseDockerHub",
         "title": "Browse in Docker Hub",
         "category": "Docker"
@@ -627,8 +659,11 @@
         "category": "Docker"
       },
       {
+<<<<<<< HEAD
         "command": "vscode-docker.deleteAzureImage",
         "title": "Delete Azure Image",
+=======
+>>>>>>> Jackson/acr-build
         "category": "Docker"
       }
     ],
@@ -690,15 +725,24 @@
     "azure-arm-website": "^1.0.0-preview",
     "dockerfile-language-server-nodejs": "^0.0.18",
     "dockerode": "^2.5.1",
+<<<<<<< HEAD
     "fs-extra": "^6.0.1",
+=======
+>>>>>>> Jackson/acr-build
     "glob": "7.1.2",
     "gradle-to-js": "^1.0.1",
     "moment": "^2.19.3",
     "opn": "^5.1.0",
     "pom-parser": "^1.1.1",
     "request-promise": "^4.2.2",
+<<<<<<< HEAD
     "vscode-azureextensionui": "~0.15.0",
     "vscode-extension-telemetry": "^0.0.6",
     "vscode-languageclient": "4.4.0"
+=======
+    "tar": "^4.4.6",
+    "vscode-extension-telemetry": "^0.0.6",
+    "vscode-languageclient": "^4.2.1"
+>>>>>>> Jackson/acr-build
   }
 }

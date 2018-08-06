@@ -11,41 +11,32 @@ var os = require('os');
 var url = require('url');
 
 export async function queueBuild(context?: ImageNode) {
-
     let opt: vscode.InputBoxOptions = {
         ignoreFocusOut: true,
-        placeHolder: 'tutorialsGroup',
-        value: 'tutorialsGroup',
         prompt: 'Resource Group? '
     };
     const resourceGroup: string = await vscode.window.showInputBox(opt);
-
     opt = {
         ignoreFocusOut: true,
-        placeHolder: 'rocketPenguinInterns',
-        value: 'rocketPenguinInterns',
         prompt: 'Registry name? '
     };
     const registryName: string = await vscode.window.showInputBox(opt);
 
-    let sourceLocation: string = vscode.workspace.rootPath;
-    let dockerPath: string = (vscode.workspace.rootPath + "\\Dockerfile");
-
     console.log("Obtaining Subscription and Client");
-    const subscription = AzureCredentialsManager.getInstance().getFilteredSubscriptionList()[0];
-    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
-
-    let images: string[] = [];
+    let subscription = AzureCredentialsManager.getInstance().getFilteredSubscriptionList()[0];
+    let client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
 
     console.log("Setting up temp file with 'sourceArchive.tar.gz' ");
     let tarFilePath = url.resolve(os.tmpdir(), 'sourceArchive.tar.gz');
+
     console.log("Uploading Source Code");
+    let sourceLocation: string = vscode.workspace.rootPath;
     sourceLocation = await uploadSourceCode(client, registryName, resourceGroup, sourceLocation, tarFilePath);
 
     console.log("Setting up Build Request");
     let buildRequest: QuickBuildRequest = {
         'type': 'QuickBuild',
-        'imageNames': images,
+        'imageNames': [],
         'isPushEnabled': false,
         'sourceLocation': sourceLocation,
         'platform': { 'osType': 'Linux' },
@@ -64,7 +55,7 @@ export async function queueBuild(context?: ImageNode) {
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName, resourceGroupName, sourceLocation, tarFilePath) {
     console.log("   Sending source code to temp file");
     try {
-        tar.c( // or tar.create
+        tar.c(
             {
                 gzip: true
             },
@@ -78,15 +69,14 @@ async function uploadSourceCode(client: ContainerRegistryManagementClient, regis
     let sourceUploadLocation = await client.registries.getBuildSourceUploadUrl(resourceGroupName, registryName);
     let upload_url = sourceUploadLocation.uploadUrl;
     let relative_path = sourceUploadLocation.relativePath;
+
     console.log("   Getting blob info from upload URl ");
+    // Right now, accountName and endpointSuffix are unused, but will be used for streaming logs later.
     let { accountName, endpointSuffix, containerName, blobName, sasToken, host } = getBlobInfo(upload_url);
-    let blob: BlobService;
+
     console.log("   Creating Blob service ");
-    try {
-        blob = createBlobServiceWithSas(host, sasToken);
-    } catch (error) {
-        console.log(error);
-    }
+    let blob: BlobService = createBlobServiceWithSas(host, sasToken);
+
     console.log("   Creating Block Blob ");
     try {
         blob.createBlockBlobFromLocalFile(containerName, blobName, tarFilePath, (): void => { });
@@ -98,12 +88,12 @@ async function uploadSourceCode(client: ContainerRegistryManagementClient, regis
 }
 
 function getBlobInfo(blobUrl: string): { accountName: string, endpointSuffix: string, containerName: string, blobName: string, sasToken: string, host: string } {
-    const items: string[] = blobUrl.slice(blobUrl.search('https://') + 'https://'.length).split('/');
-    const accountName: string = blobUrl.slice(blobUrl.search('https://') + 'https://'.length, blobUrl.search('.blob'));
-    const endpointSuffix: string = items[0].slice(items[0].search('.blob.') + '.blob.'.length);
-    const containerName: string = items[1];
-    const blobName: string = items[2] + '/' + items[3] + '/' + items[4].slice(0, items[4].search('[?]'));
-    const sasToken: string = items[4].slice(items[4].search('[?]') + 1);
-    const host: string = accountName + '.blob.' + endpointSuffix;
+    let items: string[] = blobUrl.slice(blobUrl.search('https://') + 'https://'.length).split('/');
+    let accountName: string = blobUrl.slice(blobUrl.search('https://') + 'https://'.length, blobUrl.search('.blob'));
+    let endpointSuffix: string = items[0].slice(items[0].search('.blob.') + '.blob.'.length);
+    let containerName: string = items[1];
+    let blobName: string = items[2] + '/' + items[3] + '/' + items[4].slice(0, items[4].search('[?]'));
+    let sasToken: string = items[4].slice(items[4].search('[?]') + 1);
+    let host: string = accountName + '.blob.' + endpointSuffix;
     return { accountName, endpointSuffix, containerName, blobName, sasToken, host };
 }

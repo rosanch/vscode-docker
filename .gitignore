@@ -8,3 +8,4 @@ package-lock.json
 .vs
 commands/acr-buildtask.ts
 commands/acr-buildtask.ts
+commands/acr-buildtask.ts

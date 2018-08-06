@@ -6,3 +6,5 @@ package-lock.json
 # Artifacts from running vscode extension tests
 .vscode-test
 .vs
+commands/acr-buildtask.ts
+commands/acr-buildtask.ts

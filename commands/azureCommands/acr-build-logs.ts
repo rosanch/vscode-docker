@@ -1,28 +1,33 @@
 import { Build, BuildGetLogResult, BuildListResult, BuildTaskListResult, Registry, RegistryListResult, RegistryNameStatus } from "azure-arm-containerregistry/lib/models";
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
-import * as vscode from "vscode";
-const teleCmdId: string = 'vscode-docker.buildTaskLog';
-import * as fs from "fs";
 import * as path from 'path';
+import * as vscode from "vscode";
 import { AzureImageNode, AzureLoadingNode, AzureNotSignedInNode, AzureRegistryNode, AzureRepositoryNode } from '../../explorer/models/azureRegistryNodes';
 import ContainerRegistryManagementClient from "../../node_modules/azure-arm-containerregistry";
+import { Subscription } from "../../node_modules/azure-arm-resource/lib/subscription/models";
+import { getSubscriptionFromRegistry } from '../../utils/Azure/acrTools';
 import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
+import { quickPickACRRegistry } from '../utils/quick-pick-azure'
+
+const teleCmdId: string = 'vscode-docker.buildTaskLog';
 
 /**  This command is used through a right click on an azure registry, repository or image in the Docker Explorer. It is used to view build logs for a given item. */
 export async function viewBuildLogs(context: AzureRegistryNode | AzureRepositoryNode | AzureImageNode): Promise<void> {
+    let registry: Registry;
+    let subscription: Subscription;
     if (!context) {
-
+        registry = await quickPickACRRegistry();
+        if (!registry) { return; }
+        subscription = getSubscriptionFromRegistry(registry);
+    } else {
+        registry = context.registry;
+        subscription = context.subscription;
     }
-    let resourceGroup: string = context.registry.id.slice(context.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, context.registry.id.search('/providers/'));
-    let subscriptionId: string = context.registry.id.slice('subscriptions/'.length, context.registry.id.search('/resourceGroups/'));
+    let resourceGroup: string = registry.id.slice(registry.id.search('resourceGroups/') + 'resourceGroups/'.length, registry.id.search('/providers/'));
 
-    if (!resourceGroup || !subscriptionId) {
-        throw new Error('Something went wrong, this registry may no longer exist');
-    }
-
-    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
-    let logData: LogData = new LogData(client, context.registry, resourceGroup);
-    const filterFunction = getFilterFunction(context);
+    const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(subscription);
+    let logData: LogData = new LogData(client, registry, resourceGroup);
+    const filterFunction = context ? getFilterFunction(context) : undefined;
     try {
         await logData.loadMoreLogs(filterFunction);
     } catch (error) {
@@ -33,9 +38,9 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
 
     if (logData.logs.length === 0) {
         let itemType: string;
-        if (context instanceof AzureRepositoryNode) {
+        if (context && context instanceof AzureRepositoryNode) {
             itemType = 'repository';
-        } else if (context instanceof AzureRepositoryNode) {
+        } else if (context && context instanceof AzureRepositoryNode) {
             itemType = 'image';
         } else {
             itemType = 'registry';
@@ -47,9 +52,9 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
     let links: { url?: string, id: number }[] = [];
 
     links.sort((a, b): number => { return a.id - b.id });
-    let webViewTitle: string = context.registry.name;
+    let webViewTitle: string = registry.name;
     if (context instanceof AzureRepositoryNode || context instanceof AzureImageNode) {
-        webViewTitle += '/' + context.label;
+        webViewTitle += (context ? '/' + context.label : '');
     }
     createWebview(webViewTitle, logData);
 

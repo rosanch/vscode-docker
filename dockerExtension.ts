@@ -42,7 +42,6 @@ import { browseDockerHub, dockerHubLogout } from './explorer/utils/dockerHubUtil
 import { ext } from "./extensionVariables";
 import { initializeTelemetryReporter, reporter } from './telemetry/telemetry';
 import { AzureAccount } from './typings/azure-account.api';
-import { AzureCredentialsManager } from './utils/azureCredentialsManager';
 import { AzureUtilityManager } from './utils/azureUtilityManager';
 
 export const FROM_DIRECTIVE_PATTERN = /^\s*FROM\s*([\w-\/:]*)(\s*AS\s*[a-z][a-z0-9-_\\.]*)?$/i;

@@ -6,12 +6,10 @@ import * as fs from "fs";
 import * as path from 'path';
 import { AzureImageNode, AzureLoadingNode, AzureNotSignedInNode, AzureRegistryNode, AzureRepositoryNode } from '../../explorer/models/azureRegistryNodes';
 import ContainerRegistryManagementClient from "../../node_modules/azure-arm-containerregistry";
-import { Subscription } from "../../node_modules/azure-arm-resource/lib/subscription/models";
-import { AsyncPool } from "../../utils/asyncpool";
 import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
 
 /**  This command is used through a right click on an azure registry, repository or image in the Docker Explorer. It is used to view build logs for a given item. */
-export async function viewBuildLogs(context?: AzureRegistryNode | AzureRepositoryNode | AzureImageNode): Promise<void> {
+export async function viewBuildLogs(context: AzureRegistryNode | AzureRepositoryNode | AzureImageNode): Promise<void> {
 
     let resourceGroup: string = context.registry.id.slice(context.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, context.registry.id.search('/providers/'));
     let subscriptionId: string = context.registry.id.slice('subscriptions/'.length, context.registry.id.search('/resourceGroups/'));
@@ -22,9 +20,9 @@ export async function viewBuildLogs(context?: AzureRegistryNode | AzureRepositor
 
     const client = AzureCredentialsManager.getInstance().getContainerRegistryManagementClient(context.subscription);
     let logData: LogData = new LogData(client, context.registry, resourceGroup);
-
+    const filterFunction = getFilterFunction(context);
     try {
-        await logData.loadMoreLogs();
+        await logData.loadMoreLogs(filterFunction);
     } catch (error) {
         if (error.code !== "NoRegisteredProviderFound") {
             throw error;
@@ -32,14 +30,26 @@ export async function viewBuildLogs(context?: AzureRegistryNode | AzureRepositor
     }
 
     if (logData.logs.length === 0) {
-        vscode.window.showErrorMessage('This registry has no associated build logs');
+        let itemType: string;
+        if (context instanceof AzureRepositoryNode) {
+            itemType = 'repository';
+        } else if (context instanceof AzureRepositoryNode) {
+            itemType = 'image';
+        } else {
+            itemType = 'registry';
+        }
+        vscode.window.showErrorMessage(`This ${itemType} has no associated build logs`);
         return;
     }
 
     let links: { url?: string, id: number }[] = [];
 
     links.sort((a, b): number => { return a.id - b.id });
-    createWebview(context.registry.name, logData);
+    let webViewTitle: string = context.registry.name;
+    if (context instanceof AzureRepositoryNode || context instanceof AzureImageNode) {
+        webViewTitle += '/' + context.label;
+    }
+    createWebview(webViewTitle, logData);
 
 }
 
@@ -47,7 +57,7 @@ export async function viewBuildLogs(context?: AzureRegistryNode | AzureRepositor
 /** Generate the webview to display the logs */
 function createWebview(webviewName: string, logData: LogData): void {
     //Creating the panel in which to show the logs
-    const panel = vscode.window.createWebviewPanel('log Viewer', `${webviewName} Build Logs`, vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
+    const panel = vscode.window.createWebviewPanel('log Viewer', webviewName, vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
 
     //Get path to resource on disk
     let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
@@ -107,34 +117,38 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
         panel.webview.postMessage({
             'type': 'populate',
             'id': i,
-            'logComponent': `<button id= "btn${i}" class="accordion">
-                        <table>
-                            <tr>
-                                <td class = 'widthControl'>${name}</td>
-                                <td class = 'widthControl'>${buildTask}</td>
-                                <td class ='status widthControl ${log.status}'>${log.status}</td>
-                                <td class = 'widthControl'>${startTime}</td>
-                                <td class = 'widthControl'>${finishTime}</td>
-                                <td class = 'widthControl'>${osType}</td>
-                            </tr>
-                        </table>
-                    </button>
-                    <div class="panel">
-                        <table class="overallTable">
-                            <tr>
-                                <td colspan="4">Output Images</td>
-                            </tr>
-                            <tr>
-                                <td>Tag</th>
-                                <td>Repository</td>
-                                <td>Registry</td>
-                                <td>Digest</td>
-                            </tr>
-                            ${imageOutput}
-                        </table>
-                            <div class = 'button-holder'>
-                                <button id= "log${i}" class="viewLog">Open Logs</button>
-                            </div>
+            'logComponent': `
+                    <div class = "holder">
+                        <button id= "btn${i}" class="accordion">
+                            <table>
+                                <tr>
+                                    <td class = 'widthControl'>${name}</td>
+                                    <td class = 'widthControl'>${buildTask}</td>
+                                    <td class ='status widthControl ${log.status}'>${log.status}</td>
+                                    <td class = 'widthControl'>${startTime}</td>
+                                    <td class = 'widthControl'>${finishTime}</td>
+                                    <td class = 'widthControl'>${osType}</td>
+                                    <td><div class = "arrow"></div></td>
+                                </tr>
+                            </table>
+                        </button>
+                        <div class="panel">
+                            <table class="overallTable">
+                                <tr>
+                                    <td colspan="4">Output Images</td>
+                                </tr>
+                                <tr>
+                                    <td>Tag</th>
+                                    <td>Repository</td>
+                                    <td>Registry</td>
+                                    <td>Digest</td>
+                                </tr>
+                                ${imageOutput}
+                            </table>
+                                <div class = 'button-holder'>
+                                    <button id= "log${i}" class="viewLog">Open Logs</button>
+                                </div>
+                        </div>
                     </div>`
         });
     }
@@ -253,6 +267,45 @@ function makeBase64(str: string): string {
     return buffer.toString('base64');
 }
 
+/** Obtains a function to filter logs to a single repository/image */
+function getFilterFunction(context: AzureRegistryNode | AzureRepositoryNode | AzureImageNode): (logEntry: Build) => boolean {
+    if (context instanceof AzureRegistryNode) {
+        return undefined;
+    } else if (context instanceof AzureRepositoryNode) {
+        return (logEntry: Build) => {
+            if (!logEntry.outputImages) {
+                return false;
+            } else if (logEntry.outputImages.length === 0) {
+                return false;
+            } else if (logEntry.outputImages.find((imgDescriptor) => {
+                if (!imgDescriptor) { return false; }
+                return imgDescriptor.repository === context.label;
+            })) {
+                return true
+            } else {
+                return false;
+            }
+        }
+    } else {
+        const tag: string = context.label.slice(context.label.search(':') + 1);
+        return (logEntry: Build) => {
+            if (!logEntry.outputImages) {
+                return false;
+            } else if (logEntry.outputImages.length === 0) {
+                return false;
+            } else if (logEntry.outputImages.find((imgDescriptor) => {
+                if (!imgDescriptor) { return false; }
+                return imgDescriptor.tag === tag;
+            })) {
+                return true
+            } else {
+                return false;
+            }
+        }
+    }
+}
+
+/** Class to manage data and data acquisition for logs */
 class LogData {
     public registry: Registry;
     public resourceGroup: string;
@@ -268,7 +321,9 @@ class LogData {
         this.logs = [];
         this.links = [];
     }
-
+    /** Acquires Links from an item number corresponding to the index of the corresponding log, caches
+     * logs in order to avoid unecessary requests if opened multiple times.
+     */
     public async getLink(itemNumber: number): Promise<string> {
         if (itemNumber >= this.links.length) {
             throw new Error('Log for which the link was requested has not been added');
@@ -288,7 +343,7 @@ class LogData {
         return this.links[itemNumber].url
     }
 
-    public async loadMoreLogs(): Promise<void> {
+    public async loadMoreLogs(filterFunc?: (logEntry: Build) => boolean): Promise<void> {
         let buildListResult: BuildListResult;
         if (this.logs.length === 0) {
             buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name);
@@ -300,6 +355,10 @@ class LogData {
             buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name, options);
             this.nextLink = buildListResult.nextLink;
         }
+        if (filterFunc) {
+            buildListResult = buildListResult.filter(filterFunc);
+        }
+
         this.addLogs(buildListResult);
     }
 

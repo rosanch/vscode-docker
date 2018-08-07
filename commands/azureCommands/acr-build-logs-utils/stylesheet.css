@@ -64,7 +64,7 @@ table {
 
 .widthControl {
     text-align: center;
-    width: 16.66%;
+    width: 16.45%;
 }
 
 #header {
@@ -89,6 +89,7 @@ h2 {
 #headerTable {
     font-size: var(--vscode-editor-font-size);
     font-family: var(--vscode-editor-font-family);
+    cursor: pointer;
 }
 
 body {
@@ -155,4 +156,21 @@ table {
 
 .viewLog:hover {
     background-color: var(--vscode-button-hoverBackground);
+}
+
+.arrow {
+    width: 25%;
+    padding-top: 25%;
+    transform: rotate(45deg);
+    border-left: none;
+    border-top: none;
+    border-right: 2px var(--vscode-editor-foreground) solid;
+    border-bottom: 2px var(--vscode-editor-foreground) solid;
+    -webkit-transition: -webkit-transform .2s ease-in-out;
+    transition: transform .2s ease-in-out;
+}
+
+.activeArrow {
+    -webkit-transform: rotate(225deg);
+    transform: rotate(225deg);
 }

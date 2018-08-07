@@ -226,7 +226,6 @@ export async function loginCredentials(subscription: SubscriptionModels.Subscrip
     }
     let username: string;
     let password: string;
-
     const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
     const resourceGroup: string = registry.id.slice(registry.id.search('resourceGroups/') + 'resourceGroups/'.length, registry.id.search('/providers/'));
 

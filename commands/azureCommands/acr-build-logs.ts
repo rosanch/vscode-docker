@@ -40,7 +40,7 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
         let itemType: string;
         if (context && context instanceof AzureRepositoryNode) {
             itemType = 'repository';
-        } else if (context && context instanceof AzureRepositoryNode) {
+        } else if (context && context instanceof AzureImageNode) {
             itemType = 'image';
         } else {
             itemType = 'registry';

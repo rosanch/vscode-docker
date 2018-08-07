@@ -181,6 +181,7 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
                 <th class = 'widthControl'>Start Time </th>
                 <th class = 'widthControl'>Finish Time </th>
                 <th class = 'widthControl'>Platform </th>
+                <td></td>
             </table>
         </div>
         <div id = 'core'>

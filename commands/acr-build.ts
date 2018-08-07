@@ -1,16 +1,15 @@
-
-import * as vscode from "vscode";
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
-import { ImageNode } from "../explorer/models/imageNode";
 import { QuickBuildRequest } from "azure-arm-containerregistry/lib/models";
-import { AzureCredentialsManager } from "../utils/AzureCredentialsManager";
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
-var tar = require('tar');
-var fs = require('fs');
-var os = require('os');
-var url = require('url');
+import * as vscode from "vscode";
+import { ImageNode } from "../explorer/models/imageNode";
+import { AzureCredentialsManager } from "../utils/AzureCredentialsManager";
+let tar = require('tar');
+let fs = require('fs');
+let os = require('os');
+let url = require('url');
 
-export async function queueBuild(context?: ImageNode) {
+export async function queueBuild(context?: ImageNode): Promise<void> {
     let opt: vscode.InputBoxOptions = {
         ignoreFocusOut: true,
         prompt: 'Resource Group? '
@@ -52,7 +51,7 @@ export async function queueBuild(context?: ImageNode) {
     console.log(client.builds.list(resourceGroup, registryName));
 }
 
-async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName, resourceGroupName, sourceLocation, tarFilePath) {
+async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string): Promise<string> {
     console.log("   Sending source code to temp file");
     try {
         tar.c(

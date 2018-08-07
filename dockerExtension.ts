@@ -17,6 +17,7 @@ import { openShellContainer } from './commands/open-shell-container';
 //import { createRegistry } from './commands/create-registry';
 import { buildTask } from './commands/acr-buildtask';
 import { launchAsBuildTask } from './commands/acr-buildtask';
+import { queueBuild } from './commands/acr-build';
 import inspectImageCommand from './commands/inspect-image';
 import { removeImage } from './commands/remove-image';
 >>>>>>> Jackson/acr-build
@@ -135,6 +136,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
 
     //ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.createRegistry', createRegistry));
+    ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.queueBuild', queueBuild));
 
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.buildTask', buildTask));
     ctx.subscriptions.push(vscode.commands.registerCommand('vscode-docker.launchAsBuildTask', launchAsBuildTask));

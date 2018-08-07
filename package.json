@@ -49,6 +49,7 @@
     "onCommand:vscode-docker.createRegistry",
     "onCommand:vscode-docker.system.prune",
     "onCommand:vscode-docker.dockerHubLogout",
+    "onCommand:vscode-docker.queuebuild",
     "onCommand:vscode-docker.createRegistry",
     "onCommand:vscode-docker.buildTask",
     "onCommand:vscode-docker.launchAsBuildTask",
@@ -76,6 +77,11 @@
         {
           "when": "editorLangId == dockerfile",
           "command": "vscode-docker.image.build",
+          "group": "docker"
+        },
+        {
+          "when": "editorLangId == dockerfile",
+          "command": "vscode-docker.queueBuild",
           "group": "docker"
         },
         {
@@ -118,6 +124,11 @@
         {
           "when": "resourceFilename =~ /[dD]ocker[fF]ile/",
           "command": "vscode-docker.image.build",
+          "group": "docker"
+        },
+        {
+          "when": "resourceFilename =~ /[dD]ocker[fF]ile/",
+          "command": "vscode-docker.queueBuild",
           "group": "docker"
         },
         {
@@ -269,7 +280,11 @@
 <<<<<<< HEAD
           "command": "vscode-docker.deleteAzureImage",
 =======
+          "command": "vscode-docker.createRegistry",
+          "when": "view == dockerExplorer && viewItem == azureRegistryRootNode"
         },
+        {
+          "command": "vscode-docker.buildTask",
 >>>>>>> Jackson/acr-build
           "when": "view == dockerExplorer && viewItem == azureImageNode"
         },
@@ -663,6 +678,8 @@
         "command": "vscode-docker.deleteAzureImage",
         "title": "Delete Azure Image",
 =======
+        "command": "vscode-docker.queueBuild",
+        "title": "Lightweight Build",
 >>>>>>> Jackson/acr-build
         "category": "Docker"
       }

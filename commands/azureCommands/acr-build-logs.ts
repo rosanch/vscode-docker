@@ -10,7 +10,9 @@ import { AzureCredentialsManager } from '../../utils/azureCredentialsManager';
 
 /**  This command is used through a right click on an azure registry, repository or image in the Docker Explorer. It is used to view build logs for a given item. */
 export async function viewBuildLogs(context: AzureRegistryNode | AzureRepositoryNode | AzureImageNode): Promise<void> {
+    if (!context) {
 
+    }
     let resourceGroup: string = context.registry.id.slice(context.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, context.registry.id.search('/providers/'));
     let subscriptionId: string = context.registry.id.slice('subscriptions/'.length, context.registry.id.search('/resourceGroups/'));
 

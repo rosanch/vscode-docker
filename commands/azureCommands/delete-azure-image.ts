@@ -24,7 +24,7 @@ export async function deleteAzureImage(context?: AzureImageNode): Promise<void> 
     let tag: string;
     if (!context) {
         registry = await quickPicks.quickPickACRRegistry();
-        subscription = acrTools.getRegistrySubscription(registry);
+        subscription = acrTools.getSubscriptionFromRegistry(registry);
         let repository: Repository = await quickPicks.quickPickACRRepository(registry);
         repoName = repository.name;
         const image = await quickPicks.quickPickACRImage(repository);

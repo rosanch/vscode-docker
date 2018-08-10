@@ -3,6 +3,7 @@ import { BlobService, createBlobServiceWithSas } from "azure-storage";
 import * as path from 'path';
 import * as vscode from "vscode";
 import { AzureImageNode, AzureLoadingNode, AzureNotSignedInNode, AzureRegistryNode, AzureRepositoryNode } from '../../explorer/models/azureRegistryNodes';
+import { truncate } from "../../node_modules/@types/fs-extra";
 import ContainerRegistryManagementClient from "../../node_modules/azure-arm-containerregistry";
 import { Subscription } from "../../node_modules/azure-arm-resource/lib/subscription/models";
 import { getSubscriptionFromRegistry } from '../../utils/Azure/acrTools';
@@ -83,26 +84,26 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
     if (!startItem) { setupCommunication(panel, logData); }
     for (let i = begin; i < logData.logs.length; i++) {
         const log = logData.logs[i];
-        const buildTask: string = log.buildTask ? log.buildTask : '?';
-        const startTime: string = log.startTime ? log.startTime.toLocaleString() : '?';
-        const finishTime: string = log.finishTime ? log.finishTime.toLocaleString() : '?';
-        const osType: string = log.platform.osType ? log.platform.osType : '?';
-        const name: string = log.name ? log.name : '?';
+        const buildTask: string = log.buildTask ? log.buildTask : '';
+        const createTime: string = log.createTime ? log.createTime.toLocaleString() : '';
+        const timeElapsed: string = log.startTime && log.finishTime ? (Math.abs(log.startTime.valueOf() - log.finishTime.valueOf()) / 1000).toString() : '';
+        const osType: string = log.platform.osType ? log.platform.osType : '';
+        const name: string = log.name ? log.name : '';
         let imageOutput: string = '';
 
         let needsNA: boolean = false;
         if (logData.logs[i].outputImages) {
             for (const img of log.outputImages) {
                 if (img) {
-                    const tag: string = img.tag ? img.tag : '?';
-                    const repository: string = img.repository ? img.repository : '?';
-                    const registry: string = img.registry ? img.registry : '?';
-                    const digest: string = img.digest ? img.digest : '?';
+                    const tag: string = img.tag ? img.tag : '';
+                    const repository: string = img.repository ? img.repository : '';
+                    const digest: string = img.digest ? img.digest : '';
+                    const truncatedDigest: string = digest ? digest.substr(0, 5) + '...' + digest.substr(digest.length - 5) : '';
+
                     imageOutput += `<tr>
                                     <td>${tag}</td>
                                     <td>${repository}</td>
-                                    <td>${registry}</td>
-                                    <td>${digest}</td>
+                                    <td data-digest = "${digest}">${truncatedDigest}</td>
                                 </tr>`;
                 }
             }
@@ -132,29 +133,30 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
                                     <td class = 'widthControl'>${name}</td>
                                     <td class = 'widthControl'>${buildTask}</td>
                                     <td class ='status widthControl ${log.status}'>${log.status}</td>
-                                    <td class = 'widthControl'>${startTime}</td>
-                                    <td class = 'widthControl'>${finishTime}</td>
+                                    <td class = 'widthControl'>${createTime}</td>
+                                    <td class = 'widthControl'>${timeElapsed}s</td>
                                     <td class = 'widthControl'>${osType}</td>
                                     <td><div class = "arrow"></div></td>
                                 </tr>
                             </table>
                         </button>
                         <div class="panel">
-                            <table class="overallTable">
-                                <tr>
-                                    <td colspan="4">Output Images</td>
-                                </tr>
-                                <tr>
-                                    <td>Tag</th>
-                                    <td>Repository</td>
-                                    <td>Registry</td>
-                                    <td>Digest</td>
-                                </tr>
-                                ${imageOutput}
-                            </table>
+                            <div class= "paddingDiv">
+                                <table class="innerTable">
+                                    <tr>
+                                        <td colspan="3">Output Images</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tag</th>
+                                        <td>Repository</td>
+                                        <td>Digest</td>
+                                    </tr>
+                                    ${imageOutput}
+                                </table>
                                 <div class = 'button-holder'>
                                     <button id= "log${i}" class="viewLog">Open Logs</button>
                                 </div>
+                            </div>
                         </div>
                     </div>`
         });
@@ -183,8 +185,8 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
                 <th class = 'widthControl'>Build Name </th>
                 <th class = 'widthControl'>BuildTask </th>
                 <th class = 'widthControl'>Status </th>
-                <th class = 'widthControl'>Start Time </th>
-                <th class = 'widthControl'>Finish Time </th>
+                <th class = 'widthControl'>Created </th>
+                <th class = 'widthControl'>Elapsed Time </th>
                 <th class = 'widthControl'>Platform </th>
                 <td></td>
             </table>

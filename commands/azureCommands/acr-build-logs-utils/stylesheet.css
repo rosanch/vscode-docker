@@ -3,7 +3,7 @@
     color: var(--color);
     cursor: pointer;
     margin: 0px;
-    padding: 5px;
+    padding: 5px 0px;
     width: 100%;
     border: none;
     text-align: left;
@@ -11,7 +11,7 @@
     font-size: var(--vscode-editor-font-size);
     font-family: var(--vscode-editor-font-family);
     transition: 0.4s;
-    text-align: center;
+    text-align: left;
 }
 
 .accordion:hover {
@@ -30,7 +30,6 @@
 .panel {
     width: 100%;
     display: flex;
-    padding: 0 10px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.2s ease-out;
@@ -38,42 +37,36 @@
 }
 
 .status.Failed {
-    color: red;
-    font-weight: bold
+    color: var(--vscode-terminal-ansiRed);
 }
 
 .status.Running {
-    color: yellow;
-    font-weight: bold
+    color: var(--vscode-terminal-ansiBlue);
 }
 
 .status.Error {
-    color: rgb(255, 136, 0);
-    font-weight: bold
-}
-
-.status.Succeeded {
-    color: green;
-    font-weight: bold
+    color: var(--vscode-terminal-ansiYellow);
 }
 
 table {
-    text-align: center;
+    text-align: left;
     width: 100%;
 }
 
 .widthControl {
-    text-align: center;
+    text-align: left;
     width: 16.45%;
 }
 
 #header {
+    height: 0.8cm;
     top: 0px;
     position: fixed;
     width: 100%;
     z-index: 1;
     display: block;
     background-color: var(--vscode-activityBar-background);
+    color: var(--vscode-activityBar-foreground);
 }
 
 h2 {
@@ -83,13 +76,14 @@ h2 {
 }
 
 #core {
-    margin-top: 0.6cm;
+    margin-top: 0.8cm;
 }
 
 #headerTable {
     font-size: var(--vscode-editor-font-size);
     font-family: var(--vscode-editor-font-family);
     cursor: pointer;
+    height: 100%;
 }
 
 body {
@@ -103,26 +97,28 @@ body {
     overflow-y: auto;
 }
 
-.overallTable {
-    width: 90%;
-    align-content: center;
-    text-align: center;
+.innerTable {
+    width: 85%;
+    align-content: left;
+    text-align: left;
 }
 
-.overallTable td {
+.innerTable td {
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
+    width: 28.33%;
     border-bottom: 1px solid var(--vscode-editor-foreground);
 }
 
 table {
     border-collapse: collapse;
-    width: 100%;
+    width: 95%;
+    margin-left: 5%;
 }
 
-.overallTable td,
-.overallTable th {
-    text-align: center;
+.innerTable td,
+.innerTable th {
+    text-align: left;
 }
 
 .button-holder {
@@ -138,12 +134,12 @@ table {
     border: none;
     color: var(--vscode-button-foreground);
     padding: 5px 13px;
-    text-align: center;
+    text-align: left;
     text-decoration: none;
     display: inline-block;
     font-size: var(--vscode-editor-font-size);
     cursor: pointer;
-    align-items: center;
+    align-items: left;
 }
 
 .loadMoreBtn {

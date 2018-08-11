@@ -91,7 +91,6 @@ function acquireCompareFunction(n) {
 }
 
 // Event Listener Setup
-
 window.addEventListener('message', event => {
     const message = event.data; // The JSON data our extension sent
     if (message.type === 'populate') {
@@ -102,6 +101,9 @@ window.addEventListener('message', event => {
 
         const logButton = content.querySelector(`#log${message.id}`);
         setLogBtnListener(logButton);
+
+        const digestClick = item.nextElementSibling.getElementsByClassName('copy');
+        setDigestListener(digestClick);
 
     } else if (message.type === 'endContinued') {
         sortTable(currentN, currentDir, true);
@@ -117,7 +119,9 @@ function setSingleAccordion(item) {
         if (panel.style.maxHeight) {
             panel.style.maxHeight = null;
         } else {
-            panel.style.maxHeight = panel.scrollHeight + 'px';
+            let paddingTop = +panel.querySelector('.paddingDiv').style.paddingTop.split('px')[0];
+            let paddingBottom = +panel.querySelector('.paddingDiv').style.paddingBottom.split('px')[0];
+            panel.style.maxHeight = (panel.scrollHeight + paddingTop + paddingBottom) + 'px';
         }
     });
 }
@@ -149,4 +153,12 @@ function setLoadMoreListener() {
             loadMore: true
         });
     });
+}
+
+function setDigestListener(digestClick) {
+    for (let digestClickable of digestClick) {
+        digestClickable.addEventListener('click', function () {
+            alert(this.parentNode.dataset.digest);
+        });
+    }
 }

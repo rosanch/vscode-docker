@@ -89,38 +89,7 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
         const timeElapsed: string = log.startTime && log.finishTime ? (Math.abs(log.startTime.valueOf() - log.finishTime.valueOf()) / 1000).toString() : '';
         const osType: string = log.platform.osType ? log.platform.osType : '';
         const name: string = log.name ? log.name : '';
-        let imageOutput: string = '';
-
-        let needsNA: boolean = false;
-        if (logData.logs[i].outputImages) {
-            for (const img of log.outputImages) {
-                if (img) {
-                    const tag: string = img.tag ? img.tag : '';
-                    const repository: string = img.repository ? img.repository : '';
-                    const digest: string = img.digest ? img.digest : '';
-                    const truncatedDigest: string = digest ? digest.substr(0, 5) + '...' + digest.substr(digest.length - 5) : '';
-
-                    imageOutput += `<tr>
-                                    <td>${tag}</td>
-                                    <td>${repository}</td>
-                                    <td data-digest = "${digest}">${truncatedDigest}</td>
-                                </tr>`;
-                }
-            }
-            if (!log.outputImages[0]) {
-                needsNA = true;
-            }
-        } else {
-            needsNA = true;
-        }
-        if (needsNA) {
-            imageOutput += `<tr>
-                                <td>NA</td>
-                                <td>NA</td>
-                                <td>NA</td>
-                                <td>NA</td>
-                            </tr>`;
-        }
+        let imageOutput: string = getImageOutputTable(log);
 
         panel.webview.postMessage({
             'type': 'populate',
@@ -167,6 +136,42 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
         panel.webview.postMessage({ 'type': 'end' });
     }
 }
+
+function getImageOutputTable(log: Build): string {
+    let imageOutput: string = '';
+    let needsNA: boolean = false;
+    if (log.outputImages) {
+        for (let j = 0; j < log.outputImages.length; j++) {
+            let img = log.outputImages[j]
+            if (img) {
+                const tag: string = img.tag ? img.tag : '';
+                const repository: string = img.repository ? img.repository : '';
+                const digest: string = img.digest ? img.digest : '';
+                const truncatedDigest: string = digest ? digest.substr(0, 5) + '...' + digest.substr(digest.length - 5) : '';
+                const lastTr: string = j === log.outputImages.length - 1 ? 'class = "lastTr"' : '';
+                imageOutput += `<tr ${lastTr}>
+                                        <td>${tag}</td>
+                                        <td>${repository}</td>
+                                        <td data-digest = "${digest}">${truncatedDigest} <inline class = 'copy'>&#128459</inline></td>
+                                    </tr>`;
+            }
+        }
+        if (!log.outputImages[0]) {
+            needsNA = true;
+        }
+    } else {
+        needsNA = true;
+    }
+    if (needsNA) {
+        imageOutput += `<tr class = "lastTr">
+                                    <td>NA</td>
+                                    <td>NA</td>
+                                    <td>NA</td>
+                                </tr>`;
+    }
+    return imageOutput;
+}
+
 /** Create the table in which to push the build logs */
 function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): string {
     return `<!DOCTYPE html>
@@ -196,6 +201,8 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
         <div class = 'loadMoreBtn'>
             <button id= "loadBtn" class="viewLog">Load More Logs</button>
         </div>
+        <div class="overlay"></div>
+        <div class="modal"></div>
         <script src= "${scriptFile}"></script>
     </body>
 `;

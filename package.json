@@ -634,7 +634,7 @@
       },
       {
         "command": "vscode-docker.acrBuildLogs",
-        "title": "Show ACR build logs",
+        "title": "ACR build logs",
         "category": "Docker"
       }
     ],

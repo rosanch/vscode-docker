@@ -46,7 +46,7 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
         } else {
             itemType = 'registry';
         }
-        vscode.window.showErrorMessage(`This ${itemType} has no associated build logs`);
+        vscode.window.showInformationMessage(`This ${itemType} has no associated build logs`);
         return;
     }
 

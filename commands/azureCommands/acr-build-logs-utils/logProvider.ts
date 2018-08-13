@@ -7,7 +7,7 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
     constructor() { }
 
     public provideTextDocumentContent(uri: vscode.Uri): string {
-        return this.stylehtml(this.reverseBase64(JSON.parse(uri.query).log));
+        return this.stylehtml(this.decodeBase64(JSON.parse(uri.query).log));
     }
 
     get onDidChange(): vscode.Event<vscode.Uri> {
@@ -18,7 +18,7 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
         this.onDidChangeEvent.fire(uri);
     }
 
-    private reverseBase64(str: string): string {
+    private decodeBase64(str: string): string {
         return Buffer.from(str, 'base64').toString('ascii');
     }
 
@@ -29,10 +29,10 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
         lines[0] = lines[0].trim();
 
         for (let line of lines) {
-            if (line.toLowerCase().search('error') !== -1 || line.toLowerCase().search('fail') !== -1) {
+            if (line.toLowerCase().indexOf('error') !== -1 || line.toLowerCase().indexOf('fail') !== -1) {
                 processedLog += `<span class = 'r'>${line}\n </span>`
-            } else if (line.toLowerCase().search('success') !== -1 || line.toLowerCase().search('succeeded') !== -1 || line.toLowerCase().search('complete') !== -1 ||
-                line.toLowerCase().search('0 warning(s)') !== -1 || line.toLowerCase().search('0 error(s)') !== -1) {
+            } else if (line.toLowerCase().indexOf('success') !== -1 || line.toLowerCase().indexOf('succeeded') !== -1 || line.toLowerCase().indexOf('complete') !== -1 ||
+                line.toLowerCase().indexOf('0 warning(s)') !== -1 || line.toLowerCase().indexOf('0 error(s)') !== -1) {
                 processedLog += `<span class = 'g'>${line}\n </span>`
             } else {
                 processedLog += `${line}\n`

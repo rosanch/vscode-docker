@@ -8,12 +8,29 @@ const status = {
 
 var currentN = 4;
 var currentDir = "asc"
+var modalObject = {
+    modal: document.querySelector('.modal'),
+    overlay: document.querySelector('.overlay')
+};
 
 // Main
 let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();
 setLoadMoreListener();
 setTableSorter();
+
+modalObject.overlay.addEventListener('click', (event) => {
+    if (event.target === modalObject.overlay) {
+        modalObject.overlay.style.display = 'none';
+        modalObject.modal.style.display = 'none';
+    }
+});
+
+const copy = modalObject.modal.querySelector('.copyBtn');
+copy.addEventListener('click', () => {
+    modalObject.modal.querySelector('#digestVisualizer').select();
+    document.execCommand("copy");
+});
 
 /* Sorting
  * PR note, while this does not use a particularly quick algorithm
@@ -102,8 +119,8 @@ window.addEventListener('message', event => {
         const logButton = content.querySelector(`#log${message.id}`);
         setLogBtnListener(logButton);
 
-        const digestClick = item.nextElementSibling.getElementsByClassName('copy');
-        setDigestListener(digestClick);
+        const digestClickables = item.nextElementSibling.querySelectorAll('.copy');
+        setDigestListener(digestClickables);
 
     } else if (message.type === 'endContinued') {
         sortTable(currentN, currentDir, true);
@@ -155,10 +172,12 @@ function setLoadMoreListener() {
     });
 }
 
-function setDigestListener(digestClick) {
-    for (let digestClickable of digestClick) {
-        digestClickable.addEventListener('click', function () {
-            alert(this.parentNode.dataset.digest);
+function setDigestListener(digestClickables) {
+    for (digest of digestClickables) {
+        digest.addEventListener('click', function () {
+            modalObject.modal.querySelector('#digestVisualizer').value = this.parentNode.dataset.digest;
+            modalObject.modal.style.display = 'flex';
+            modalObject.overlay.style.display = 'flex';
         });
     }
 }

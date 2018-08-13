@@ -201,8 +201,13 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
         <div class = 'loadMoreBtn'>
             <button id= "loadBtn" class="viewLog">Load More Logs</button>
         </div>
-        <div class="overlay"></div>
-        <div class="modal"></div>
+        <div class="overlay">
+            <div class="modal">
+                <input id = "digestVisualizer", readonly>
+                <button class = "copyBtn">Copy</button>
+            </div>
+        </div>
+
         <script src= "${scriptFile}"></script>
     </body>
 `;

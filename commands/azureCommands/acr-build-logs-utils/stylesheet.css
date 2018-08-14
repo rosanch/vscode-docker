@@ -37,7 +37,8 @@
 }
 
 .status.Failed {
-    color: var(--vscode-terminal-ansiRed);
+    color: var(--vscode-terminal-ansiBrightRed);
+    font-weight: bold;
 }
 
 .status.Running {

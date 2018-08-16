@@ -8,12 +8,7 @@ import * as acrTools from '../../utils/Azure/acrTools';
 export async function pullFromAzure(context?: AzureImageNode): Promise<any> {
 
     // Step 1: Using loginCredentials function to get the username and password. This takes care of all users, even if they don't have the Azure CLI
-    let credentials;
-    try {
-        credentials = await acrTools.acquireRegistryLoginCredential(context.subscription, context.registry, context);
-    } catch (error) {
-        console.log(error);
-    }
+    let credentials = await acrTools.acquireRegistryLoginCredential(context.subscription, context.registry, context);
     let username = credentials.username;
     let password = credentials.password;
     let registry = context.registry.loginServer;
@@ -22,10 +17,10 @@ export async function pullFromAzure(context?: AzureImageNode): Promise<any> {
     terminal.show();
 
     // Step 2: docker login command
-    await terminal.sendText(`docker login ${registry} -u ${username} -p ${password}`);
+    terminal.sendText(`docker login ${registry} -u ${username} -p ${password}`);
 
     // Step 3: docker pull command
-    await terminal.sendText(`docker pull ${registry}/${context.label}`);
+    terminal.sendText(`docker pull ${registry}/${context.label}`);
 
     //Acquiring telemetry data here
     if (reporter) {

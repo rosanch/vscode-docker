@@ -89,14 +89,19 @@ function acquireCompareFunction(n) {
             return (x, y) => {
                 return status[x.innerHTML] > status[y.innerHTML];;
             }
-        case 3: //Start time
-        case 4: // Finish time
+        case 3: //Created time
             return (x, y) => {
-                if (x.innerHTML === '?') return true;
-                if (y.innerHTML === '?') return false;
+                if (x.innerHTML === '') return true;
+                if (y.innerHTML === '') return false;
                 let dateX = new Date(x.innerHTML);
                 let dateY = new Date(y.innerHTML);
                 return dateX > dateY;
+            }
+        case 4: //Elapsed time
+            return (x, y) => {
+                if (x.innerHTML === '') return true;
+                if (y.innerHTML === '') return false;
+                return (+x.innerHTML.substring(0, x.innerHTML.length)) > (+y.innerHTML.substring(0, x.innerHTML.length));
             }
         case 5: //OS Type
             return (x, y) => {

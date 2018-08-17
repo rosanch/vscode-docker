@@ -99,7 +99,7 @@ body {
 }
 
 .innerTable {
-    width: 85%;
+    width: 87%;
     align-content: left;
     text-align: left;
 }
@@ -120,8 +120,8 @@ body {
 
 table {
     border-collapse: collapse;
-    width: 95%;
-    margin-left: 5%;
+    width: 98%;
+    margin-left: 2%;
 }
 
 .innerTable td,
@@ -134,7 +134,7 @@ table {
     justify-content: center;
     align-content: center;
     align-items: center;
-    width: 10%;
+    width: 13%;
 }
 
 .viewLog {
@@ -163,25 +163,20 @@ table {
 }
 
 .arrow {
-    width: 25%;
-    padding-top: 25%;
     transform: rotate(45deg);
-    border-left: none;
-    border-top: none;
-    border-right: 2px var(--vscode-editor-foreground) solid;
-    border-bottom: 2px var(--vscode-editor-foreground) solid;
     -webkit-transition: -webkit-transform .2s ease-in-out;
     transition: transform .2s ease-in-out;
 }
 
 .activeArrow {
-    -webkit-transform: rotate(225deg);
-    transform: rotate(225deg);
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
 }
 
 .paddingDiv {
     display: flex;
-    width: 100%;
+    width: 96.5%;
+    margin-left: 3.5%;
     padding-top: 10px;
     padding-bottom: 10px;
 }
@@ -228,4 +223,14 @@ table {
 
 #digestVisualizer {
     width: 85%;
+}
+
+.arrowHolder {
+    width: 4.3%;
+    padding-left: 1.5%;
+    padding-right: 1.5%;
+}
+
+.overflowX {
+    overflow-x: auto;
 }

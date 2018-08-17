@@ -53,12 +53,26 @@ table {
     text-align: left;
     border-collapse: collapse;
     width: 100%;
-    padding-left: 2%;
 }
 
 .widthControl {
     text-align: left;
-    width: 16.45%;
+    width: 15.95%;
+}
+
+.widthControl2 {
+    text-align: left;
+    width: 31.9%;
+}
+
+.widthControl3 {
+    text-align: left;
+    width: 47.85%;
+}
+
+.widthControl5 {
+    text-align: left;
+    width: 79.75%;
 }
 
 #header {
@@ -100,27 +114,17 @@ body {
     overflow-y: auto;
 }
 
-.innerTable {
-    width: 85%;
-    align-content: left;
-    text-align: left;
-}
-
 .innerTable td {
+    border-bottom: 1px solid var(--vscode-editor-foreground);
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
-    width: 28.33%;
-}
-
-.innerTable tr {
-    border-bottom: 1px solid var(--vscode-editor-foreground);
-}
-
-.innerTable tr.lastTr {
-    border-bottom: 0px;
 }
 
 .innerTable td.lastTd {
+    border-bottom: 0px;
+}
+
+.innerTable td.arrowHolder {
     border-bottom: 0px;
 }
 
@@ -134,7 +138,7 @@ body {
     justify-content: center;
     align-content: center;
     align-items: center;
-    width: 13%;
+    width: 100%;
 }
 
 .viewLog {

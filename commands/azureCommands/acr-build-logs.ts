@@ -95,39 +95,35 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
             'type': 'populate',
             'id': i,
             'logComponent': `
-                    <div class = "holder">
-                        <button id= "btn${i}" class="accordion">
-                            <table>
-                                <tr>
-                                    <td class = 'arrowHolder'><div class = "arrow">&#x25f9</div></td>
-                                    <td class = 'widthControl'>${name}</td>
-                                    <td class = 'widthControl'>${buildTask}</td>
-                                    <td class ='status widthControl ${log.status}'>${log.status}</td>
-                                    <td class = 'widthControl'>${createTime}</td>
-                                    <td class = 'widthControl'>${timeElapsed}</td>
-                                    <td class = 'widthControl'>${osType}</td>
-                                </tr>
-                            </table>
-                        </button>
-                        <div class="panel">
-                            <div class= "paddingDiv">
-                                <table class="innerTable">
-                                    <tr>
-                                        <td colspan="3">Output Images</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Tag</th>
-                                        <td>Repository</td>
-                                        <td>Digest</td>
-                                    </tr>
-                                    ${imageOutput}
-                                </table>
-                                <div class = 'button-holder'>
-                                    <button id= "log${i}" class="viewLog">Open Logs</button>
+                        <tr id= "btn${i}" class="accordion">
+                                <td class = 'arrowHolder'><div class = "arrow">&#x25f9</div></td>
+                                <td class = 'widthControl'>${name}</td>
+                                <td class = 'widthControl'>${buildTask}</td>
+                                <td class ='status widthControl ${log.status}'>${log.status}</td>
+                                <td class = 'widthControl'>${createTime}</td>
+                                <td class = 'widthControl'>${timeElapsed}</td>
+                                <td class = 'widthControl'>${osType}</td>
+                        </tr>
+                        <tr class="panel">
+                            <td colspan = "7">
+                                <div class= "paddingDiv">
+                                    <table class="innerTable">
+                                        <tr>
+                                            <td colspan="3">Output Images</td>
+                                            <td class = "lastTd" rowspan = "300">
+                                                <button id= "log${i}" class="viewLog">Open Logs</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Tag</th>
+                                            <td>Repository</td>
+                                            <td>Digest</td>
+                                        </tr>
+                                        ${imageOutput}
+                                    </table>
                                 </div>
-                            </div>
-                        </div>
-                    </div>`
+                            </td>
+                        </tr>`
         });
     }
     if (startItem) {
@@ -197,7 +193,12 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
                 <td></td>
             </table>
         </div>
-        <div id = 'core'>
+        <div class = "offsetX">
+            <table>
+                <tbody id = 'core'>
+
+                </tbody>
+            </table>
         </div>
         <div class = 'loadMoreBtn'>
             <button id= "loadBtn" class="viewLog">Load More Logs</button>
@@ -246,6 +247,10 @@ function createLogView(text: string, title: string): void {
     } catch (error) {
         console.log(error);
     }
+
+    // vscode.workspace.openTextDocument(uri).then((doc) => {
+    //     return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
+    // });
 
     vscode.commands.executeCommand('vscode.previewHtml', uri, undefined, title).then(_ => { }, _ => {
         vscode.window.showErrorMessage('Cant open!');

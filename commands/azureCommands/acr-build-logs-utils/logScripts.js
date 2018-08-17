@@ -139,10 +139,12 @@ function setSingleAccordion(item) {
         this.querySelector('.arrow').classList.toggle('activeArrow');
         var panel = this.nextElementSibling;
         if (panel.style.maxHeight) {
+            panel.style.display = 'none';
             panel.style.maxHeight = null;
         } else {
-            let paddingTop = +panel.querySelector('.paddingDiv').style.paddingTop.split('px')[0];
-            let paddingBottom = +panel.querySelector('.paddingDiv').style.paddingBottom.split('px')[0];
+            panel.style.display = 'table-row';
+            let paddingTop = +panel.style.paddingTop.split('px')[0];
+            let paddingBottom = +panel.style.paddingBottom.split('px')[0];
             panel.style.maxHeight = (panel.scrollHeight + paddingTop + paddingBottom) + 'px';
         }
     });

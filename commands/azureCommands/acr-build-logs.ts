@@ -106,18 +106,22 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
                         </tr>
                         <tr class="panel">
                             <td colspan = "7">
-                                <div class= "paddingDiv">
+                                <div class= "paddingDiv overflowX">
                                     <table class="innerTable">
                                         <tr>
-                                            <td colspan="3">Output Images</td>
-                                            <td class = "lastTd" rowspan = "300">
-                                                <button id= "log${i}" class="viewLog">Open Logs</button>
+                                            <td class = "arrowHolder">&#160</td>
+                                            <td colspan = "5" class = "widthControl5">Output Images</td>
+                                            <td class = "widthControl lastTd" rowspan = "300">
+                                                <div class = "button-holder">
+                                                    <button id= "log${i}" class="viewLog">Open Logs</button>
+                                                </div>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td>Tag</th>
-                                            <td>Repository</td>
-                                            <td>Digest</td>
+                                            <td class = "arrowHolder">&#160</td>
+                                            <td colspan = "2" class = 'widthControl2'>Tag</th>
+                                            <td colspan = "2" class = 'widthControl3'>Repository</td>
+                                            <td class = 'widthControl'>Digest</td>
                                         </tr>
                                         ${imageOutput}
                                     </table>
@@ -144,12 +148,13 @@ function getImageOutputTable(log: Build): string {
                 const repository: string = img.repository ? img.repository : '';
                 const digest: string = img.digest ? img.digest : '';
                 const truncatedDigest: string = digest ? digest.substr(0, 5) + '...' + digest.substr(digest.length - 5) : '';
-                const lastTr: string = j === log.outputImages.length - 1 ? 'class = "lastTr"' : '';
-                imageOutput += `<tr ${lastTr}>
-                                        <td>${tag}</td>
-                                        <td>${repository}</td>
-                                        <td data-digest = "${digest}">${truncatedDigest} <inline class = 'copy'>&#128459</inline></td>
-                                    </tr>`;
+                const lastTd: string = j === log.outputImages.length - 1 ? 'lastTd' : '';
+                imageOutput += `<tr>
+                                    <td class = "arrowHolder">&#160</td>
+                                    <td colspan = "2" class = "widthControl2 ${lastTd}">${tag}</td>
+                                    <td colspan = "2" class = "widthControl2 ${lastTd}">${repository}</td>
+                                    <td colspan = "1" class = "widthControl ${lastTd}" data-digest = "${digest}">${truncatedDigest} <inline class = 'copy'>&#128459</inline></td>
+                                </tr>`;
             }
         }
         if (!log.outputImages[0]) {
@@ -159,11 +164,12 @@ function getImageOutputTable(log: Build): string {
         needsNA = true;
     }
     if (needsNA) {
-        imageOutput += `<tr class = "lastTr">
-                                    <td>NA</td>
-                                    <td>NA</td>
-                                    <td>NA</td>
-                                </tr>`;
+        imageOutput += `<tr>
+                            <td class = "arrowHolder lastTd">&#160</td>
+                            <td colspan = "2" class = "widthControl2 lastTd">NA</td>
+                            <td colspan = "2" class = "widthControl2 lastTd">NA</td>
+                            <td colspan = "1" class = "widthControl lastTd">NA</td>
+                        </tr>`;
     }
     return imageOutput;
 }

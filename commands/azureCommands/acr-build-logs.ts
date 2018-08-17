@@ -110,7 +110,7 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
                                     <table class="innerTable">
                                         <tr>
                                             <td class = "arrowHolder">&#160</td>
-                                            <td colspan = "5" class = "widthControl5">Output Images</td>
+                                            <td colspan = "5" class = "borderLimit widthControl5">Output Images</td>
                                             <td class = "widthControl lastTd" rowspan = "300">
                                                 <div class = "button-holder">
                                                     <button id= "log${i}" class="viewLog">Open Logs</button>
@@ -119,9 +119,9 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
                                         </tr>
                                         <tr>
                                             <td class = "arrowHolder">&#160</td>
-                                            <td colspan = "2" class = 'widthControl2'>Tag</th>
-                                            <td colspan = "2" class = 'widthControl3'>Repository</td>
-                                            <td class = 'widthControl'>Digest</td>
+                                            <td colspan = "2" class = "borderLimit widthControl2">Tag</th>
+                                            <td colspan = "2" class = "widthControl3">Repository</td>
+                                            <td class = "widthControl">Digest</td>
                                         </tr>
                                         ${imageOutput}
                                     </table>
@@ -151,7 +151,7 @@ function getImageOutputTable(log: Build): string {
                 const lastTd: string = j === log.outputImages.length - 1 ? 'lastTd' : '';
                 imageOutput += `<tr>
                                     <td class = "arrowHolder">&#160</td>
-                                    <td colspan = "2" class = "widthControl2 ${lastTd}">${tag}</td>
+                                    <td colspan = "2" class = "borderLimit widthControl2 ${lastTd}">${tag}</td>
                                     <td colspan = "2" class = "widthControl2 ${lastTd}">${repository}</td>
                                     <td colspan = "1" class = "widthControl ${lastTd}" data-digest = "${digest}">${truncatedDigest} <inline class = 'copy'>&#128459</inline></td>
                                 </tr>`;
@@ -166,7 +166,7 @@ function getImageOutputTable(log: Build): string {
     if (needsNA) {
         imageOutput += `<tr>
                             <td class = "arrowHolder lastTd">&#160</td>
-                            <td colspan = "2" class = "widthControl2 lastTd">NA</td>
+                            <td colspan = "2" class = "borderLimit widthControl2 lastTd">NA</td>
                             <td colspan = "2" class = "widthControl2 lastTd">NA</td>
                             <td colspan = "1" class = "widthControl lastTd">NA</td>
                         </tr>`;

@@ -86,7 +86,7 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
         const log = logData.logs[i];
         const buildTask: string = log.buildTask ? log.buildTask : '';
         const createTime: string = log.createTime ? log.createTime.toLocaleString() : '';
-        const timeElapsed: string = log.startTime && log.finishTime ? (Math.abs(log.startTime.valueOf() - log.finishTime.valueOf()) / 1000).toString() : '';
+        const timeElapsed: string = log.startTime && log.finishTime ? (Math.abs(log.startTime.valueOf() - log.finishTime.valueOf()) / 1000).toString() + 's' : '';
         const osType: string = log.platform.osType ? log.platform.osType : '';
         const name: string = log.name ? log.name : '';
         let imageOutput: string = getImageOutputTable(log);
@@ -99,13 +99,13 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
                         <button id= "btn${i}" class="accordion">
                             <table>
                                 <tr>
+                                    <td class = 'arrowHolder'><div class = "arrow">&#x25f9</div></td>
                                     <td class = 'widthControl'>${name}</td>
                                     <td class = 'widthControl'>${buildTask}</td>
                                     <td class ='status widthControl ${log.status}'>${log.status}</td>
                                     <td class = 'widthControl'>${createTime}</td>
-                                    <td class = 'widthControl'>${timeElapsed}s</td>
+                                    <td class = 'widthControl'>${timeElapsed}</td>
                                     <td class = 'widthControl'>${osType}</td>
-                                    <td><div class = "arrow"></div></td>
                                 </tr>
                             </table>
                         </button>
@@ -187,6 +187,7 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
     <body>
         <div id = "header">
             <table id="headerTable">
+                <th class = 'arrowHolder'></td>
                 <th class = 'widthControl'>Build Name </th>
                 <th class = 'widthControl'>BuildTask </th>
                 <th class = 'widthControl'>Status </th>

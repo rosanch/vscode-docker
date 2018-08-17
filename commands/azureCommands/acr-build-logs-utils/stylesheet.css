@@ -1,0 +1,231 @@
+.accordion {
+    background-color: var(--vscode-editor-background);
+    color: var(--color);
+    cursor: pointer;
+    margin: 0px;
+    padding: 5px 0px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: var(--vscode-editor-font-size);
+    font-family: var(--vscode-editor-font-family);
+    transition: 0.4s;
+    text-align: left;
+}
+
+.accordion:hover {
+    cursor: pointer;
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.active {
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.active.accordion:hover {
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.panel {
+    width: 100%;
+    display: flex;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.status.Failed {
+    color: var(--vscode-terminal-ansiBrightRed);
+    font-weight: bold;
+}
+
+.status.Running {
+    color: var(--vscode-terminal-ansiBlue);
+}
+
+.status.Error {
+    color: var(--vscode-terminal-ansiYellow);
+}
+
+table {
+    text-align: left;
+    width: 100%;
+}
+
+.widthControl {
+    text-align: left;
+    width: 16.45%;
+}
+
+#header {
+    height: 0.8cm;
+    top: 0px;
+    position: fixed;
+    width: 100%;
+    z-index: 1;
+    display: block;
+    background-color: var(--vscode-activityBar-background);
+    color: var(--vscode-activityBar-foreground);
+}
+
+h2 {
+    padding-left: 10px;
+    font-size: var(--vscode-editor-font-size);
+    font-family: var(--vscode-editor-font-family);
+}
+
+#core {
+    margin-top: 0.8cm;
+}
+
+#headerTable {
+    font-size: var(--vscode-editor-font-size);
+    font-family: var(--vscode-editor-font-family);
+    cursor: pointer;
+    height: 100%;
+}
+
+body {
+    padding: 0px;
+    width: 100%;
+    color: var(--color);
+}
+
+.logConsole {
+    height: 100px;
+    overflow-y: auto;
+}
+
+.innerTable {
+    width: 85%;
+    align-content: left;
+    text-align: left;
+}
+
+.innerTable td {
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    width: 28.33%;
+}
+
+.innerTable tr {
+    border-bottom: 1px solid var(--vscode-editor-foreground);
+}
+
+.innerTable tr.lastTr {
+    border-bottom: 0px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 95%;
+    margin-left: 5%;
+}
+
+.innerTable td,
+.innerTable th {
+    text-align: left;
+}
+
+.button-holder {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    width: 10%;
+}
+
+.viewLog {
+    background-color: var(--vscode-button-background);
+    border: none;
+    color: var(--vscode-button-foreground);
+    padding: 5px 13px;
+    text-align: left;
+    text-decoration: none;
+    display: inline-block;
+    font-size: var(--vscode-editor-font-size);
+    cursor: pointer;
+    align-items: left;
+}
+
+.loadMoreBtn {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.viewLog:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.arrow {
+    width: 25%;
+    padding-top: 25%;
+    transform: rotate(45deg);
+    border-left: none;
+    border-top: none;
+    border-right: 2px var(--vscode-editor-foreground) solid;
+    border-bottom: 2px var(--vscode-editor-foreground) solid;
+    -webkit-transition: -webkit-transform .2s ease-in-out;
+    transition: transform .2s ease-in-out;
+}
+
+.activeArrow {
+    -webkit-transform: rotate(225deg);
+    transform: rotate(225deg);
+}
+
+.paddingDiv {
+    display: flex;
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.copy:hover {
+    cursor: pointer;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    justify-content: center;
+    align-content: center;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.5);
+    /*dim the background*/
+}
+
+.modal {
+    margin: auto;
+    display: none;
+    width: 40%;
+    z-index: 11;
+}
+
+.copyBtn {
+    background-color: var(--vscode-button-background);
+    border: none;
+    color: var(--vscode-button-foreground);
+    padding: 5px 13px;
+    text-align: left;
+    text-decoration: none;
+    display: inline-block;
+    font-size: var(--vscode-editor-font-size);
+    cursor: pointer;
+    align-items: left;
+}
+
+#digestVisualizer {
+    width: 85%;
+}

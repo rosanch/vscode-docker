@@ -6,7 +6,9 @@ import * as opn from 'opn';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, registerCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
-import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/lib/main';
+import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { viewBuildLogs } from './commands/azureCommands/acr-build-logs'
+import { LogContentProvider } from './commands/azureCommands/acr-build-logs-utils/logProvider';
 import { createRegistry } from './commands/azureCommands/create-registry';
 import { deleteAzureImage } from './commands/azureCommands/delete-image';
 import { deleteAzureRegistry } from './commands/azureCommands/delete-registry';
@@ -167,12 +169,19 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
 
     ctx.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('docker', new DockerDebugConfigProvider()));
 
+    //If ms-vscode.azure-account extension is present
     if (azureAccount) {
         registerCommand('vscode-docker.delete-ACR-Registry', deleteAzureRegistry);
         registerCommand('vscode-docker.delete-ACR-Image', deleteAzureImage);
         registerCommand('vscode-docker.delete-ACR-Repository', deleteRepository);
         registerCommand('vscode-docker.create-ACR-Registry', createRegistry);
+        registerCommand('vscode-docker.acrBuildLogs', viewBuildLogs);
         AzureUtilityManager.getInstance().setAccount(azureAccount);
+
+        // instantiate LogProvider
+        const logProvider = new LogContentProvider();
+        const registration = vscode.workspace.registerTextDocumentContentProvider(LogContentProvider.scheme, logProvider);
+        ctx.subscriptions.push(registration);
     }
 
     activateLanguageClient(ctx);

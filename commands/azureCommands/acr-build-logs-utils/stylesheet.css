@@ -55,24 +55,36 @@ table {
     width: 100%;
 }
 
+.innerTable .borderLimit {
+    padding-left: 0px;
+}
+
 .widthControl {
+    box-sizing: border-box;
     text-align: left;
-    width: 15.95%;
+    width: calc(15.45%);
+    padding-left: 0.7cm;
 }
 
 .widthControl2 {
+    box-sizing: border-box;
     text-align: left;
-    width: 31.9%;
+    width: calc(30.9%);
+    padding-left: 0.7cm;
 }
 
 .widthControl3 {
+    box-sizing: border-box;
     text-align: left;
-    width: 47.85%;
+    width: calc(46.35%);
+    padding-left: 0.7cm;
 }
 
 .widthControl5 {
+    box-sizing: border-box;
     text-align: left;
-    width: 79.75%;
+    width: calc(77.25%);
+    padding-left: 0.7cm;
 }
 
 #header {
@@ -126,6 +138,7 @@ body {
 
 .innerTable td.arrowHolder {
     border-bottom: 0px;
+    padding-right: 0.7cm;
 }
 
 .innerTable td,

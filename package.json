@@ -47,6 +47,7 @@
     "onCommand:vscode-docker.configure",
     "onCommand:vscode-docker.createWebApp",
     "onCommand:vscode-docker.create-ACR-Registry",
+    "onCommand:vscode-docker.acr-task",
     "onCommand:vscode-docker.system.prune",
     "onCommand:vscode-docker.dockerHubLogout",
     "onCommand:vscode-docker.browseDockerHub",
@@ -113,6 +114,11 @@
         {
           "when": "resourceFilename =~ /[dD]ocker[fF]ile/",
           "command": "vscode-docker.image.build",
+          "group": "docker"
+        },
+        {
+          "when": "resourceFilename =~ /[dD]ocker[fF]ile/",
+          "command": "vscode-docker.acr-task",
           "group": "docker"
         },
         {
@@ -434,6 +440,12 @@
         "command": "vscode-docker.image.build",
         "title": "Build Image",
         "description": "Build a Docker image from a Dockerfile",
+        "category": "Docker"
+      },
+      {
+        "command": "vscode-docker.acr-task",
+        "title": "Launch with Automated Builds",
+        "description": "Create task for the designated image",
         "category": "Docker"
       },
       {

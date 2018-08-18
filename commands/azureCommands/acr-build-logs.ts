@@ -199,13 +199,11 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
                 <td></td>
             </table>
         </div>
-        <div class = "offsetX">
             <table>
                 <tbody id = 'core'>
 
                 </tbody>
             </table>
-        </div>
         <div class = 'loadMoreBtn'>
             <button id= "loadBtn" class="viewLog">Load More Logs</button>
         </div>

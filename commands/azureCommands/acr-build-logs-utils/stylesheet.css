@@ -55,36 +55,32 @@ table {
     width: 100%;
 }
 
-.innerTable .borderLimit {
-    padding-left: 0px;
-}
-
 .widthControl {
     box-sizing: border-box;
     text-align: left;
-    width: calc(15.45%);
-    padding-left: 0.7cm;
+    width: calc(15.9%);
+    padding-right: 0.7cm;
 }
 
 .widthControl2 {
     box-sizing: border-box;
     text-align: left;
-    width: calc(30.9%);
-    padding-left: 0.7cm;
+    width: calc(31.8%);
+    padding-right: 0.7cm;
 }
 
 .widthControl3 {
     box-sizing: border-box;
     text-align: left;
-    width: calc(46.35%);
-    padding-left: 0.7cm;
+    width: calc(47.7%);
+    padding-right: 0.7cm;
 }
 
 .widthControl5 {
     box-sizing: border-box;
     text-align: left;
-    width: calc(77.25%);
-    padding-left: 0.7cm;
+    width: calc(79.5%);
+    padding-right: 0.7cm;
 }
 
 #header {
@@ -147,11 +143,13 @@ body {
 }
 
 .button-holder {
+    box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-content: center;
     align-items: center;
     width: 100%;
+    padding-left: 0.7cm;
 }
 
 .viewLog {
@@ -159,12 +157,12 @@ body {
     border: none;
     color: var(--vscode-button-foreground);
     padding: 5px 13px;
-    text-align: left;
+    text-align: center;
     text-decoration: none;
     display: inline-block;
     font-size: var(--vscode-editor-font-size);
     cursor: pointer;
-    align-items: left;
+    align-items: center;
 }
 
 .loadMoreBtn {
@@ -242,9 +240,9 @@ body {
 }
 
 .arrowHolder {
-    width: 4.3%;
-    padding-left: 1.5%;
-    padding-right: 1.5%;
+    box-sizing: border-box;
+    width: 4.6%;
+    padding-right: 0.7cm;
     text-align: center;
 }
 

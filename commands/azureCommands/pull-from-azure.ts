@@ -1,7 +1,7 @@
 import vscode = require('vscode');
 import { reporter } from '../../telemetry/telemetry';
 const teleCmdId: string = 'vscode-docker.image.pullFromAzure';
-import { AzureImageNode } from '../../explorer/models/AzureRegistryNodes';
+import { AzureImageNode } from '../../explorer/models/azureRegistryNodes';
 import * as acrTools from '../../utils/Azure/acrTools';
 
 /* Pulls an image from Azure. The context is the image node the user has right clicked on */

@@ -6,8 +6,8 @@ import * as opn from 'opn';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, registerCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
-import { queueBuild } from './commands/acr-build';
-import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/lib/main';
+import { queueBuild } from './commands/azureCommands/acr-build';
 import { viewBuildLogs } from './commands/azureCommands/acr-build-logs'
 import { LogContentProvider } from './commands/azureCommands/acr-build-logs-utils/logProvider';
 import { createRegistry } from './commands/azureCommands/create-registry';
@@ -123,7 +123,6 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     registerCommand('vscode-docker.image.remove', removeImage);
     registerCommand('vscode-docker.image.push', pushImage);
     registerCommand('vscode-docker.image.tag', tagImage);
-    registerCommand('vscode-docker.queueBuild', queueBuild);
     registerCommand('vscode-docker.container.start', startContainer);
     registerCommand('vscode-docker.container.start.interactive', startContainerInteractive);
     registerCommand('vscode-docker.container.start.azurecli', startAzureCLI);
@@ -177,6 +176,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
         registerCommand('vscode-docker.delete-ACR-Repository', deleteRepository);
         registerCommand('vscode-docker.create-ACR-Registry', createRegistry);
         registerCommand('vscode-docker.acrBuildLogs', viewBuildLogs);
+        registerCommand('vscode-docker.queueBuild', queueBuild);
         AzureUtilityManager.getInstance().setAccount(azureAccount);
 
         // instantiate LogProvider

@@ -1,11 +1,11 @@
+import ContainerRegistryManagementClient from "azure-arm-containerregistry";
 import { Build, BuildGetLogResult, BuildListResult, BuildTaskListResult, Registry, RegistryListResult, RegistryNameStatus } from "azure-arm-containerregistry/lib/models";
+import { Subscription } from "azure-arm-resource/lib/subscription/models";
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
+import { truncate } from "fs-extra";
 import * as path from 'path';
 import * as vscode from "vscode";
 import { AzureImageNode, AzureLoadingNode, AzureNotSignedInNode, AzureRegistryNode, AzureRepositoryNode } from '../../explorer/models/azureRegistryNodes';
-import { truncate } from "../../node_modules/@types/fs-extra";
-import ContainerRegistryManagementClient from "../../node_modules/azure-arm-containerregistry";
-import { Subscription } from "../../node_modules/azure-arm-resource/lib/subscription/models";
 import { getSubscriptionFromRegistry } from '../../utils/Azure/acrTools';
 import { AzureUtilityManager } from '../../utils/azureUtilityManager';
 import { quickPickACRRegistry } from '../utils/quick-pick-azure'
@@ -199,7 +199,7 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
                 <td></td>
             </table>
         </div>
-            <table>
+            <table id = 'coreParent'>
                 <tbody id = 'core'>
 
                 </tbody>

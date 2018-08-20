@@ -18,6 +18,7 @@ let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();
 setLoadMoreListener();
 setTableSorter();
+window.addEventListener("resize", manageWidth);
 
 modalObject.overlay.addEventListener('click', (event) => {
     if (event.target === modalObject.overlay) {
@@ -129,6 +130,8 @@ window.addEventListener('message', event => {
 
     } else if (message.type === 'endContinued') {
         sortTable(currentN, currentDir, true);
+    } else if (message.type === 'end') {
+        manageWidth();
     }
 
 });
@@ -188,3 +191,16 @@ function setDigestListener(digestClickables) {
         });
     }
 }
+
+function manageWidth() {
+    let headerCells = document.querySelectorAll("#headerTable th");
+    let topRow = document.querySelector("#core tr");
+    let topRowCells = topRow.querySelectorAll("td");
+    console.log(topRowCells);
+    for (let i = 0; i < topRowCells.length; i++) {
+        let width = parseInt(getComputedStyle(topRowCells[i]).width);
+        console.log(width);
+        headerCells[i].style.width = width + "px";
+    }
+}
+

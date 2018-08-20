@@ -8,9 +8,9 @@ import * as os from 'os';
 import * as tar from 'tar';
 import * as url from 'url';
 import * as vscode from "vscode";
-import { getBlobInfo } from "../utils/Azure/acrTools";
-import { AzureUtilityManager } from "../utils/azureUtilityManager";
-import { quickPickACRRegistry, quickPickResourceGroup, quickPickSubscription } from './utils/quick-pick-azure';
+import { getBlobInfo } from "../../utils/Azure/acrTools";
+import { AzureUtilityManager } from "../../utils/azureUtilityManager";
+import { quickPickACRRegistry, quickPickResourceGroup, quickPickSubscription } from '../utils/quick-pick-azure';
 const idPrecision = 6;
 let status = vscode.window.createOutputChannel('status');
 

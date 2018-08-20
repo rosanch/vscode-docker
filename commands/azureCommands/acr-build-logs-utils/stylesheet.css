@@ -84,7 +84,7 @@ table {
 }
 
 #header {
-    height: 0.8cm;
+    height: 1cm;
     top: 0px;
     position: fixed;
     width: 100%;
@@ -100,9 +100,10 @@ h2 {
     font-family: var(--vscode-editor-font-family);
 }
 
-#core {
-    margin-top: 0.8cm;
+#coreParent{
+    margin-top: 1cm;
 }
+
 
 #headerTable {
     font-size: var(--vscode-editor-font-size);

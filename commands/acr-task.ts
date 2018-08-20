@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as vscode from "vscode";
 import { ImageNode } from "../explorer/models/imageNode";
 import { BuildStep, BuildTask } from '../node_modules/azure-arm-containerregistry/lib/models';
-import { AzureUtilityManager } from "../utils/AzureUtilityManager";
+import { AzureUtilityManager } from "../utils/azureUtilityManager";
 import { quickPickACRRegistry, quickPickLocation, quickPickResourceGroup, quickPickSKU, quickPickSubscription } from './utils/quick-pick-azure';
 //import { DockerBuildStep } from "azure-arm-containerregistry/lib/models";
 
@@ -22,9 +22,8 @@ import { quickPickACRRegistry, quickPickLocation, quickPickResourceGroup, quickP
 
 export async function launchAsTask(): Promise<void> {
     let subscription = await quickPickSubscription();
-    let resourceGroup = await quickPickResourceGroup(false);
+    let resourceGroup = await quickPickResourceGroup(false, subscription);
     let registry = await quickPickACRRegistry();
-
     createTask(subscription, resourceGroup.name, registry.name);
 }
 

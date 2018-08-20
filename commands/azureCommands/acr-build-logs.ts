@@ -27,6 +27,7 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
     let resourceGroup: string = registry.id.slice(registry.id.search('resourceGroups/') + 'resourceGroups/'.length, registry.id.search('/providers/'));
 
     const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
+
     let logData: LogData = new LogData(client, registry, resourceGroup);
     const filterFunction = context ? getFilterFunction(context) : undefined;
     try {
@@ -43,22 +44,26 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
             itemType = 'repository';
         } else if (context && context instanceof AzureImageNode) {
             itemType = 'image';
+
         } else {
             itemType = 'registry';
         }
         vscode.window.showInformationMessage(`This ${itemType} has no associated build logs`);
         return;
     }
-
-    let links: { url?: string, id: number }[] = [];
-
-    links.sort((a, b): number => { return a.id - b.id });
-    let webViewTitle: string = registry.name;
-    if (context instanceof AzureRepositoryNode || context instanceof AzureImageNode) {
-        webViewTitle += (context ? '/' + context.label : '');
+    if (context && context instanceof AzureImageNode) {
+        logData.getLink(0).then((url) => {
+            if (url !== 'requesting') {
+                openLog(url, logData.logs[0].buildId); //-----------------------------------------------------Need to use filter
+            }
+        });
+    } else {
+        let webViewTitle: string = registry.name;
+        if (context instanceof AzureRepositoryNode || context instanceof AzureImageNode) {
+            webViewTitle += (context ? '/' + context.label : '');
+        }
+        createWebview(webViewTitle, logData);
     }
-    createWebview(webViewTitle, logData);
-
 }
 
 //# WEBVIEW COMPONENTS

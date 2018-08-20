@@ -33,7 +33,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     } else {
         folder = await (<any>vscode).window.showWorkspaceFolderPick();
     }
-    let sourceLocation: string = folder.uri.path;
+    let sourceLocation: string = '.' + folder.uri.path;
     let relativeDockerPath = 'Dockerfile';
     if (dockerFileUri.path.indexOf(sourceLocation) !== 0) {
         //Currently, there is no support for selecting source location folders that don't contain a path to the triggered dockerfile.
@@ -70,7 +70,8 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     status.appendLine("Queueing Build");
     const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
     status.show();
-    streamLogs2(client, resourceGroupName, registry, build);
+    await streamLogs2(client, resourceGroupName, registry, build);
+    status.show();
 }
 
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string): Promise<string> {
@@ -135,9 +136,7 @@ async function streamLogs2(client: ContainerRegistryManagementClient, resourceGr
     const link = temp.logLink;
     let blobInfo = getBlobInfo(link);
     let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
-    let stream: Readable = new Readable();
-
-    stream = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
+    let stream: Readable = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
         if (response) {
             status.appendLine(response.name + 'has Completed');
         } else {
@@ -148,7 +147,37 @@ async function streamLogs2(client: ContainerRegistryManagementClient, resourceGr
 
     stream.on('data', (chunk) => {
         status.appendLine(chunk.toString());
+        console.log(chunk.toString());
         status.show();
     });
 
+}
+
+export async function streamLogs3(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
+    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
+    return new Promise<void>((resolve, reject) => {
+        const link = temp.logLink;
+        let blobInfo = getBlobInfo(link);
+        let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
+        let stream: Readable = new Readable();
+        stream = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
+            if (response) {
+                //.appendLine(chunk.toString());
+                status.show();
+            } else {
+                status.appendLine(error.message);
+                reject();
+            }
+            status.show();
+        });
+
+        stream.on('data', (chunk) => {
+            status.appendLine(chunk.toString());
+            status.show();
+        });
+        stream.on('finish', () => {
+            resolve();
+        });
+
+    });
 }

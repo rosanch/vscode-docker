@@ -42,13 +42,13 @@ function sortTable(n, dir = "asc", holdDir = false) {
     currentN = n;
     let table, rows, switching, i, x, y, shouldSwitch, switchcount = 0;
     let cmpFunc = acquireCompareFunction(n);
-    table = document.getElementById("core");
+    table = document.getElementById("coreParent");
     switching = true;
     //Set the sorting direction to ascending:
 
     while (switching) {
         switching = false;
-        rows = table.getElementsByClassName("holder");
+        rows = table.querySelectorAll(".accordion");
         for (i = 0; i < rows.length - 1; i++) {
             shouldSwitch = false;
             x = rows[i].getElementsByTagName("TD")[n];
@@ -81,16 +81,18 @@ function sortTable(n, dir = "asc", holdDir = false) {
 
 function acquireCompareFunction(n) {
     switch (n) {
-        case 0: //Name
-        case 1: //Build Task
+        case 0:
+            return;
+        case 1: //Name
+        case 2: //Build Task
             return (x, y) => {
                 return x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()
             }
-        case 2: //Status
+        case 3: //Status
             return (x, y) => {
                 return status[x.innerHTML] > status[y.innerHTML];;
             }
-        case 3: //Created time
+        case 4: //Created time
             return (x, y) => {
                 if (x.innerHTML === '') return true;
                 if (y.innerHTML === '') return false;
@@ -98,13 +100,13 @@ function acquireCompareFunction(n) {
                 let dateY = new Date(y.innerHTML);
                 return dateX > dateY;
             }
-        case 4: //Elapsed time
+        case 5: //Elapsed time
             return (x, y) => {
                 if (x.innerHTML === '') return true;
                 if (y.innerHTML === '') return false;
-                return (+x.innerHTML.substring(0, x.innerHTML.length)) > (+y.innerHTML.substring(0, x.innerHTML.length));
+                return (+x.innerHTML.substring(0, x.innerHTML.length - 1)) > (+y.innerHTML.substring(0, x.innerHTML.length - 1));
             }
-        case 5: //OS Type
+        case 6: //OS Type
             return (x, y) => {
                 return x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()
             }
@@ -157,7 +159,7 @@ function setTableSorter() {
     let items = document.getElementsByTagName('TH');
     for (let i = 0; i < items.length; i++) {
         items[i].addEventListener('click', () => {
-            sortTable(i)
+            sortTable(i);
         });
     }
 }

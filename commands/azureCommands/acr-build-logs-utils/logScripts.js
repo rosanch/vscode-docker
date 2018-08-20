@@ -198,11 +198,8 @@ function manageWidth() {
     let headerCells = document.querySelectorAll("#headerTable th");
     let topRow = document.querySelector("#core tr");
     let topRowCells = topRow.querySelectorAll("td");
-    console.log(topRowCells);
     for (let i = 0; i < topRowCells.length; i++) {
         let width = parseInt(getComputedStyle(topRowCells[i]).width);
-        console.log(width);
         headerCells[i].style.width = width + "px";
     }
 }
-

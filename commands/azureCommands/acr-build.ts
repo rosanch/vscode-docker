@@ -1,14 +1,13 @@
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
 import { QuickBuildRequest } from "azure-arm-containerregistry/lib/models";
 import { Registry } from 'azure-arm-containerregistry/lib/models';
-import { ResourceManagementClient } from 'azure-arm-resource';
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
 import * as fs from 'fs';
 import * as os from 'os';
 import * as tar from 'tar';
 import * as url from 'url';
 import * as vscode from "vscode";
-import { getBlobInfo } from "../../utils/Azure/acrTools";
+import { getBlobInfo, getResourceGroupName } from "../../utils/Azure/acrTools";
 import { AzureUtilityManager } from "../../utils/azureUtilityManager";
 import { quickPickACRRegistry, quickPickResourceGroup, quickPickSubscription } from '../utils/quick-pick-azure';
 const idPrecision = 6;
@@ -19,17 +18,13 @@ let status = vscode.window.createOutputChannel('status');
 // Selected source code must contain a path to the desired dockerfile.
 export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     status.show();
-    status.appendLine("Obtaining Subscription and Client");
-    let subscription = await quickPickSubscription();
-    let client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
-    const resourceGroupClient = new ResourceManagementClient(AzureUtilityManager.getInstance().getCredentialByTenantId(subscription.tenantId), subscription.subscriptionId);
+    status.appendLine("Obtaining Subscription and initializing management client");
+    const subscription = await quickPickSubscription();
+    const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
+    const registry: Registry = await quickPickACRRegistry(true);
+    status.appendLine("Selected registry: " + registry.name);
 
-    let resourceGroup = await quickPickResourceGroup(false, subscription);
-    let resourceGroupName = resourceGroup.name;
-
-    let registry: Registry = await quickPickACRRegistry(false);
-    let registryName = registry.name;
-
+    const resourceGroupName = getResourceGroupName(registry);
     let folder: vscode.WorkspaceFolder;
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
         folder = vscode.workspace.workspaceFolders[0];
@@ -37,7 +32,6 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         folder = await (<any>vscode).window.showWorkspaceFolderPick();
     }
     let sourceLocation: string = folder.uri.path;
-
     let relativeDockerPath = 'Dockerfile';
     if (dockerFileUri.path.indexOf(sourceLocation) !== 0) {
         //Currently, there is no support for selecting source location folders that don't contain a path to the triggered dockerfile.
@@ -55,7 +49,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     let tarFilePath = getTempSourceArchivePath();
 
     status.appendLine("Uploading Source Code to " + tarFilePath);
-    sourceLocation = await uploadSourceCode(client, registryName, resourceGroupName, sourceLocation, tarFilePath);
+    sourceLocation = await uploadSourceCode(client, registry.name, resourceGroupName, sourceLocation, tarFilePath);
 
     let osType = os.type()
     if (osType === 'Windows_NT') {
@@ -72,7 +66,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         'dockerFilePath': relativeDockerPath
     };
     status.appendLine("Queueing Build");
-    await client.registries.queueBuild(resourceGroupName, registryName, buildRequest);
+    await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
     status.appendLine('Success');
 }
 

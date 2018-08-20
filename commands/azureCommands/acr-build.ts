@@ -1,12 +1,14 @@
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
-import { QuickBuildRequest } from "azure-arm-containerregistry/lib/models";
-import { Registry } from 'azure-arm-containerregistry/lib/models';
+import { Build, Registry } from 'azure-arm-containerregistry/lib/models';
+import { BuildGetLogResult, QuickBuildRequest } from "azure-arm-containerregistry/lib/models";
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
 import * as fs from 'fs';
 import * as os from 'os';
+import { Readable, Writable } from 'stream';
 import * as tar from 'tar';
 import * as url from 'url';
 import * as vscode from "vscode";
+import { ResourceGroup } from '../../node_modules/azure-arm-resource/lib/resource/models';
 import { getBlobInfo, getResourceGroupName } from "../../utils/Azure/acrTools";
 import { AzureUtilityManager } from "../../utils/azureUtilityManager";
 import { quickPickACRRegistry, quickPickResourceGroup, quickPickSubscription } from '../utils/quick-pick-azure';
@@ -37,7 +39,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         //Currently, there is no support for selecting source location folders that don't contain a path to the triggered dockerfile.
         throw new Error("Source code path must be a parent of the Dockerfile path");
     } else {
-        relativeDockerPath = dockerFileUri.path.toString().substring(sourceLocation.length);
+        relativeDockerPath = '.' + dockerFileUri.path.toString().substring(sourceLocation.length);
     }
 
     // Prompting for name so the image can then be pushed to a repository.
@@ -66,8 +68,9 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         'dockerFilePath': relativeDockerPath
     };
     status.appendLine("Queueing Build");
-    await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
-    status.appendLine('Success');
+    const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+    status.show();
+    streamLogs2(client, resourceGroupName, registry, build);
 }
 
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string): Promise<string> {
@@ -87,15 +90,10 @@ async function uploadSourceCode(client: ContainerRegistryManagementClient, regis
     status.appendLine("   Getting blob info from Upload Url ");
     // Right now, accountName and endpointSuffix are unused, but will be used for streaming logs later.
     let { accountName, endpointSuffix, containerName, blobName, sasToken, host } = getBlobInfo(upload_url);
-
     status.appendLine("   Creating Blob Service ");
     let blob: BlobService = createBlobServiceWithSas(host, sasToken);
-
     status.appendLine("   Creating Block Blob ");
-
     blob.createBlockBlobFromLocalFile(containerName, blobName, tarFilePath, (): void => { });
-
-    status.appendLine("   Success ");
     return relative_path;
 }
 
@@ -105,4 +103,52 @@ function getTempSourceArchivePath(): string {
     status.appendLine("Setting up temp file with 'sourceArchive" + id + ".tar.gz' ");
     let tarFilePath = url.resolve(os.tmpdir(), `sourceArchive${id}.tar.gz`);
     return tarFilePath;
+}
+
+async function streamLogs(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
+    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
+    const link = temp.logLink;
+    let blobInfo = getBlobInfo(link);
+    let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
+    let stream: Readable = new Readable();
+    try {
+        stream = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
+            if (response) {
+                console.log(response.name + 'has Completed');
+            } else {
+                console.log(error);
+            }
+        });
+        console.log(stream);
+    } catch (error) {
+        console.log('a' + error);
+    }
+    stream.on('data', (chunk) => {
+        status.appendLine(chunk.toString());
+        status.show();
+    });
+
+}
+
+async function streamLogs2(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
+    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
+    const link = temp.logLink;
+    let blobInfo = getBlobInfo(link);
+    let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
+    let stream: Readable = new Readable();
+
+    stream = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
+        if (response) {
+            status.appendLine(response.name + 'has Completed');
+        } else {
+            status.appendLine(error.message);
+        }
+        status.show();
+    });
+
+    stream.on('data', (chunk) => {
+        status.appendLine(chunk.toString());
+        status.show();
+    });
+
 }

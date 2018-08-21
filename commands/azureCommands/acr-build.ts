@@ -39,7 +39,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         //Currently, there is no support for selecting source location folders that don't contain a path to the triggered dockerfile.
         throw new Error("Source code path must be a parent of the Dockerfile path");
     } else {
-        relativeDockerPath = '.' + dockerFileUri.path.toString().substring(sourceLocation.length);
+        relativeDockerPath = dockerFileUri.path.toString().substring(sourceLocation.length + 1);
     }
 
     // Prompting for name so the image can then be pushed to a repository.
@@ -51,27 +51,32 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     let tarFilePath = getTempSourceArchivePath();
 
     status.appendLine("Uploading Source Code to " + tarFilePath);
-    sourceLocation = await uploadSourceCode(client, registry.name, resourceGroupName, sourceLocation, tarFilePath);
+    let uploadedSourceLocation = await uploadSourceCode(client, registry.name, resourceGroupName, sourceLocation, tarFilePath);
 
     let osType = os.type()
     if (osType === 'Windows_NT') {
         osType = 'Windows'
     }
-
     status.appendLine("Setting up Build Request");
     let buildRequest: QuickBuildRequest = {
         'type': 'QuickBuild',
         'imageNames': [name],
         'isPushEnabled': true,
-        'sourceLocation': sourceLocation,
+        'sourceLocation': uploadedSourceLocation,
         'platform': { 'osType': osType },
-        'dockerFilePath': relativeDockerPath
+        'dockerFilePath': dockerFileUri.path.substring(4)//'Dockerfile' //relativeDockerPath
     };
     status.appendLine("Queueing Build");
-    const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
-    status.show();
-    await streamLogs2(client, resourceGroupName, registry, build);
-    status.show();
+    // Real line is commented out, spoof sends code to terminal with the azure cli
+    //await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+    const terminal = vscode.window.createTerminal();
+    terminal.show();
+    await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
+    status.appendLine('Success');
+    //const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+    //status.show();
+    //await streamLogs2(client, resourceGroupName, registry, build);
+    //status.show();
 }
 
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string): Promise<string> {
@@ -80,9 +85,10 @@ async function uploadSourceCode(client: ContainerRegistryManagementClient, regis
         {
             gzip: true
         },
-        [sourceLocation]
+        [sourceLocation.substring(1)]
     ).pipe(fs.createWriteStream(tarFilePath));
-
+    console.log(sourceLocation);
+    console.log(tarFilePath);
     status.appendLine("   Getting Build Source Upload Url ");
     let sourceUploadLocation = await client.registries.getBuildSourceUploadUrl(resourceGroupName, registryName);
     let upload_url = sourceUploadLocation.uploadUrl;
@@ -106,6 +112,16 @@ function getTempSourceArchivePath(): string {
     return tarFilePath;
 }
 
+/*
+function loadDockerignoreFile(sourceLocation) {
+    let ignoreFile = url.resolve(sourceLocation, '.dockerignore');
+    let ignoreList = [];
+    for (for line of ignoreFile) {
+
+    }
+
+}
+*/
 async function streamLogs(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
     const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
     const link = temp.logLink;

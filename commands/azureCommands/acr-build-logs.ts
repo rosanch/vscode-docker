@@ -248,26 +248,30 @@ function setupCommunication(panel: vscode.WebviewPanel, logData: LogData): void 
 function createLogView(text: string, title: string): void {
     const scheme = 'purejs';
     let uri: vscode.Uri;
+    let query: string;
     try {
-        let query = JSON.stringify({ 'log': makeBase64(text) });
+        query = JSON.stringify({ 'log': makeBase64(text) });
         uri = vscode.Uri.parse(`${scheme}://authority/${title}?${query}#idk`);
     } catch (error) {
         console.log(error);
     }
 
-    // ///TODO: temporarily testing with the opentext, trying to save
-    // let bool;
-    // console.log("here");
-    // vscode.workspace.openTextDocument(uri).then((doc) => {
-    //     console.log("inside openTextDocument lambda function");
-    //     bool = doc.save(); ///want to make this async, wasn't able to make lambda asyc
-    //     console.log(bool);
-    //     return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
-    // });
+    /*vscode.workspace.openTextDocument(uri).then(doc => {
+        vscode.window.showTextDocument(doc);
+    });*/
+
+    let fs = require('fs');
+    fs.writeFile(`C:/Users/t-rusama/Downloads/vscode-docker-57f39125c3e5990e20a36e48ab1f71df31f1f402/.vscode/${title}.log`, text, (err) => {
+        if (err) {
+            return console.log(err);
+        }
+        console.log("The file was saved!");
+    });
 
     vscode.commands.executeCommand('vscode.previewHtml', uri, undefined, title).then(_ => { }, _ => {
         vscode.window.showErrorMessage('Cant open!');
     });
+
 }
 /** Loads log text from remote url using azure blobservices */
 function openLog(url: string, title: string): void {

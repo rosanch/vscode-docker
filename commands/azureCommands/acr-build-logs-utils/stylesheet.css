@@ -100,10 +100,9 @@ h2 {
     font-family: var(--vscode-editor-font-family);
 }
 
-#coreParent{
+#core {
     margin-top: 1cm;
 }
-
 
 #headerTable {
     font-size: var(--vscode-editor-font-size);

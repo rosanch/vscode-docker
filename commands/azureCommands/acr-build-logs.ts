@@ -27,6 +27,7 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
     let resourceGroup: string = registry.id.slice(registry.id.search('resourceGroups/') + 'resourceGroups/'.length, registry.id.search('/providers/'));
 
     const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
+
     let logData: LogData = new LogData(client, registry, resourceGroup);
     const filterFunction = context ? getFilterFunction(context) : undefined;
     try {
@@ -43,22 +44,26 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
             itemType = 'repository';
         } else if (context && context instanceof AzureImageNode) {
             itemType = 'image';
+
         } else {
             itemType = 'registry';
         }
         vscode.window.showInformationMessage(`This ${itemType} has no associated build logs`);
         return;
     }
-
-    let links: { url?: string, id: number }[] = [];
-
-    links.sort((a, b): number => { return a.id - b.id });
-    let webViewTitle: string = registry.name;
-    if (context instanceof AzureRepositoryNode || context instanceof AzureImageNode) {
-        webViewTitle += (context ? '/' + context.label : '');
+    if (context && context instanceof AzureImageNode) {
+        logData.getLink(0).then((url) => {
+            if (url !== 'requesting') {
+                openLog(url, logData.logs[0].buildId); //-----------------------------------------------------Need to use filter
+            }
+        });
+    } else {
+        let webViewTitle: string = registry.name;
+        if (context instanceof AzureRepositoryNode || context instanceof AzureImageNode) {
+            webViewTitle += (context ? '/' + context.label : '');
+        }
+        createWebview(webViewTitle, logData);
     }
-    createWebview(webViewTitle, logData);
-
 }
 
 //# WEBVIEW COMPONENTS
@@ -95,39 +100,41 @@ function addLogsToWebView(panel: vscode.WebviewPanel, logData: LogData, startIte
             'type': 'populate',
             'id': i,
             'logComponent': `
-                        <tr id= "btn${i}" class="accordion">
-                                <td class = 'arrowHolder'><div class = "arrow">&#x25f9</div></td>
-                                <td class = 'widthControl'>${name}</td>
-                                <td class = 'widthControl'>${buildTask}</td>
-                                <td class ='status widthControl ${log.status}'>${log.status}</td>
-                                <td class = 'widthControl'>${createTime}</td>
-                                <td class = 'widthControl'>${timeElapsed}</td>
-                                <td class = 'widthControl'>${osType}</td>
-                        </tr>
-                        <tr class="panel">
-                            <td colspan = "7">
-                                <div class= "paddingDiv overflowX">
-                                    <table class="innerTable">
-                                        <tr>
-                                            <td class = "arrowHolder">&#160</td>
-                                            <td colspan = "5" class = "borderLimit widthControl5">Output Images</td>
-                                            <td class = "widthControl lastTd" rowspan = "300">
-                                                <div class = "button-holder">
-                                                    <button id= "log${i}" class="viewLog">Open Logs</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class = "arrowHolder">&#160</td>
-                                            <td colspan = "2" class = "borderLimit widthControl2">Tag</th>
-                                            <td colspan = "2" class = "widthControl3">Repository</td>
-                                            <td class = "widthControl">Digest</td>
-                                        </tr>
-                                        ${imageOutput}
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>`
+                        <tbody class = "holder">
+                            <tr id= "btn${i}" class="accordion">
+                                    <td class = 'arrowHolder'><div class = "arrow">&#x25f9</div></td>
+                                    <td class = 'widthControl'>${name}</td>
+                                    <td class = 'widthControl'>${buildTask}</td>
+                                    <td class ='status widthControl ${log.status}'>${log.status}</td>
+                                    <td class = 'widthControl'>${createTime}</td>
+                                    <td class = 'widthControl'>${timeElapsed}</td>
+                                    <td class = 'widthControl'>${osType}</td>
+                            </tr>
+                            <tr class="panel">
+                                <td colspan = "7">
+                                    <div class= "paddingDiv overflowX">
+                                        <table class="innerTable">
+                                            <tr>
+                                                <td class = "arrowHolder">&#160</td>
+                                                <td colspan = "5" class = "borderLimit widthControl5">Output Images</td>
+                                                <td class = "widthControl lastTd" rowspan = "300">
+                                                    <div class = "button-holder">
+                                                        <button id= "log${i}" class="viewLog">Open Logs</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class = "arrowHolder">&#160</td>
+                                                <td colspan = "2" class = "borderLimit widthControl2">Tag</th>
+                                                <td colspan = "2" class = "widthControl3">Repository</td>
+                                                <td class = "widthControl">Digest</td>
+                                            </tr>
+                                            ${imageOutput}
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>`
         });
     }
     if (startItem) {
@@ -190,19 +197,16 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
         <div id = "header">
             <table id="headerTable">
                 <th class = 'arrowHolder'></td>
-                <th class = 'widthControl'>Build Name </th>
-                <th class = 'widthControl'>BuildTask </th>
-                <th class = 'widthControl'>Status </th>
-                <th class = 'widthControl'>Created </th>
-                <th class = 'widthControl'>Elapsed Time </th>
-                <th class = 'widthControl'>Platform </th>
+                <th class = 'widthControl'>Build Name<span class="sort">  </span></th>
+                <th class = 'widthControl'>BuildTask<span class="sort">  </span></th>
+                <th class = 'widthControl'>Status<span class="sort">  </span></th>
+                <th class = 'widthControl'>Created<span class="sort"> &#9661</span></th>
+                <th class = 'widthControl'>Elapsed Time<span class="sort">  </span></th>
+                <th class = 'widthControl'>Platform<span class="sort">  </span></th>
                 <td></td>
             </table>
         </div>
-            <table id = 'coreParent'>
-                <tbody id = 'core'>
-
-                </tbody>
+            <table id = 'core'>
             </table>
         <div class = 'loadMoreBtn'>
             <button id= "loadBtn" class="viewLog">Load More Logs</button>
@@ -215,8 +219,7 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
         </div>
 
         <script src= "${scriptFile}"></script>
-    </body>
-`;
+    </body>`;
 }
 /** Setup communication with the webview sorting out received mesages from its javascript file */
 function setupCommunication(panel: vscode.WebviewPanel, logData: LogData): void {
@@ -252,7 +255,13 @@ function createLogView(text: string, title: string): void {
         console.log(error);
     }
 
+    // ///TODO: temporarily testing with the opentext, trying to save
+    // let bool;
+    // console.log("here");
     // vscode.workspace.openTextDocument(uri).then((doc) => {
+    //     console.log("inside openTextDocument lambda function");
+    //     bool = doc.save(); ///want to make this async, wasn't able to make lambda asyc
+    //     console.log(bool);
     //     return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
     // });
 

@@ -51,22 +51,24 @@ export class LogContentProvider implements vscode.TextDocumentContentProvider {
                         font-size: var(--vscode-editor-font-size);
                         font-family: var(--vscode-editor-font-family);
                     }
-                    pre{
+                    #force{
                         font-size: var(--vscode-editor-font-size);
-                        font-family: var(--vscode-editor-font-family);
+                        font-family: monospace;
+                        font-size: var(--font-size);
+                        font-weight: var(--font-weight);
                     }
                     .r{
-                        color:lightcoral;
+                        color:var(--vscode-terminal-ansiBrightRed);
                     }
                     .g{
-                        color:lightgreen;
+                        color:var(--vscode-terminal-ansiBrightGreen);
                     }
 
                 </style>
             </head>
 
             <body>
-                <pre>${processedLog}</pre>
+                <pre><span id="force">${processedLog}</span></pre>
             </body>
         </html>`
     }

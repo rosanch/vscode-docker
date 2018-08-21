@@ -13,6 +13,11 @@ var modalObject = {
     overlay: document.querySelector('.overlay')
 };
 
+var triangles = {
+    'down': ' △',
+    'up': ' ▽'
+}
+
 // Main
 let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();
@@ -76,6 +81,19 @@ function sortTable(n, dir = "asc", holdDir = false) {
             }
         }
     }
+
+    let sortColumns = document.querySelectorAll(".sort");
+    if (sortColumns[n - 1].innerHTML === triangles['down']) {
+        sortColumns[n - 1].innerHTML = triangles['up'];
+    } else if (sortColumns[n - 1].innerHTML === triangles['up']) {
+        sortColumns[n - 1].innerHTML = triangles['down'];
+    } else {
+        for (cell of sortColumns) {
+            cell.innerHTML = '  ';
+        }
+        sortColumns[n - 1].innerHTML = triangles['down'];
+    }
+
 }
 
 function acquireCompareFunction(n) {

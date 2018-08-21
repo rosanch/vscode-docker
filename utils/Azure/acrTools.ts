@@ -108,6 +108,7 @@ export async function loginCredentials(registry: Registry): Promise<{ password: 
         return { 'password': acrRefreshToken, 'username': NULL_GUID };
     }
 }
+
 /** Obtains tokens for using the Docker Registry v2 Api
  * @param registry The targeted Azure Container Registry
  * @param scope String determining the scope of the access token

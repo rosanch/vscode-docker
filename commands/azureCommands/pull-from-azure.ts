@@ -1,10 +1,10 @@
 import vscode = require('vscode');
 import { reporter } from '../../telemetry/telemetry';
 const teleCmdId: string = 'vscode-docker.image.pullFromAzure';
+//tslint ignore-next-line
+import { exec } from 'child_process';
 import { AzureImageNode } from '../../explorer/models/azureRegistryNodes';
 import * as acrTools from '../../utils/Azure/acrTools';
-//tslint ignore-next-line
-const { exec } = require('child_process');
 
 /* Pulls an image from Azure. The context is the image node the user has right clicked on */
 export async function pullFromAzure(context?: AzureImageNode): Promise<any> {

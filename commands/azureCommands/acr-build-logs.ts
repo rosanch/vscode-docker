@@ -197,12 +197,12 @@ function getWebviewContent(scriptFile: vscode.Uri, stylesheet: vscode.Uri): stri
         <div id = "header">
             <table id="headerTable">
                 <th class = 'arrowHolder'></td>
-                <th class = 'widthControl'>Build Name </th>
-                <th class = 'widthControl'>BuildTask </th>
-                <th class = 'widthControl'>Status </th>
-                <th class = 'widthControl'>Created </th>
-                <th class = 'widthControl'>Elapsed Time </th>
-                <th class = 'widthControl'>Platform </th>
+                <th class = 'widthControl'>Build Name<span class="sort">  </span></th>
+                <th class = 'widthControl'>BuildTask<span class="sort">  </span></th>
+                <th class = 'widthControl'>Status<span class="sort">  </span></th>
+                <th class = 'widthControl'>Created<span class="sort"> &#9661</span></th>
+                <th class = 'widthControl'>Elapsed Time<span class="sort">  </span></th>
+                <th class = 'widthControl'>Platform<span class="sort">  </span></th>
                 <td></td>
             </table>
         </div>

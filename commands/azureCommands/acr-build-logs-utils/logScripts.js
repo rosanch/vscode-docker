@@ -14,8 +14,8 @@ var modalObject = {
 };
 
 var triangles = {
-    'down': ' △',
-    'up': ' ▽'
+    'down': ' ▽',
+    'up': ' △'
 }
 
 // Main

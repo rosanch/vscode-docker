@@ -18,7 +18,6 @@ let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();
 setLoadMoreListener();
 setTableSorter();
-window.addEventListener("resize", manageWidth);
 
 modalObject.overlay.addEventListener('click', (event) => {
     if (event.target === modalObject.overlay) {
@@ -42,13 +41,13 @@ function sortTable(n, dir = "asc", holdDir = false) {
     currentN = n;
     let table, rows, switching, i, x, y, shouldSwitch, switchcount = 0;
     let cmpFunc = acquireCompareFunction(n);
-    table = document.getElementById("coreParent");
+    table = document.getElementById("core");
     switching = true;
     //Set the sorting direction to ascending:
 
     while (switching) {
         switching = false;
-        rows = table.querySelectorAll(".accordion");
+        rows = table.querySelectorAll(".holder");
         for (i = 0; i < rows.length - 1; i++) {
             shouldSwitch = false;
             x = rows[i].getElementsByTagName("TD")[n];
@@ -133,6 +132,7 @@ window.addEventListener('message', event => {
     } else if (message.type === 'endContinued') {
         sortTable(currentN, currentDir, true);
     } else if (message.type === 'end') {
+        window.addEventListener("resize", manageWidth);
         manageWidth();
     }
 
@@ -142,11 +142,17 @@ function setSingleAccordion(item) {
     item.addEventListener('click', function () {
         this.classList.toggle('active');
         this.querySelector('.arrow').classList.toggle('activeArrow');
-        var panel = this.nextElementSibling;
+        let panel = this.nextElementSibling;
         if (panel.style.maxHeight) {
             panel.style.display = 'none';
             panel.style.maxHeight = null;
+            let index = openAccordions.indexOf(panel);
+            if (index > -1) {
+                openAccordions.splice(index, 1);
+            }
         } else {
+            openAccordions.push(panel);
+            setAccordionTableWidth();
             panel.style.display = 'table-row';
             let paddingTop = +panel.style.paddingTop.split('px')[0];
             let paddingBottom = +panel.style.paddingBottom.split('px')[0];
@@ -201,5 +207,34 @@ function manageWidth() {
     for (let i = 0; i < topRowCells.length; i++) {
         let width = parseInt(getComputedStyle(topRowCells[i]).width);
         headerCells[i].style.width = width + "px";
+    }
+    setAccordionTableWidth();
+}
+
+let openAccordions = [];
+
+function setAccordionTableWidth() {
+    let topRow = document.querySelector("#core tr");
+    let topRowCells = topRow.querySelectorAll("td");
+    let topWidths = [];
+    for (let cell of topRowCells) {
+        topWidths.push(parseInt(getComputedStyle(cell).width));
+    }
+    for (acc of openAccordions) {
+        let cells = acc.querySelectorAll(".innerTable td");
+        cells[0].style.width = topWidths[0];
+        cells[5].style.width = topWidths[1] + topWidths[2] + topWidths[3] + topWidths[4] + topWidths[5];
+        cells[2].style.width = topWidths[6];
+        for (let i = 3; i < cells.length; i++) {
+            if ((i + 2) % 4 === 1) {
+                cells[i].style.width = topWidths[0] + "px";
+            } else if ((i + 2) % 4 === 2) {
+                cells[i].style.width = (topWidths[1] + topWidths[2]) + "px";
+            } else if ((i + 2) % 4 === 3) {
+                cells[i].style.width = (topWidths[3] + topWidths[4]) + "px";
+            } else if ((i + 2) % 4 === 0) {
+                cells[i].style.width = topWidths[5] + "px";
+            }
+        }
     }
 }

@@ -33,7 +33,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     } else {
         folder = await (<any>vscode).window.showWorkspaceFolderPick();
     }
-    let sourceLocation: string = '.' + folder.uri.path;
+    let sourceLocation: string = folder.uri.path;
     let relativeDockerPath = 'Dockerfile';
     if (dockerFileUri.path.indexOf(sourceLocation) !== 0) {
         //Currently, there is no support for selecting source location folders that don't contain a path to the triggered dockerfile.
@@ -51,7 +51,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     let tarFilePath = getTempSourceArchivePath();
 
     status.appendLine("Uploading Source Code to " + tarFilePath);
-    let uploadedSourceLocation = await uploadSourceCode(client, registry.name, resourceGroupName, sourceLocation, tarFilePath);
+    let uploadedSourceLocation = await uploadSourceCode(client, registry.name, resourceGroupName, sourceLocation, tarFilePath, folder);
 
     let osType = os.type()
     if (osType === 'Windows_NT') {
@@ -63,15 +63,17 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         'imageNames': [name],
         'isPushEnabled': true,
         'sourceLocation': uploadedSourceLocation,
-        'platform': { 'osType': osType },
+        'platform': { 'osType': 'Linux' },
         'dockerFilePath': dockerFileUri.path.substring(4)//'Dockerfile' //relativeDockerPath
     };
     status.appendLine("Queueing Build");
+    //const terminal = vscode.window.createTerminal();
+    //terminal.show();
+    //terminal.sendText('az acr login -n ' + registry.name);
     // Real line is commented out, spoof sends code to terminal with the azure cli
-    //await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
-    const terminal = vscode.window.createTerminal();
-    terminal.show();
-    await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
+    await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+
+    //await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
     status.appendLine('Success');
     //const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
     //status.show();
@@ -79,16 +81,32 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     //status.show();
 }
 
-async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string): Promise<string> {
+async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string, folder: vscode.WorkspaceFolder): Promise<string> {
     status.appendLine("   Sending source code to temp file");
+    status.appendLine('./' + folder.name);
+    status.appendLine(tarFilePath);
+
+    /*
+        process.chdir(sourceLocation);
+        tar.c(
+            {
+                //strip: 1,
+                //prefix: 'test/prefix/',
+                gzip: true
+            },
+            ['CHANGELOG.md', 'CONTRIBUTING.md', 'Dockerfile', 'Dockerfile-app', 'Dockerfile-base', 'LICENSE.md', 'New Text Document.txt', 'package.json', 'README.md', 'server.js']
+        ).pipe(fs.createWriteStream(tarFilePath));
+        /**/
     tar.c(
         {
+            follow: true,
+            //strip: 1,
+            //prefix: 'test/prefix/',
             gzip: true
         },
         [sourceLocation.substring(1)]
     ).pipe(fs.createWriteStream(tarFilePath));
-    console.log(sourceLocation);
-    console.log(tarFilePath);
+
     status.appendLine("   Getting Build Source Upload Url ");
     let sourceUploadLocation = await client.registries.getBuildSourceUploadUrl(resourceGroupName, registryName);
     let upload_url = sourceUploadLocation.uploadUrl;

@@ -9,6 +9,7 @@ import { AzureImageNode, AzureLoadingNode, AzureNotSignedInNode, AzureRegistryNo
 import { getSubscriptionFromRegistry } from '../../utils/Azure/acrTools';
 import { AzureUtilityManager } from '../../utils/azureUtilityManager';
 import { quickPickACRRegistry } from '../utils/quick-pick-azure'
+import { LogWebview } from "./log-webview";
 
 const teleCmdId: string = 'vscode-docker.buildTaskLog';
 
@@ -246,32 +247,21 @@ function setupCommunication(panel: vscode.WebviewPanel, logData: LogData): void 
 //# LOGS
 /** Passes the log text into a document provider */
 function createLogView(text: string, title: string): void {
+    let log = new LogWebview(text, title);
+
     const scheme = 'purejs';
     let uri: vscode.Uri;
     let query: string;
     try {
         query = JSON.stringify({ 'log': makeBase64(text) });
-        uri = vscode.Uri.parse(`${scheme}://authority/${title}?${query}#idk`);
+        uri = vscode.Uri.parse(`${scheme}://authority/${title}.log?${query}#idk`);
     } catch (error) {
         console.log(error);
     }
 
-    /*vscode.workspace.openTextDocument(uri).then(doc => {
+    vscode.workspace.openTextDocument(uri).then(doc => {
         vscode.window.showTextDocument(doc);
-    });*/
-
-    let fs = require('fs');
-    fs.writeFile(`C:/Users/t-rusama/Downloads/vscode-docker-57f39125c3e5990e20a36e48ab1f71df31f1f402/.vscode/${title}.log`, text, (err) => {
-        if (err) {
-            return console.log(err);
-        }
-        console.log("The file was saved!");
     });
-
-    vscode.commands.executeCommand('vscode.previewHtml', uri, undefined, title).then(_ => { }, _ => {
-        vscode.window.showErrorMessage('Cant open!');
-    });
-
 }
 /** Loads log text from remote url using azure blobservices */
 function openLog(url: string, title: string): void {

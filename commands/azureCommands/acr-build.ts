@@ -67,18 +67,10 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         'dockerFilePath': dockerFileUri.path.substring(4)//'Dockerfile' //relativeDockerPath
     };
     status.appendLine("Queueing Build");
-    //const terminal = vscode.window.createTerminal();
-    //terminal.show();
-    //terminal.sendText('az acr login -n ' + registry.name);
-    // Real line is commented out, spoof sends code to terminal with the azure cli
     await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
 
     //await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
     status.appendLine('Success');
-    //const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
-    //status.show();
-    //await streamLogs2(client, resourceGroupName, registry, build);
-    //status.show();
 }
 
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string, folder: vscode.WorkspaceFolder): Promise<string> {
@@ -86,22 +78,9 @@ async function uploadSourceCode(client: ContainerRegistryManagementClient, regis
     status.appendLine('./' + folder.name);
     status.appendLine(tarFilePath);
 
-    /*
-        process.chdir(sourceLocation);
-        tar.c(
-            {
-                //strip: 1,
-                //prefix: 'test/prefix/',
-                gzip: true
-            },
-            ['CHANGELOG.md', 'CONTRIBUTING.md', 'Dockerfile', 'Dockerfile-app', 'Dockerfile-base', 'LICENSE.md', 'New Text Document.txt', 'package.json', 'README.md', 'server.js']
-        ).pipe(fs.createWriteStream(tarFilePath));
-        /**/
     tar.c(
         {
             follow: true,
-            //strip: 1,
-            //prefix: 'test/prefix/',
             gzip: true
         },
         [sourceLocation.substring(1)]

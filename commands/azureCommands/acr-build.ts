@@ -33,7 +33,7 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     } else {
         folder = await (<any>vscode).window.showWorkspaceFolderPick();
     }
-    let sourceLocation: string = '.' + folder.uri.path;
+    let sourceLocation: string = folder.uri.path;
     let relativeDockerPath = 'Dockerfile';
     if (dockerFileUri.path.indexOf(sourceLocation) !== 0) {
         //Currently, there is no support for selecting source location folders that don't contain a path to the triggered dockerfile.
@@ -68,15 +68,15 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     };
     status.appendLine("Queueing Build");
     // Real line is commented out, spoof sends code to terminal with the azure cli
-    //await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
-    const terminal = vscode.window.createTerminal();
-    terminal.show();
-    await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
-    status.appendLine('Success');
-    //const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
-    //status.show();
-    //await streamLogs2(client, resourceGroupName, registry, build);
-    //status.show();
+    await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+    //const terminal = vscode.window.createTerminal();
+    //terminal.show();
+    //await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
+    //status.appendLine('Success');
+    const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+    status.show();
+    await streamLogs4(client, resourceGroupName, registry, build);
+    status.show();
 }
 
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string): Promise<string> {
@@ -196,4 +196,28 @@ export async function streamLogs3(client: ContainerRegistryManagementClient, res
         });
 
     });
+}
+
+async function streamLogs4(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
+    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
+    const link = temp.logLink;
+    let blobInfo = getBlobInfo(link);
+    let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
+    let stream: Readable = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
+        if (response) {
+            status.appendLine(response.name + 'has Completed');
+        } else {
+            status.appendLine(error.message);
+        }
+        status.show();
+    });
+
+    stream
+        .on('data', (chunk) => {
+            status.appendLine(chunk.toString());
+            status.show();
+        })
+        .on('end', () => {
+            console.log('Finished');
+        });
 }

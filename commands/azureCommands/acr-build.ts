@@ -1,9 +1,11 @@
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
-import { Build, Registry } from 'azure-arm-containerregistry/lib/models';
 import { BuildGetLogResult, QuickBuildRequest } from "azure-arm-containerregistry/lib/models";
+import { Build, Registry } from 'azure-arm-containerregistry/lib/models';
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
 import * as fs from 'fs';
 import * as os from 'os';
+import * as path from 'path';
+import * as process from 'process';
 import { Readable, Writable } from 'stream';
 import * as tar from 'tar';
 import * as url from 'url';
@@ -19,6 +21,25 @@ let status = vscode.window.createOutputChannel('status');
 // The user is then asked to name & tag the image. A build is queued for the image in the selected registry.
 // Selected source code must contain a path to the desired dockerfile.
 export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
+
+    let items = [
+        '.git',
+        'CHANGELOG.md',
+        'CONTRIBUTING.md',
+        'Dockerfile',
+        '.bzr',
+        'Dockerfile-app',
+        'Dockerfile-base',
+        '.hg',
+        'LICENSE.md',
+        'New Text Document.txt',
+        'package.json', 'README.md',
+        'server.js'
+    ]
+    console.log(items);
+    items = filter(items);
+    console.log(items);
+
     status.show();
     status.appendLine("Obtaining Subscription and initializing management client");
     const subscription = await quickPickSubscription();
@@ -58,33 +79,34 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         osType = 'Windows'
     }
     status.appendLine("Setting up Build Request");
+    console.log(dockerFileUri.path.substring(4));
     let buildRequest: QuickBuildRequest = {
         'type': 'QuickBuild',
         'imageNames': [name],
         'isPushEnabled': true,
         'sourceLocation': uploadedSourceLocation,
         'platform': { 'osType': 'Linux' },
-        'dockerFilePath': dockerFileUri.path.substring(4)//'Dockerfile' //relativeDockerPath
+        'dockerFilePath': 'Dockerfile' //relativeDockerPath
     };
     status.appendLine("Queueing Build");
     await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
-
-    //await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
     status.appendLine('Success');
 }
 
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string, folder: vscode.WorkspaceFolder): Promise<string> {
     status.appendLine("   Sending source code to temp file");
-    status.appendLine('./' + folder.name);
-    status.appendLine(tarFilePath);
-
-    tar.c(
-        {
-            follow: true,
-            gzip: true
-        },
-        [sourceLocation.substring(1)]
-    ).pipe(fs.createWriteStream(tarFilePath));
+    let source = sourceLocation.substring(1);
+    process.chdir(source);
+    await fs.readdir(source, (err, items) => {
+        console.log(items);
+        //items = filter(items);
+        tar.c(
+            {},
+            items
+        ).pipe(fs.createWriteStream(tarFilePath));
+        process.chdir(current);
+    });
+    let current = process.cwd();
 
     status.appendLine("   Getting Build Source Upload Url ");
     let sourceUploadLocation = await client.registries.getBuildSourceUploadUrl(resourceGroupName, registryName);
@@ -107,6 +129,24 @@ function getTempSourceArchivePath(): string {
     status.appendLine("Setting up temp file with 'sourceArchive" + id + ".tar.gz' ");
     let tarFilePath = url.resolve(os.tmpdir(), `sourceArchive${id}.tar.gz`);
     return tarFilePath;
+}
+
+function filter(list: string[]): string[] {
+    let ignoreList = ['.git', '.gitignore', '.bzr', 'bzrignore', '.hg', '.hgignore', '.svn'];
+    for (let file of list) {
+        if (ignoreList.indexOf(file) !== -1) {
+            list.splice(list.indexOf(file), 1);
+        }
+    }
+
+    return list;
+}
+/*
+function getItemFiles(source: vscode): string[] {
+    let files = vscode.workspace.findFiles
+    for (let file of ) {
+
+    }
 }
 
 /*
@@ -194,3 +234,17 @@ export async function streamLogs3(client: ContainerRegistryManagementClient, res
 
     });
 }
+
+/*
+    let items = [
+        'CHANGELOG.md',
+        'CONTRIBUTING.md',
+        'Dockerfile',
+        'Dockerfile-app',
+        'Dockerfile-base',
+        'LICENSE.md',
+        'New Text Document.txt',
+        'package.json', 'README.md',
+        'server.js'
+    ]
+    */

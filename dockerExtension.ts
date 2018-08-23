@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, registerCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/lib/main';
+import { launchAsTask } from './commands/acr-task';
 import { queueBuild } from './commands/azureCommands/acr-build';
 import { viewBuildLogs } from './commands/azureCommands/acr-build-logs'
 import { LogContentProvider } from './commands/azureCommands/acr-build-logs-utils/logProvider';
@@ -177,6 +178,8 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
         registerCommand('vscode-docker.create-ACR-Registry', createRegistry);
         registerCommand('vscode-docker.acrBuildLogs', viewBuildLogs);
         registerCommand('vscode-docker.queueBuild', queueBuild);
+        registerCommand('vscode-docker.launchTask', launchAsTask);
+
         AzureUtilityManager.getInstance().setAccount(azureAccount);
 
         // instantiate LogProvider

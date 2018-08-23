@@ -1,10 +1,10 @@
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
-import { DockerBuildStep } from 'azure-arm-containerregistry/lib/models/dockerBuildStep';
+//import { DockerBuildStep } from 'azure-arm-containerregistry/lib/models/dockerBuildStep';
 import { SubscriptionModels } from 'azure-arm-resource';
 import * as os from 'os';
 import * as vscode from "vscode";
 import { ImageNode } from "../explorer/models/imageNode";
-import { BuildStep, BuildTask, Registry } from '../node_modules/azure-arm-containerregistry/lib/models';
+import { BuildStep, BuildTask, DockerBuildStep, Registry } from '../node_modules/azure-arm-containerregistry/lib/models';
 import { AzureUtilityManager } from "../utils/azureUtilityManager";
 import { quickPickACRRegistry, quickPickLocation, quickPickResourceGroup, quickPickSKU, quickPickSubscription } from './utils/quick-pick-azure';
 //import { DockerBuildStep } from "azure-arm-containerregistry/lib/models";
@@ -42,6 +42,12 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
 
     opt = {
         ignoreFocusOut: true,
+        prompt: 'new image name in format: <name>:<tag> '
+    };
+    const imageName: string = await vscode.window.showInputBox(opt);
+
+    opt = {
+        ignoreFocusOut: true,
         prompt: 'Task Name? '
     };
     const taskName: string = await vscode.window.showInputBox(opt);
@@ -61,21 +67,42 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
     let client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
     console.log("uhh");
     let taskCreateParameters: BuildTask = {
+        'location': registry.location,
         'alias': buildTaskAlias,
-        'platform': { 'osType': osType },
-        'sourceRepository': { 'repositoryUrl': gitURL, 'sourceControlType': sourceControlType, 'sourceControlAuthProperties': { 'token': gitToken } },
-        'location': registry.location
+        'platform': { 'osType': 'Linux' },
+        'sourceRepository': {
+            'repositoryUrl': gitURL,
+            'sourceControlType': sourceControlType,
+            'isCommitTriggerEnabled': true,
+            'sourceControlAuthProperties': {
+                'token': gitToken,
+                'tokenType': 'PAT',
+                'refreshToken': '',
+                'scope': 'repo',
+                'expiresIn': 1313141
+            }
+        }
     }
 
-    client.buildTasks.create(resourceGroupName, registry.name, taskName, taskCreateParameters);
+    await client.buildTasks.create(resourceGroupName, registry.name, taskName, taskCreateParameters);
     const type: string = 'image';
     // stepName is set equal to taskName to prepare for new library without step
     const stepName = taskName;
-    let stepCreateParameters: BuildStep = {
-        'properties': { 'type': 'image' }
+    let dockerStep: DockerBuildStep = {
+        'type': 'DockerBuildStep',
+        'branch': 'master',
+        'imageNames': [imageName],
+        'noCache': false,
+        'dockerFilePath': 'Dockerfile',
+        'baseImageTrigger': 'Runtime'
     }
+    /*let stepCreateParameters: BuildStep = {
+        'properties': {
+            'type': dockerStep
+        }
+    }*/
     try {
-        client.buildSteps.create(resourceGroupName, registry.name, taskName, stepName, stepCreateParameters);
+        client.buildSteps.create(resourceGroupName, registry.name, taskName, stepName, dockerStep);
     } catch (error) {
         console.log(error);
     }

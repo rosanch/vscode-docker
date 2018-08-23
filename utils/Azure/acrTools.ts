@@ -158,6 +158,7 @@ export async function acquireACRAccessToken(registryUrl: string, scope: string, 
     return JSON.parse(acrAccessTokenResponse).access_token;
 }
 
+/** Parses blob url into a readable form */
 export function getBlobInfo(blobUrl: string): { accountName: string, endpointSuffix: string, containerName: string, blobName: string, sasToken: string, host: string } {
     let items: string[] = blobUrl.slice(blobUrl.search('https://') + 'https://'.length).split('/');
     let accountName: string = blobUrl.slice(blobUrl.search('https://') + 'https://'.length, blobUrl.search('.blob'));

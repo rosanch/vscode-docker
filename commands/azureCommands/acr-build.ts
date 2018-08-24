@@ -1,45 +1,24 @@
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
-import { BuildGetLogResult, QuickBuildRequest } from "azure-arm-containerregistry/lib/models";
-import { Build, Registry } from 'azure-arm-containerregistry/lib/models';
+import { QuickBuildRequest } from "azure-arm-containerregistry/lib/models";
+import { Registry } from 'azure-arm-containerregistry/lib/models';
 import { BlobService, createBlobServiceWithSas } from "azure-storage";
 import * as fs from 'fs';
 import * as os from 'os';
-import * as path from 'path';
 import * as process from 'process';
-import { Readable, Writable } from 'stream';
 import * as tar from 'tar';
 import * as url from 'url';
 import * as vscode from "vscode";
-import { ResourceGroup } from '../../node_modules/azure-arm-resource/lib/resource/models';
 import { getBlobInfo, getResourceGroupName } from "../../utils/Azure/acrTools";
 import { AzureUtilityManager } from "../../utils/azureUtilityManager";
-import { quickPickACRRegistry, quickPickResourceGroup, quickPickSubscription } from '../utils/quick-pick-azure';
+import { quickPickACRRegistry, quickPickSubscription } from '../utils/quick-pick-azure';
 const idPrecision = 6;
-let status = vscode.window.createOutputChannel('status');
+const status = vscode.window.createOutputChannel('status');
+const vcsIgnoreList = ['.git', '.gitignore', '.bzr', 'bzrignore', '.hg', '.hgignore', '.svn'];
 
 // Prompts user to select a subscription, resource group, then registry from drop down. If there are multiple folders in the workspace, the source folder must also be selected.
 // The user is then asked to name & tag the image. A build is queued for the image in the selected registry.
 // Selected source code must contain a path to the desired dockerfile.
 export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
-
-    let items = [
-        '.git',
-        'CHANGELOG.md',
-        'CONTRIBUTING.md',
-        'Dockerfile',
-        '.bzr',
-        'Dockerfile-app',
-        'Dockerfile-base',
-        '.hg',
-        'LICENSE.md',
-        'New Text Document.txt',
-        'package.json', 'README.md',
-        'server.js'
-    ]
-    console.log(items);
-    items = filter(items);
-    console.log(items);
-
     status.show();
     status.appendLine("Obtaining Subscription and initializing management client");
     const subscription = await quickPickSubscription();
@@ -79,14 +58,13 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         osType = 'Windows'
     }
     status.appendLine("Setting up Build Request");
-    console.log(dockerFileUri.path.substring(4));
     let buildRequest: QuickBuildRequest = {
         'type': 'QuickBuild',
         'imageNames': [name],
         'isPushEnabled': true,
         'sourceLocation': uploadedSourceLocation,
         'platform': { 'osType': 'Linux' },
-        'dockerFilePath': 'Dockerfile' //relativeDockerPath
+        'dockerFilePath': relativeDockerPath
     };
     status.appendLine("Queueing Build");
     await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
@@ -96,17 +74,16 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string, folder: vscode.WorkspaceFolder): Promise<string> {
     status.appendLine("   Sending source code to temp file");
     let source = sourceLocation.substring(1);
+    let current = process.cwd();
     process.chdir(source);
     await fs.readdir(source, (err, items) => {
-        console.log(items);
-        //items = filter(items);
+        items = filter(items);
         tar.c(
             {},
             items
         ).pipe(fs.createWriteStream(tarFilePath));
         process.chdir(current);
     });
-    let current = process.cwd();
 
     status.appendLine("   Getting Build Source Upload Url ");
     let sourceUploadLocation = await client.registries.getBuildSourceUploadUrl(resourceGroupName, registryName);
@@ -132,119 +109,10 @@ function getTempSourceArchivePath(): string {
 }
 
 function filter(list: string[]): string[] {
-    let ignoreList = ['.git', '.gitignore', '.bzr', 'bzrignore', '.hg', '.hgignore', '.svn'];
     for (let file of list) {
-        if (ignoreList.indexOf(file) !== -1) {
+        if (vcsIgnoreList.indexOf(file) !== -1) {
             list.splice(list.indexOf(file), 1);
         }
     }
-
     return list;
 }
-/*
-function getItemFiles(source: vscode): string[] {
-    let files = vscode.workspace.findFiles
-    for (let file of ) {
-
-    }
-}
-
-/*
-function loadDockerignoreFile(sourceLocation) {
-    let ignoreFile = url.resolve(sourceLocation, '.dockerignore');
-    let ignoreList = [];
-    for (for line of ignoreFile) {
-
-    }
-
-}
-*/
-async function streamLogs(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
-    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
-    const link = temp.logLink;
-    let blobInfo = getBlobInfo(link);
-    let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
-    let stream: Readable = new Readable();
-    try {
-        stream = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
-            if (response) {
-                console.log(response.name + 'has Completed');
-            } else {
-                console.log(error);
-            }
-        });
-        console.log(stream);
-    } catch (error) {
-        console.log('a' + error);
-    }
-    stream.on('data', (chunk) => {
-        status.appendLine(chunk.toString());
-        status.show();
-    });
-
-}
-
-async function streamLogs2(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
-    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
-    const link = temp.logLink;
-    let blobInfo = getBlobInfo(link);
-    let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
-    let stream: Readable = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
-        if (response) {
-            status.appendLine(response.name + 'has Completed');
-        } else {
-            status.appendLine(error.message);
-        }
-        status.show();
-    });
-
-    stream.on('data', (chunk) => {
-        status.appendLine(chunk.toString());
-        console.log(chunk.toString());
-        status.show();
-    });
-
-}
-
-export async function streamLogs3(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
-    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
-    return new Promise<void>((resolve, reject) => {
-        const link = temp.logLink;
-        let blobInfo = getBlobInfo(link);
-        let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
-        let stream: Readable = new Readable();
-        stream = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
-            if (response) {
-                //.appendLine(chunk.toString());
-                status.show();
-            } else {
-                status.appendLine(error.message);
-                reject();
-            }
-            status.show();
-        });
-
-        stream.on('data', (chunk) => {
-            status.appendLine(chunk.toString());
-            status.show();
-        });
-        stream.on('finish', () => {
-            resolve();
-        });
-
-    });
-}
-
-/*
-    let items = [
-        'CHANGELOG.md',
-        'CONTRIBUTING.md',
-        'Dockerfile',
-        'Dockerfile-app',
-        'Dockerfile-base',
-        'LICENSE.md',
-        'New Text Document.txt',
-        'package.json', 'README.md',
-        'server.js'
-    ]
-    */

@@ -7,10 +7,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, registerCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/lib/main';
-import { launchAsTask } from './commands/acr-task';
 import { queueBuild } from './commands/azureCommands/acr-build';
 import { viewBuildLogs } from './commands/azureCommands/acr-build-logs'
 import { LogContentProvider } from './commands/azureCommands/acr-build-logs-utils/logProvider';
+import { launchAsTask } from './commands/azureCommands/acr-task';
 import { createRegistry } from './commands/azureCommands/create-registry';
 import { deleteAzureImage } from './commands/azureCommands/delete-image';
 import { deleteAzureRegistry } from './commands/azureCommands/delete-registry';

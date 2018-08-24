@@ -16,10 +16,10 @@ export class LogTableWebview {
         //Get path to resource on disk
         let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
         const scriptFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'logScripts.js')).with({ scheme: 'vscode-resource' });
-        const styleFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'stylesheet.css')).with({ scheme: 'vscode-resource' });
-
+        const styleFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'stylesheet.css')).with({ scheme: 'vscode-resource' });
+        const iconFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'fabric', 'css', 'vscmdl2-icons.css')).with({ scheme: 'vscode-resource' });
         //Populate Webview
-        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile);
+        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile, iconFile);
         this.setupIncomingListeners();
         this.addLogsToWebView();
     }
@@ -80,11 +80,12 @@ export class LogTableWebview {
 
     //HTML Content Loaders
     /** Create the table in which to push the build logs */
-    private getBaseHtml(scriptFile: vscode.Uri, stylesheet: vscode.Uri): string {
+    private getBaseHtml(scriptFile: vscode.Uri, stylesheet: vscode.Uri, iconStyles: vscode.Uri): string {
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <link rel="stylesheet" type="text/css" href="${stylesheet}">
+            <link rel="stylesheet" type="text/css" href=${iconStyles}>
             <meta charset="UTF-8">
             <meta http-equiv="Content-Security-Policy" content="frame-src vscode-resource:; img-src vscode-resource: https:; script-src vscode-resource:; style-src vscode-resource:;">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -127,6 +128,7 @@ export class LogTableWebview {
         const osType: string = log.platform.osType ? log.platform.osType : '';
         const name: string = log.name ? log.name : '';
         let imageOutput: string = this.getImageOutputTable(log);
+        const statusIcon: string = this.getLogStatusIcon(log.status);
 
         return `
          <tbody class = "holder">
@@ -134,7 +136,7 @@ export class LogTableWebview {
                     <td class = 'arrowHolder'><div class = "arrow">&#x25f9</div></td>
                     <td class = 'widthControl'>${name}</td>
                     <td class = 'widthControl'>${buildTask}</td>
-                    <td class ='status widthControl ${log.status}'>${log.status}</td>
+                    <td class ='status widthControl ${log.status}'>${statusIcon} ${log.status}</td>
                     <td class = 'widthControl'>${createTime}</td>
                     <td class = 'widthControl'>${timeElapsed}</td>
                     <td class = 'widthControl'>${osType}</td>
@@ -190,4 +192,21 @@ export class LogTableWebview {
 
     }
 
+    private getLogStatusIcon(status?: string): string {
+        if (!status) { return ''; }
+        switch (status) {
+            case 'Error':
+                return '<i class="ms-Icon ms-Icon--CriticalErrorSolid"></i>';
+            case 'Failed':
+                return '<i class="ms-Icon ms-Icon--StatusErrorFull"></i>';
+            case 'Succeeded':
+                return '<i class="ms-Icon ms-Icon--CompletedSolid"></i>';
+            case 'Queued':
+                return '<i class="ms-Icon ms-Icon--SkypeCircleClock"></i>';
+            case 'Running':
+                return '<i class="ms-Icon ms-Icon--MSNVideosSolid"></i>';
+            default:
+                return '';
+        }
+    }
 }

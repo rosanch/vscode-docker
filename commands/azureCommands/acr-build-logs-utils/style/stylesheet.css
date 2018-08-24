@@ -249,3 +249,21 @@ body {
 .overflowX {
     overflow-x: auto;
 }
+
+.IconContainer {
+    font-size: 14px;
+    float: left;
+    margin: 0 5px 5px 0;
+    width: 50px;
+    height: 50px;
+    line-height: 51px;
+}
+
+.IconContainer-icon {
+    text-align: center;
+}
+
+.IconContainer-name,
+.IconContainer-unicode {
+    display: none;
+}

@@ -7,7 +7,8 @@
             "es7"
         ],
         "sourceMap": true,
-        "rootDir": "."
+        "rootDir": ".",
+        "jsx": "react"
     },
     "exclude": [
         "node_modules",

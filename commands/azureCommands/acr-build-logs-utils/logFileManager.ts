@@ -1,4 +1,5 @@
 import { BlobService, createBlobServiceWithSas } from 'azure-storage';
+import * as React from 'react';
 import * as vscode from 'vscode';
 import { getBlobInfo } from '../../../utils/Azure/acrTools';
 

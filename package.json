@@ -672,6 +672,8 @@
     "vscode": "^1.1.18"
   },
   "dependencies": {
+    "@types/react": "^16.3.3",
+    "@types/react-dom": "^16.0.7",
     "azure-arm-containerregistry": "^2.4.0",
     "azure-arm-resource": "^2.0.0-preview",
     "azure-arm-website": "^1.0.0-preview",
@@ -680,8 +682,8 @@
     "fs-extra": "^6.0.1",
     "glob": "7.1.2",
     "gradle-to-js": "^1.0.1",
-    "handlebars": "^4.0.11",
     "moment": "^2.19.3",
+    "office-ui-fabric-react": "^6.53.0",
     "opn": "^5.1.0",
     "pom-parser": "^1.1.1",
     "request-promise": "^4.2.2",

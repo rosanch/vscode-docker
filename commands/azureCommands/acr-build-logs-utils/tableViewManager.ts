@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as vscode from "vscode";
 import { openLog } from './logFileManager';
 import { LogData } from './tableDataManager'
+import { DetailsListBasicExample, obtainRenderObject } from "./temporaryRenderer";
 
 export class LogTableWebview {
     private logData: LogData;
@@ -19,9 +20,10 @@ export class LogTableWebview {
         const styleFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'stylesheet.css')).with({ scheme: 'vscode-resource' });
 
         //Populate Webview
-        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile);
-        this.setupIncomingListeners();
-        this.addLogsToWebView();
+
+        this.panel.webview.html = obtainRenderObject(); //this.getBaseHtml(scriptFile, styleFile);
+        //this.setupIncomingListeners();
+        //this.addLogsToWebView();
     }
     //Post Opening communication from webview
     /** Setup communication with the webview sorting out received mesages from its javascript file */

@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, IActionContext, registerCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/lib/main';
+import { pullFromAzure } from './commands/azureCommands/pull-from-azure';
 import { buildImage } from './commands/build-image';
 import { composeDown, composeRestart, composeUp } from './commands/docker-compose';
 import inspectImage from './commands/inspect-image';
@@ -117,6 +118,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
 
     if (azureAccount) {
         AzureUtilityManager.getInstance().setAccount(azureAccount);
+        registerCommand('vscode-docker.pullFromAzure', pullFromAzure);
     }
     await consolidateDefaultRegistrySettings();
     activateLanguageClient(ctx);

@@ -9,7 +9,7 @@ import { ResourceManagementClient, SubscriptionModels } from 'azure-arm-resource
 import { ResourceGroup } from "azure-arm-resource/lib/resource/models";
 import { ServiceClientCredentials } from 'ms-rest';
 import { MAX_CONCURRENT_SUBSCRIPTON_REQUESTS } from '../constants';
-import { AzureAccount } from '../typings/azure-account.api';
+import { AzureAccount, AzureSession } from '../typings/azure-account.api';
 import { AsyncPool } from './asyncpool';
 
 /* Singleton for facilitating communication with Azure account services by providing extended shared
@@ -129,6 +129,12 @@ export class AzureUtilityManager {
         }
 
         throw new Error(`Failed to get credentials, tenant ${tenantId} not found.`);
+    }
+
+    public getSession(subscription: SubscriptionModels.Subscription): AzureSession {
+        const tenantId: string = subscription.tenantId;
+        const azureAccount: AzureAccount = this.getAccount();
+        return azureAccount.sessions.find((s) => s.tenantId.toLowerCase() === tenantId.toLowerCase());
     }
 
     //CHECKS

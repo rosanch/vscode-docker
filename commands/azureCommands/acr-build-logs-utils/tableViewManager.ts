@@ -18,9 +18,8 @@ export class LogTableWebview {
         const scriptFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'logScripts.js')).with({ scheme: 'vscode-resource' });
         const styleFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'stylesheet.css')).with({ scheme: 'vscode-resource' });
         const iconStyle = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'fabric-components', 'css', 'vscmdl2-icons.css')).with({ scheme: 'vscode-resource' });
-        const iconSrc = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'fabric-components', 'fonts', 'vscmdl2-icons-d3699964.woff')).with({ scheme: 'vscode-resource' });
         //Populate Webview
-        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile, iconStyle, iconSrc);
+        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile, iconStyle);
         this.setupIncomingListeners();
         this.addLogsToWebView();
     }
@@ -81,39 +80,32 @@ export class LogTableWebview {
 
     //HTML Content Loaders
     /** Create the table in which to push the build logs */
-    private getBaseHtml(scriptFile: vscode.Uri, stylesheet: vscode.Uri, iconStyles: vscode.Uri, iconSrc: vscode.Uri): string {
+    private getBaseHtml(scriptFile: vscode.Uri, stylesheet: vscode.Uri, iconStyles: vscode.Uri): string {
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
-            <style>
-                @font-face {
-                    font-family: 'VSC MDL2 Assets';
-                    src: url(${iconSrc}) format('woff');
-                }
-            </style>
             <link rel="stylesheet" type="text/css" href="${stylesheet}">
             <link rel="stylesheet" type="text/css" href=${iconStyles}>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="frame-src vscode-resource:; img-src vscode-resource: https:; script-src vscode-resource:;">
+            <meta http-equiv="Content-Security-Policy" content="frame-src vscode-resource:; img-src vscode-resource: https:; script-src vscode-resource:; style-src vscode-resource:;">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Logs</title>
         </head>
 
         <body>
-            <div id = "header">
-                <table id="headerTable">
-                    <th class = 'arrowHolder'></td>
-                    <th class = 'widthControl'>Build Name<span class="sort">  </span></th>
-                    <th class = 'widthControl'>BuildTask<span class="sort">  </span></th>
-                    <th class = 'widthControl'>Status<span class="sort">  </span></th>
-                    <th class = 'widthControl'>Created<span class="sort"> &#9661</span></th>
-                    <th class = 'widthControl'>Elapsed Time<span class="sort">  </span></th>
-                    <th class = 'widthControl'>Platform<span class="sort">  </span></th>
-                    <td></td>
-                </table>
-            </div>
+            <main>
                 <table id = 'core'>
+                    <thead class = 'doubleLine'>
+                        <th class = 'arrowHolder'></td>
+                        <th class = 'widthControl'>Build ID<span class="sort">  </span></th>
+                        <th class = 'widthControl'>Task<span class="sort">  </span></th>
+                        <th class = 'widthControl'>Status<span class="sort">  </span></th>
+                        <th class = 'widthControl'>Created<span class="sort"> &#9661</span></th>
+                        <th class = 'widthControl'>Elapsed Time<span class="sort">  </span></th>
+                        <th class = 'widthControl'>Platform<span class="sort">  </span></th>
+                    </thead>
                 </table>
+            </main>
             <div class = 'loadMoreBtn'>
                 <button id= "loadBtn" class="viewLog">Load More Logs</button>
             </div>
@@ -129,22 +121,22 @@ export class LogTableWebview {
     }
 
     private getLogTableItem(log: Build, logId: number): string {
-        const buildTask: string = log.buildTask ? log.buildTask : '';
-        const createTime: string = log.createTime ? log.createTime.toLocaleString() : '';
-        const timeElapsed: string = log.startTime && log.finishTime ? (Math.abs(log.startTime.valueOf() - log.finishTime.valueOf()) / 1000).toString() + 's' : '';
+        const task: string = log.buildTask ? log.buildTask : '';
+        const prettyDate: string = log.createTime ? this.getPrettyDate(log.createTime) : '';
+        const timeElapsed: string = log.startTime && log.finishTime ? Math.ceil((log.finishTime.valueOf() - log.startTime.valueOf()) / 1000).toString() + 's' : '';
         const osType: string = log.platform.osType ? log.platform.osType : '';
         const name: string = log.name ? log.name : '';
-        let imageOutput: string = this.getImageOutputTable(log);
+        const imageOutput: string = this.getImageOutputTable(log);
         const statusIcon: string = this.getLogStatusIcon(log.status);
 
         return `
          <tbody class = "holder">
             <tr id= "btn${logId}" class="accordion">
-                    <td class = 'arrowHolder'><div class = "arrow">&#x25f9</div></td>
+                    <td class = 'arrowHolder'><div class = "arrow"><i class="ms-Icon ms-Icon--ChevronRight"></i></div></td>
                     <td class = 'widthControl'>${name}</td>
-                    <td class = 'widthControl'>${buildTask}</td>
-                    <td class ='status widthControl ${log.status}'>${statusIcon} ${log.status}</td>
-                    <td class = 'widthControl'>${createTime}</td>
+                    <td class = 'widthControl'>${task}</td>
+                    <td class ='status widthControl' data-status = '${log.status}'>${statusIcon} ${log.status}</td>
+                    <td class = 'widthControl' data-createdtime="${log.createTime.toLocaleString()}">${prettyDate}</td>
                     <td class = 'widthControl'>${timeElapsed}</td>
                     <td class = 'widthControl'>${osType}</td>
             </tr>
@@ -154,18 +146,12 @@ export class LogTableWebview {
                         <table class="innerTable">
                             <tr>
                                 <td class = "arrowHolder">&#160</td>
-                                <td colspan = "5" class = "borderLimit widthControl5">Output Images</td>
-                                <td class = "widthControl lastTd" rowspan = "300">
-                                    <div class = "button-holder">
-                                        <button id= "log${logId}" class="viewLog">Open Logs</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class = "arrowHolder">&#160</td>
-                                <td colspan = "2" class = "borderLimit widthControl2">Tag</th>
-                                <td colspan = "2" class = "widthControl3">Repository</td>
-                                <td class = "widthControl">Digest</td>
+                                <th class = "borderLimit widthControl2">Tag</th>
+                                <th class = "widthControl">Repository</th>
+                                <th class = "widthControl">Digest</th>
+                                <th colspan = "3" class = "widthControl">
+                                    <p class = "textAlignRight">Log  <i id="log${logId}" class="ms-Icon ms-Icon--OpenInNewWindow"></i>  <i class="ms-Icon ms-Icon--Copy"></i></p>
+                                </th>
                             </tr>
                             ${imageOutput}
                         </table>
@@ -184,16 +170,17 @@ export class LogTableWebview {
             const lastTd: string = islastTd ? 'lastTd' : '';
             return `<tr>
                         <td class = "arrowHolder">&#160</td>
-                        <td colspan = "2" class = "borderLimit widthControl2 ${lastTd}">${tag}</td>
-                        <td colspan = "2" class = "widthControl2 ${lastTd}">${repository}</td>
-                        <td colspan = "1" class = "widthControl ${lastTd}" data-digest = "${digest}">${truncatedDigest} <inline class = 'copy'>&#128459</inline></td>
+                        <td class = "borderLimit widthControl ${lastTd}">${tag}</td>
+                        <td class = "widthControl ${lastTd}">${repository}</td>
+                        <td class = "widthControl ${lastTd}" data-digest = "${digest}">${truncatedDigest} <inline class = 'copy'>&#128459</inline></td>
+                        <td class = "${lastTd}" colspan = "3" >NA</td>
                     </tr>`
         } else {
             return `<tr>
                         <td class = "arrowHolder lastTd">&#160</td>
-                        <td colspan = "2" class = "borderLimit widthControl2 lastTd">NA</td>
-                        <td colspan = "2" class = "widthControl2 lastTd">NA</td>
-                        <td colspan = "1" class = "widthControl lastTd">NA</td>
+                        <td class = "borderLimit widthControl lastTd">NA</td>
+                        <td class = "widthControl lastTd">NA</td>
+                        <td class = "widthControl lastTd">NA</td>
                     </tr>`;
         }
 
@@ -215,5 +202,24 @@ export class LogTableWebview {
             default:
                 return '';
         }
+    }
+
+    private getPrettyDate(date: Date): string {
+        let currentDate = new Date();
+        let secs = Math.floor((currentDate.getTime() - date.getTime()) / 1000);
+        if (secs === 1) { return "1 second ago"; }
+        if (secs < 60) { return secs + " seconds ago"; }
+        if (secs < 120) { return " 1 minute ago"; }
+        if (secs < 3600) { return Math.floor(secs / 60) + " minutes ago"; }
+        if (secs < 7200) { return Math.floor(secs / 60) + "1 hour ago"; }
+        if (secs < 86400) { return Math.floor(secs / 3600) + " hours ago"; }
+        if (secs < 172800) { return "1 day ago"; }
+        if (secs < 604800) { return Math.floor(secs / 86400) + " days ago"; }
+        if (secs < 1209600) { return "1 week ago"; }
+        if (secs < 2592000) { return Math.floor(secs / 1209600) + " weeks ago"; }
+        if (secs < 5184000) { return "1 month ago"; }
+        if (secs < 31536000) { return Math.floor(secs / 2592000) + " months ago"; }
+        if (secs < 63072000) { return "1 year ago"; }
+        return Math.floor(secs / 31536000) + " years ago";
     }
 }

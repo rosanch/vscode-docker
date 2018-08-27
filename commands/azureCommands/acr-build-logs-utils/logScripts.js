@@ -107,21 +107,21 @@ function acquireCompareFunction(n) {
             }
         case 3: //Status
             return (x, y) => {
-                return status[x.innerHTML] > status[y.innerHTML];;
+                return status[x.dataset.status] > status[y.dataset.status];;
             }
         case 4: //Created time
             return (x, y) => {
-                if (x.innerHTML === '') return true;
-                if (y.innerHTML === '') return false;
-                let dateX = new Date(x.innerHTML);
-                let dateY = new Date(y.innerHTML);
+                if (x.dataset.createdtime === '') return true;
+                if (y.dataset.createdtime === '') return false;
+                let dateX = new Date(x.dataset.createdtime);
+                let dateY = new Date(y.dataset.createdtime);
                 return dateX > dateY;
             }
         case 5: //Elapsed time
             return (x, y) => {
                 if (x.innerHTML === '') return true;
                 if (y.innerHTML === '') return false;
-                return (+x.innerHTML.substring(0, x.innerHTML.length - 1)) > (+y.innerHTML.substring(0, x.innerHTML.length - 1));
+                return Number(x.innerHTML.substring(0, x.innerHTML.length - 1)) > Number(y.innerHTML.substring(0, y.innerHTML.length - 1));
             }
         case 6: //OS Type
             return (x, y) => {
@@ -140,10 +140,10 @@ window.addEventListener('message', event => {
 
         let item = content.querySelector(`#btn${message.id}`);
         setSingleAccordion(item);
-
+        console.log(item);
         const logButton = content.querySelector(`#log${message.id}`);
+        console.log(logButton);
         setLogBtnListener(logButton);
-
         const digestClickables = item.nextElementSibling.querySelectorAll('.copy');
         setDigestListener(digestClickables);
 
@@ -232,27 +232,27 @@ function manageWidth() {
 let openAccordions = [];
 
 function setAccordionTableWidth() {
-    let topRow = document.querySelector("#core tr");
-    let topRowCells = topRow.querySelectorAll("td");
-    let topWidths = [];
-    for (let cell of topRowCells) {
-        topWidths.push(parseInt(getComputedStyle(cell).width));
-    }
-    for (acc of openAccordions) {
-        let cells = acc.querySelectorAll(".innerTable td");
-        cells[0].style.width = topWidths[0];
-        cells[5].style.width = topWidths[1] + topWidths[2] + topWidths[3] + topWidths[4] + topWidths[5];
-        cells[2].style.width = topWidths[6];
-        for (let i = 3; i < cells.length; i++) {
-            if ((i + 2) % 4 === 1) {
-                cells[i].style.width = topWidths[0] + "px";
-            } else if ((i + 2) % 4 === 2) {
-                cells[i].style.width = (topWidths[1] + topWidths[2]) + "px";
-            } else if ((i + 2) % 4 === 3) {
-                cells[i].style.width = (topWidths[3] + topWidths[4]) + "px";
-            } else if ((i + 2) % 4 === 0) {
-                cells[i].style.width = topWidths[5] + "px";
-            }
-        }
-    }
+    // let topRow = document.querySelector("#core tr");
+    // let topRowCells = topRow.querySelectorAll("td");
+    // let topWidths = [];
+    // for (let cell of topRowCells) {
+    //     topWidths.push(parseInt(getComputedStyle(cell).width));
+    // }
+    // for (acc of openAccordions) {
+    //     let cells = acc.querySelectorAll(".innerTable th");
+    //     cells = cells.concat(acc.querySelectorAll(".innerTable td"));
+    //     cells[0].style.width = topWidths[0];
+    //     cells[2].style.width = topWidths[6];
+    //     for (let i = 3; i < cells.length; i++) {
+    //         if ((i + 2) % 4 === 1) {
+    //             cells[i].style.width = topWidths[0] + "px";
+    //         } else if ((i + 2) % 4 === 2) {
+    //             cells[i].style.width = (topWidths[1] + topWidths[2]) + "px";
+    //         } else if ((i + 2) % 4 === 3) {
+    //             cells[i].style.width = (topWidths[3] + topWidths[4]) + "px";
+    //         } else if ((i + 2) % 4 === 0) {
+    //             cells[i].style.width = topWidths[5] + "px";
+    //         }
+    //     }
+    // }
 }

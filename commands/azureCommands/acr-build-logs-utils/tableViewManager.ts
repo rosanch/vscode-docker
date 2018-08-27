@@ -94,8 +94,22 @@ export class LogTableWebview {
 
         <body>
             <main>
+                <form class="searchBoxes">
+                    <div>
+                        Filter by ID:<br>
+                        <input type="text" name="id">
+                    </div>
+                    <div>
+                        Filter by Task:<br>
+                        <input type="text" name="task">
+                    </div>
+                    <div>
+                        Filter by date:<br>
+                        <input type="text" name="date">
+                    </div>
+                </form>
                 <table id = 'core'>
-                    <thead class = 'doubleLine'>
+                    <thead id = "tableHead" class = 'doubleLine'>
                         <th class = 'arrowHolder'></td>
                         <th class = 'widthControl'>Build ID<span class="sort">  </span></th>
                         <th class = 'widthControl'>Task<span class="sort">  </span></th>

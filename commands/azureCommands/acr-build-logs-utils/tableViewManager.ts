@@ -17,9 +17,10 @@ export class LogTableWebview {
         let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
         const scriptFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'logScripts.js')).with({ scheme: 'vscode-resource' });
         const styleFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'stylesheet.css')).with({ scheme: 'vscode-resource' });
-        const iconFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'fabric', 'css', 'vscmdl2-icons.css')).with({ scheme: 'vscode-resource' });
+        const iconStyle = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'fabric-components', 'css', 'vscmdl2-icons.css')).with({ scheme: 'vscode-resource' });
+        const iconSrc = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'fabric-components', 'fonts', 'vscmdl2-icons-d3699964.woff')).with({ scheme: 'vscode-resource' });
         //Populate Webview
-        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile, iconFile);
+        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile, iconStyle, iconSrc);
         this.setupIncomingListeners();
         this.addLogsToWebView();
     }
@@ -80,14 +81,20 @@ export class LogTableWebview {
 
     //HTML Content Loaders
     /** Create the table in which to push the build logs */
-    private getBaseHtml(scriptFile: vscode.Uri, stylesheet: vscode.Uri, iconStyles: vscode.Uri): string {
+    private getBaseHtml(scriptFile: vscode.Uri, stylesheet: vscode.Uri, iconStyles: vscode.Uri, iconSrc: vscode.Uri): string {
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
+            <style>
+                @font-face {
+                    font-family: 'VSC MDL2 Assets';
+                    src: url(${iconSrc}) format('woff');
+                }
+            </style>
             <link rel="stylesheet" type="text/css" href="${stylesheet}">
             <link rel="stylesheet" type="text/css" href=${iconStyles}>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="frame-src vscode-resource:; img-src vscode-resource: https:; script-src vscode-resource:; style-src vscode-resource:;">
+            <meta http-equiv="Content-Security-Policy" content="frame-src vscode-resource:; img-src vscode-resource: https:; script-src vscode-resource:;">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Logs</title>
         </head>

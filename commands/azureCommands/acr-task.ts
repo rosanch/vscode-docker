@@ -47,7 +47,7 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
 
     opt = {
         ignoreFocusOut: true,
-        prompt: 'Task Name? '
+        prompt: 'Task Name? (5 or more charachters)'
     };
     const taskName: string = await vscode.window.showInputBox(opt);
     let newOpt = {
@@ -66,9 +66,10 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
     let client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
     console.log("uhh");
     let taskCreateParameters: BuildTask = {
-        'type': "Microsoft.ContainerRegistry/registries/buildTasks",
+        'type': "buildTask",
         'location': registry.location,
         'alias': buildTaskAlias,
+        //'id': subscription.id + '/resourceGroups/' + resourceGroupName + '/providers/Microsoft.ContainerRegistry/registries/' + registry.name + '/buildTasks/' + taskName,
         'name': taskName,
         'sourceRepository': {
             'repositoryUrl': gitURL,
@@ -82,11 +83,14 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
                 'expiresIn': 1313141
             }
         },
+        'provisioningState': "Succeeded",
         'platform': { "cpu": 2, 'osType': 'Linux' },
         'status': 'Enabled',
-        'timeout': 3600
+        'timeout': 3600,
+        'tags': null
     }
-
+    console.log(taskCreateParameters.id)
+    console.log(taskCreateParameters);
     try {
         await client.buildTasks.create(resourceGroupName, registry.name, taskName, taskCreateParameters);
     } catch (error) {
@@ -104,6 +108,7 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
         'dockerFilePath': 'Dockerfile',
         'buildArguments': [],
         'isPushEnabled': true,
+        'provisioningState': "Succeeded",
         'type': 'Docker'
     }
     /*let stepCreateParameters: BuildStep = {

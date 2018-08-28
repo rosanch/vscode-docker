@@ -1,10 +1,10 @@
 
 import { Build, ImageDescriptor } from "azure-arm-containerregistry/lib/models";
+import * as clipboardy from 'clipboardy'
 import * as path from 'path';
 import * as vscode from "vscode";
-import { downloadLog, openLog } from './logFileManager';
+import { accessLog, downloadLog } from './logFileManager';
 import { LogData } from './tableDataManager'
-
 export class LogTableWebview {
     private logData: LogData;
     private panel: vscode.WebviewPanel;
@@ -31,9 +31,13 @@ export class LogTableWebview {
                 const itemNumber: number = +message.logRequest.id;
                 this.logData.getLink(itemNumber).then((url) => {
                     if (url !== 'requesting') {
-                        openLog(url, this.logData.logs[itemNumber].buildId, message.logRequest.download);
+                        accessLog(url, this.logData.logs[itemNumber].buildId, message.logRequest.download);
                     }
                 });
+
+            } else if (message.copyRequest) {
+                clipboardy.writeSync(message.copyRequest.text);
+
             } else if (message.loadMore) {
                 await this.logData.loadMoreLogs();
                 this.addLogsToWebView();
@@ -123,12 +127,6 @@ export class LogTableWebview {
             <div class = 'loadMoreBtn'>
                 <button id= "loadBtn" class="viewLog">Load More Logs</button>
             </div>
-            <div class="overlay">
-                <div class="modal">
-                    <input id = "digestVisualizer", readonly>
-                    <button class = "copyBtn">Copy</button>
-                </div>
-            </div>
 
             <script src= "${scriptFile}"></script>
         </body>`;
@@ -186,8 +184,14 @@ export class LogTableWebview {
                         <td class = "arrowHolder">&#160</td>
                         <td class = "borderLimit widthControl ${lastTd}">${tag}</td>
                         <td class = "widthControl ${lastTd}">${repository}</td>
-                        <td class = "widthControl ${lastTd}" data-digest = "${digest}">${truncatedDigest} <inline class = 'copy'>&#128459</inline></td>
-                        <td class = "${lastTd}" colspan = "3" >NA</td>
+                        <td class = "widthControl ${lastTd}" data-digest = "${digest}">
+                            <span class = "tooltip">
+                                ${truncatedDigest}
+                                <span class="tooltiptext">${digest}</span>
+                            </span>
+                            <i class="copy downloadlog ms-Icon ms-Icon--Copy"></i>
+                        </td>
+                        <td class = "${lastTd}" colspan = "3" ></td>
                     </tr>`
         } else {
             return `<tr>

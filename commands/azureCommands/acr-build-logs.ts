@@ -5,7 +5,7 @@ import { AzureImageNode, AzureRegistryNode, AzureRepositoryNode } from '../../ex
 import { getResourceGroupName, getSubscriptionFromRegistry } from '../../utils/Azure/acrTools';
 import { AzureUtilityManager } from '../../utils/azureUtilityManager';
 import { quickPickACRRegistry } from '../utils/quick-pick-azure'
-import { openLog } from "./acr-build-logs-utils/logFileManager";
+import { accessLog } from "./acr-build-logs-utils/logFileManager";
 import { LogData } from "./acr-build-logs-utils/tableDataManager";
 import { LogTableWebview } from "./acr-build-logs-utils/tableViewManager";
 
@@ -41,7 +41,7 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
     } else if (context && context instanceof AzureImageNode) {
         logData.getLink(0).then((url) => {
             if (url !== 'requesting') {
-                openLog(url, logData.logs[0].buildId, false);
+                accessLog(url, logData.logs[0].buildId, false);
             }
         });
 

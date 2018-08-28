@@ -184,48 +184,14 @@ body {
     cursor: pointer;
 }
 
-.overlay {
-    display: none;
-    position: fixed;
-    justify-content: center;
-    align-content: center;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    background-color: rgba(0, 0, 0, 0.5);
-    /*dim the background*/
-}
-
-.modal {
-    margin: auto;
-    display: none;
-    width: 40%;
-    z-index: 11;
-}
-
-.copyBtn {
-    background-color: var(--vscode-button-background);
-    border: none;
-    color: var(--vscode-button-foreground);
-    padding: 5px 13px;
-    text-align: left;
-    text-decoration: none;
-    display: inline-block;
-    font-size: var(--vscode-editor-font-size);
-    cursor: pointer;
-    align-items: left;
-}
-
 .borderLimit {
     padding-left: 40px;
 }
 
 #digestVisualizer {
-    width: 85%;
+    position: absolute;
+    width: 1px;
+    visibility: hidden;
 }
 
 .arrowHolder {
@@ -306,6 +272,20 @@ main {
 }
 
 #tableHead {
+    position: sticky;
+    position: -webkit-sticky;
+    position: -moz-sticky;
+    position: -ms-sticky;
+    position: -o-sticky;
+    cursor: pointer;
+}
+
+#tableHead th {
+    position: sticky;
+    position: -webkit-sticky;
+    position: -moz-sticky;
+    position: -ms-sticky;
+    position: -o-sticky;
     cursor: pointer;
 }
 
@@ -334,4 +314,40 @@ main {
     box-sizing: border-box;
     background-color: var(--vscode-list-hoverBackground);
     color: var(--vscode-dropdown-foreground);
+}
+
+.tooltip {
+    position: relative;
+}
+
+.tooltip .tooltiptext {
+    box-sizing: border-box;
+    display: none;
+    background-color: var(--vscode-editor-foreground);
+    color: var(--vscode-activityBar-background);
+    text-align: center;
+    padding: 5px 16px;
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--vscode-editor-foreground) transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    display: inline;
+    opacity: 1;
 }

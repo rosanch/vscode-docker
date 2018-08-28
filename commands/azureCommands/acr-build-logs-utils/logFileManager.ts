@@ -1,7 +1,6 @@
 import { BlobService, createBlobServiceWithSas } from 'azure-storage';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { registerUIExtensionVariables } from 'vscode-azureextensionui';
 import { getBlobInfo } from '../../../utils/Azure/acrTools';
 
 export class LogContentProvider implements vscode.TextDocumentContentProvider {
@@ -33,7 +32,7 @@ export function encodeBase64(str: string): string {
 }
 
 /** Loads log text from remote url using azure blobservices */
-export function openLog(url: string, title: string, download: boolean): void {
+export function accessLog(url: string, title: string, download: boolean): void {
     let blobInfo = getBlobInfo(url);
     let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
     blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {

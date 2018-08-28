@@ -285,6 +285,13 @@ main {
     margin-right: 0px;
 }
 
+@media screen and (min-width: 640px) {
+    main {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+}
+
 @media screen and (min-width: 1399px) {
     main {
         margin-left: 5%;
@@ -298,7 +305,7 @@ main {
     }
 }
 
-.tableHead {
+#tableHead {
     cursor: pointer;
 }
 
@@ -307,10 +314,10 @@ main {
     flex-direction: row;
 }
 
-.searchBoxes middle {
-    padding-right: 1%;
-    padding-left: 1%;
-    width: 33%;
+.searchBoxes .middle {
+    padding-right: 0.5%;
+    padding-left: 0.5%;
+    width: 34%;
     box-sizing: border-box;
 }
 
@@ -321,7 +328,10 @@ main {
 }
 
 .searchBoxes div input {
+    padding: 5px;
+    border: 0px;
     width: 100%;
     box-sizing: border-box;
-    background-color: #3C3C3C;
+    background-color: var(--vscode-list-hoverBackground);
+    color: var(--vscode-dropdown-foreground);
 }

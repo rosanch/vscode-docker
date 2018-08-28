@@ -2,7 +2,7 @@
 import { Build, ImageDescriptor } from "azure-arm-containerregistry/lib/models";
 import * as path from 'path';
 import * as vscode from "vscode";
-import { openLog } from './logFileManager';
+import { downloadLog, openLog } from './logFileManager';
 import { LogData } from './tableDataManager'
 
 export class LogTableWebview {
@@ -31,9 +31,9 @@ export class LogTableWebview {
                 const itemNumber: number = +message.logRequest.id;
                 this.logData.getLink(itemNumber).then((url) => {
                     if (url !== 'requesting') {
-                        openLog(url, this.logData.logs[itemNumber].buildId);
+                        openLog(url, this.logData.logs[itemNumber].buildId, message.logRequest.download);
                     }
-                })
+                });
             } else if (message.loadMore) {
                 await this.logData.loadMoreLogs();
                 this.addLogsToWebView();
@@ -99,7 +99,7 @@ export class LogTableWebview {
                         Filter by ID:<br>
                         <input type="text" name="id">
                     </div>
-                    <div>
+                    <div class = "middle">
                         Filter by Task:<br>
                         <input type="text" name="task">
                     </div>
@@ -164,7 +164,7 @@ export class LogTableWebview {
                                 <th class = "widthControl">Repository</th>
                                 <th class = "widthControl">Digest</th>
                                 <th colspan = "3" class = "widthControl">
-                                    <p class = "textAlignRight">Log  <i id="log${logId}" class="ms-Icon ms-Icon--OpenInNewWindow"></i>  <i class="ms-Icon ms-Icon--Copy"></i></p>
+                                    <p class = "textAlignRight">Log  <i data-id = '${logId}' class="openLog ms-Icon ms-Icon--OpenInNewWindow"></i>  <i data-id = '${logId}' class="downloadlog ms-Icon ms-Icon--Copy"></i></p>
                                 </th>
                             </tr>
                             ${imageOutput}

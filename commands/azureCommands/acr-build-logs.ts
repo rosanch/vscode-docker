@@ -41,7 +41,7 @@ export async function viewBuildLogs(context: AzureRegistryNode | AzureRepository
     } else if (context && context instanceof AzureImageNode) {
         logData.getLink(0).then((url) => {
             if (url !== 'requesting') {
-                openLog(url, logData.logs[0].buildId);
+                openLog(url, logData.logs[0].buildId, false);
             }
         });
 

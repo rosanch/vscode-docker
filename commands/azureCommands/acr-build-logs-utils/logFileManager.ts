@@ -1,5 +1,7 @@
 import { BlobService, createBlobServiceWithSas } from 'azure-storage';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
+import { registerUIExtensionVariables } from 'vscode-azureextensionui';
 import { getBlobInfo } from '../../../utils/Azure/acrTools';
 
 export class LogContentProvider implements vscode.TextDocumentContentProvider {
@@ -31,12 +33,16 @@ export function encodeBase64(str: string): string {
 }
 
 /** Loads log text from remote url using azure blobservices */
-export function openLog(url: string, title: string): void {
+export function openLog(url: string, title: string, download: boolean): void {
     let blobInfo = getBlobInfo(url);
     let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
     blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {
         if (response) {
-            openLogInNewWindow(text, title);
+            if (download) {
+                downloadLog(text, title);
+            } else {
+                openLogInNewWindow(text, title);
+            }
         } else if (error) {
             throw error;
         }
@@ -50,4 +56,15 @@ function openLogInNewWindow(content: string, title: string): void {
     vscode.workspace.openTextDocument(uri).then((doc) => {
         return vscode.window.showTextDocument(doc, vscode.ViewColumn.Active + 1, true);
     });
+}
+
+export async function downloadLog(content: string, title: string): Promise<void> {
+    let uri = await vscode.window.showSaveDialog({
+        filters: { 'Log': ['.log', '.txt'] },
+        defaultUri: vscode.Uri.file(`${title}.log`)
+    });
+    fs.writeFile(uri.fsPath, content,
+        (err) => {
+            if (err) { throw err; }
+        });
 }

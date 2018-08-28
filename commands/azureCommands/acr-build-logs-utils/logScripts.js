@@ -140,11 +140,15 @@ window.addEventListener('message', event => {
 
         let item = content.querySelector(`#btn${message.id}`);
         setSingleAccordion(item);
-        console.log(item);
-        const logButton = content.querySelector(`#log${message.id}`);
-        console.log(logButton);
-        setLogBtnListener(logButton);
-        const digestClickables = item.nextElementSibling.querySelectorAll('.copy');
+
+        let panel = item.nextElementSibling;
+
+        const logButton = panel.querySelector('.openLog');
+        setLogBtnListener(logButton, false);
+        const downloadlogButton = panel.querySelector('.downloadlog');
+        setLogBtnListener(downloadlogButton, true);
+
+        const digestClickables = panel.querySelectorAll('.copy');
         setDigestListener(digestClickables);
 
     } else if (message.type === 'endContinued') {
@@ -188,12 +192,12 @@ function setTableSorter() {
     }
 }
 
-function setLogBtnListener(item) {
+function setLogBtnListener(item, download) {
     item.addEventListener('click', function () {
-        const id = this.id.substring('Log'.length);
         vscode.postMessage({
             logRequest: {
-                'id': id
+                'id': this.dataset.id,
+                'download': download
             }
         });
     });

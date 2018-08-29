@@ -113,15 +113,24 @@ export class LogTableWebview {
                     </div>
                 </form>
                 <table id = 'core'>
+                    <col class="arrowHolder">
+                    <col class="widthControl">
+                    <col class="widthControl">
+                    <col class="widthControl">
+                    <col class="widthControl">
+                    <col class="widthControl">
+                    <col class="widthControl">
+
                     <thead id = "tableHead" class = 'doubleLine'>
-                        <th class = 'arrowHolder'></td>
-                        <th class = 'widthControl'>Build ID<span class="sort">  </span></th>
-                        <th class = 'widthControl'>Task<span class="sort">  </span></th>
-                        <th class = 'widthControl'>Status<span class="sort">  </span></th>
-                        <th class = 'widthControl'>Created<span class="sort"> &#9661</span></th>
-                        <th class = 'widthControl'>Elapsed Time<span class="sort">  </span></th>
-                        <th class = 'widthControl'>Platform<span class="sort">  </span></th>
+                        <td></td>
+                        <th>Build ID<span class="sort">  </span></th>
+                        <th>Task<span class="sort">  </span></th>
+                        <th>Status<span class="sort">  </span></th>
+                        <th>Created<span class="sort"> &#9661</span></th>
+                        <th>Elapsed Time<span class="sort">  </span></th>
+                        <th>Platform<span class="sort">  </span></th>
                     </thead>
+
                 </table>
             </main>
             <div class = 'loadMoreBtn'>
@@ -145,12 +154,12 @@ export class LogTableWebview {
          <tbody class = "holder">
             <tr id= "btn${logId}" class="accordion">
                     <td class = 'arrowHolder'><div class = "arrow"><i class="ms-Icon ms-Icon--ChevronRight"></i></div></td>
-                    <td class = 'widthControl'>${name}</td>
-                    <td class = 'widthControl'>${task}</td>
-                    <td class ='status widthControl' data-status = '${log.status}'>${statusIcon} ${log.status}</td>
-                    <td class = 'widthControl' data-createdtime="${log.createTime.toLocaleString()}">${prettyDate}</td>
-                    <td class = 'widthControl'>${timeElapsed}</td>
-                    <td class = 'widthControl'>${osType}</td>
+                    <td>${name}</td>
+                    <td>${task}</td>
+                    <td class ='status ' data-status = '${log.status}'>${statusIcon} ${log.status}</td>
+                    <td data-createdtime="${log.createTime.toLocaleString()}">${prettyDate}</td>
+                    <td>${timeElapsed}</td>
+                    <td>${osType}</td>
             </tr>
             <tr class="panel">
                 <td colspan = "7">
@@ -158,10 +167,10 @@ export class LogTableWebview {
                         <table class="innerTable">
                             <tr>
                                 <td class = "arrowHolder">&#160</td>
-                                <th class = "borderLimit widthControl2">Tag</th>
-                                <th class = "widthControl">Repository</th>
-                                <th class = "widthControl">Digest</th>
-                                <th colspan = "3" class = "widthControl">
+                                <th class = "borderLimit">Tag</th>
+                                <th>Repository</th>
+                                <th>Digest</th>
+                                <th colspan = "3">
                                     <p class = "textAlignRight">Log  <i data-id = '${logId}' class="openLog ms-Icon ms-Icon--OpenInNewWindow"></i>  <i data-id = '${logId}' class="downloadlog ms-Icon ms-Icon--Copy"></i></p>
                                 </th>
                             </tr>
@@ -182,9 +191,9 @@ export class LogTableWebview {
             const lastTd: string = islastTd ? 'lastTd' : '';
             return `<tr>
                         <td class = "arrowHolder">&#160</td>
-                        <td class = "borderLimit widthControl ${lastTd}">${tag}</td>
-                        <td class = "widthControl ${lastTd}">${repository}</td>
-                        <td class = "widthControl ${lastTd}" data-digest = "${digest}">
+                        <td class = "borderLimit  ${lastTd}">${tag}</td>
+                        <td class = "${lastTd}">${repository}</td>
+                        <td class = "${lastTd}" data-digest = "${digest}">
                             <span class = "tooltip">
                                 ${truncatedDigest}
                                 <span class="tooltiptext">${digest}</span>
@@ -196,9 +205,10 @@ export class LogTableWebview {
         } else {
             return `<tr>
                         <td class = "arrowHolder lastTd">&#160</td>
-                        <td class = "borderLimit widthControl lastTd">NA</td>
-                        <td class = "widthControl lastTd">NA</td>
-                        <td class = "widthControl lastTd">NA</td>
+                        <td class = "borderLimit lastTd">NA</td>
+                        <td class = "lastTd">NA</td>
+                        <td class = "lastTd">NA</td>
+                        <td class = "lastTd" colspan = "3" ></td>
                     </tr>`;
         }
 
@@ -234,7 +244,7 @@ export class LogTableWebview {
         if (secs < 172800) { return "1 day ago"; }
         if (secs < 604800) { return Math.floor(secs / 86400) + " days ago"; }
         if (secs < 1209600) { return "1 week ago"; }
-        if (secs < 2592000) { return Math.floor(secs / 1209600) + " weeks ago"; }
+        if (secs < 2592000) { return Math.floor(secs / 604800) + " weeks ago"; }
         if (secs < 5184000) { return "1 month ago"; }
         if (secs < 31536000) { return Math.floor(secs / 2592000) + " months ago"; }
         if (secs < 63072000) { return "1 year ago"; }

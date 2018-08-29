@@ -38,8 +38,8 @@ function sortTable(n, dir = "asc", holdDir = false) {
         rows = table.querySelectorAll(".holder");
         for (i = 0; i < rows.length - 1; i++) {
             shouldSwitch = false;
-            x = rows[i].getElementsByTagName("TD")[n];
-            y = rows[i + 1].getElementsByTagName("TD")[n];
+            x = rows[i].getElementsByTagName("TD")[n + 1];
+            y = rows[i + 1].getElementsByTagName("TD")[n + 1];
             if (dir == "asc") {
                 if (cmpFunc(x, y)) {
                     shouldSwitch = true;
@@ -66,33 +66,31 @@ function sortTable(n, dir = "asc", holdDir = false) {
     }
 
     let sortColumns = document.querySelectorAll(".sort");
-    if (sortColumns[n - 1].innerHTML === triangles['down']) {
-        sortColumns[n - 1].innerHTML = triangles['up'];
-    } else if (sortColumns[n - 1].innerHTML === triangles['up']) {
-        sortColumns[n - 1].innerHTML = triangles['down'];
+    if (sortColumns[n].innerHTML === triangles['down']) {
+        sortColumns[n].innerHTML = triangles['up'];
+    } else if (sortColumns[n].innerHTML === triangles['up']) {
+        sortColumns[n].innerHTML = triangles['down'];
     } else {
         for (cell of sortColumns) {
             cell.innerHTML = '  ';
         }
-        sortColumns[n - 1].innerHTML = triangles['down'];
+        sortColumns[n].innerHTML = triangles['down'];
     }
 
 }
 
 function acquireCompareFunction(n) {
     switch (n) {
-        case 0:
-            return;
-        case 1: //Name
-        case 2: //Build Task
+        case 0: //Name
+        case 1: //Build Task
             return (x, y) => {
                 return x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()
             }
-        case 3: //Status
+        case 2: //Status
             return (x, y) => {
                 return status[x.dataset.status] > status[y.dataset.status];;
             }
-        case 4: //Created time
+        case 3: //Created time
             return (x, y) => {
                 if (x.dataset.createdtime === '') return true;
                 if (y.dataset.createdtime === '') return false;
@@ -100,13 +98,13 @@ function acquireCompareFunction(n) {
                 let dateY = new Date(y.dataset.createdtime);
                 return dateX > dateY;
             }
-        case 5: //Elapsed time
+        case 4: //Elapsed time
             return (x, y) => {
                 if (x.innerHTML === '') return true;
                 if (y.innerHTML === '') return false;
                 return Number(x.innerHTML.substring(0, x.innerHTML.length - 1)) > Number(y.innerHTML.substring(0, y.innerHTML.length - 1));
             }
-        case 6: //OS Type
+        case 5: //OS Type
             return (x, y) => {
                 return x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()
             }
@@ -208,40 +206,34 @@ function setDigestListener(digestClickables) {
 }
 
 function manageWidth() {
-    let headerCells = document.querySelectorAll("#headerTable th");
-    let topRow = document.querySelector("#core tr");
-    let topRowCells = topRow.querySelectorAll("td");
-    for (let i = 0; i < topRowCells.length; i++) {
-        let width = parseInt(getComputedStyle(topRowCells[i]).width);
-        headerCells[i].style.width = width + "px";
-    }
+    // let headerCells = document.querySelectorAll("#headerTable th");
+    // let topRow = document.querySelector("#core tr");
+    // let topRowCells = topRow.querySelectorAll("td");
+    // for (let i = 0; i < topRowCells.length; i++) {
+    //     let width = parseInt(getComputedStyle(topRowCells[i]).width);
+    //     headerCells[i].style.width = width + "px";
+    // }
     setAccordionTableWidth();
 }
 
 let openAccordions = [];
 
 function setAccordionTableWidth() {
-    // let topRow = document.querySelector("#core tr");
-    // let topRowCells = topRow.querySelectorAll("td");
-    // let topWidths = [];
-    // for (let cell of topRowCells) {
-    //     topWidths.push(parseInt(getComputedStyle(cell).width));
-    // }
-    // for (acc of openAccordions) {
-    //     let cells = acc.querySelectorAll(".innerTable th");
-    //     cells = cells.concat(acc.querySelectorAll(".innerTable td"));
-    //     cells[0].style.width = topWidths[0];
-    //     cells[2].style.width = topWidths[6];
-    //     for (let i = 3; i < cells.length; i++) {
-    //         if ((i + 2) % 4 === 1) {
-    //             cells[i].style.width = topWidths[0] + "px";
-    //         } else if ((i + 2) % 4 === 2) {
-    //             cells[i].style.width = (topWidths[1] + topWidths[2]) + "px";
-    //         } else if ((i + 2) % 4 === 3) {
-    //             cells[i].style.width = (topWidths[3] + topWidths[4]) + "px";
-    //         } else if ((i + 2) % 4 === 0) {
-    //             cells[i].style.width = topWidths[5] + "px";
-    //         }
-    //     }
-    // }
+    let headerCells = document.querySelectorAll("#core thead tr th");
+    let topWidths = [];
+    for (let cell of headerCells) {
+        topWidths.push(parseInt(getComputedStyle(cell).width));
+    }
+    for (acc of openAccordions) {
+        let cells = acc.querySelectorAll(".innerTable th, .innerTable td"); // 4 items
+        const cols = acc.querySelectorAll(".innerTable th").length + 1; //Account for arrowHolder
+        const rows = cells.length / cols;
+        //cells[0].style.width = topWidths[0];
+        for (let row = 0; row < rows; row++) {
+            for (let col = 1; col < cols - 1; col++) {
+                let cell = cells[row * cols + col];
+                cell.style.width = topWidths[col - 1] + "px"
+            }
+        }
+    }
 }

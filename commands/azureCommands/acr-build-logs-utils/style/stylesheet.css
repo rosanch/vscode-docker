@@ -88,6 +88,14 @@ h2 {
 
 #core {
     margin-top: 0.2cm;
+    table-layout: auto;
+    box-sizing: border-box;
+}
+
+#core td,
+#core th {
+    box-sizing: border-box;
+    padding-right: 0.7cm;
 }
 
 #headerTable {
@@ -109,7 +117,8 @@ body {
 }
 
 .innerTable td {
-    border-bottom: 1px solid var(--vscode-editor-foreground);
+    box-sizing: border-box;
+    border-bottom: 1px solid rgba(196, 196, 196, 0.2);
     font-family: var(--vscode-editor-font-family);
     font-size: var(--vscode-editor-font-size);
 }
@@ -247,15 +256,8 @@ main {
     margin-top: 8px;
     display: grid;
     box-sizing: border-box;
-    margin-left: 0px;
-    margin-right: 0px;
-}
-
-@media screen and (min-width: 640px) {
-    main {
-        margin-left: 10px;
-        margin-right: 10px;
-    }
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 @media screen and (min-width: 1399px) {

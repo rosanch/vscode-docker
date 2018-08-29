@@ -9,7 +9,7 @@ import * as request from 'request-promise-native';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, IActionContext, registerCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/lib/main';
-import { queueBuild } from './commands/acr-build';
+import { queueBuild } from './commands/azureCommands/acr-build';
 import { createRegistry } from './commands/azureCommands/create-registry';
 import { deleteAzureImage } from './commands/azureCommands/delete-image';
 import { deleteAzureRegistry } from './commands/azureCommands/delete-registry';
@@ -165,10 +165,18 @@ function registerDockerCommands(azureAccount: AzureAccount): void {
     registerCommand('vscode-docker.explorer.refresh', () => dockerExplorerProvider.refresh());
 
     registerCommand('vscode-docker.configure', async function (this: IActionContext): Promise<void> { await configure(this); });
+<<<<<<< HEAD
     registerCommand('vscode-docker.api.configure', async function (this: IActionContext, options: ConfigureApiOptions): Promise<void> {
         await configureApi(this, options);
     });
 
+=======
+    registerCommand('vscode-docker.image.build', async function (this: IActionContext): Promise<void> { await buildImage(this); });
+    registerCommand('vscode-docker.image.inspect', inspectImage);
+    registerCommand('vscode-docker.image.remove', removeImage);
+    registerCommand('vscode-docker.image.push', pushImage);
+    registerCommand('vscode-docker.image.tag', tagImage);
+>>>>>>> Jackson/QuickBuildDev
     registerCommand('vscode-docker.container.start', startContainer);
     registerCommand('vscode-docker.container.start.interactive', startContainerInteractive);
     registerCommand('vscode-docker.container.start.azurecli', startAzureCLI);
@@ -204,6 +212,7 @@ function registerDockerCommands(azureAccount: AzureAccount): void {
     registerAzureCommand('vscode-docker.pullFromAzure', pullFromAzure);
 }
 
+<<<<<<< HEAD
 async function consolidateDefaultRegistrySettings(): Promise<void> {
     const configOptions: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('docker');
     let defaultRegistryPath = configOptions.get('defaultRegistryPath', '');
@@ -218,6 +227,17 @@ async function consolidateDefaultRegistrySettings(): Promise<void> {
         }
         await configOptions.update('defaultRegistry', undefined, vscode.ConfigurationTarget.Workspace);
         vscode.window.showInformationMessage("The 'docker.defaultRegistry' setting is now obsolete, and you should just use the 'docker.defaultRegistryPath' setting. Your settings have been updated to reflect this change.")
+=======
+    ctx.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('docker', new DockerDebugConfigProvider()));
+
+    if (azureAccount) {
+        registerCommand('vscode-docker.queueBuild', queueBuild);
+        registerCommand('vscode-docker.delete-ACR-Registry', deleteAzureRegistry);
+        registerCommand('vscode-docker.delete-ACR-Image', deleteAzureImage);
+        registerCommand('vscode-docker.delete-ACR-Repository', deleteRepository);
+        registerCommand('vscode-docker.create-ACR-Registry', createRegistry);
+        AzureUtilityManager.getInstance().setAccount(azureAccount);
+>>>>>>> Jackson/QuickBuildDev
     }
 }
 

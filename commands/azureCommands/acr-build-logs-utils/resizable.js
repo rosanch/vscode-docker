@@ -39,8 +39,6 @@ function getWidth(x) {
 
 // main class prototype
 function ColumnResize(table) {
-    if (table.tagName != 'TABLE') return;
-
     this.id = table.id;
     // private data
     let self = this;

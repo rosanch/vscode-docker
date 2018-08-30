@@ -18,7 +18,6 @@ var triangles = {
 let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();
 setLoadMoreListener();
-setTableSorter();
 
 /* Sorting
  * PR note, while this does not use a particularly quick algorithm
@@ -137,6 +136,7 @@ window.addEventListener('message', event => {
     } else if (message.type === 'end') {
         window.addEventListener("resize", manageWidth);
         manageWidth();
+        setTableSorter();
     }
 
 });
@@ -165,7 +165,9 @@ function setSingleAccordion(item) {
 }
 
 function setTableSorter() {
-    let items = document.getElementsByTagName('TH');
+    let tableHeader = document.querySelector("#tableHead");
+    let items = tableHeader.querySelectorAll(".colTitle");
+    console.log(items);
     for (let i = 0; i < items.length; i++) {
         items[i].addEventListener('click', () => {
             sortTable(i);

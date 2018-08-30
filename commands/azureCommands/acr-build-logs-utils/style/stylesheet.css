@@ -100,8 +100,11 @@ h2 {
 #headerTable {
     font-size: var(--vscode-editor-font-size);
     font-family: var(--vscode-editor-font-family);
-    cursor: pointer;
     height: 100%;
+}
+
+.colTitle {
+    cursor: pointer;
 }
 
 body {
@@ -278,7 +281,6 @@ main {
     position: -moz-sticky;
     position: -ms-sticky;
     position: -o-sticky;
-    cursor: pointer;
 }
 
 #tableHead th {
@@ -287,7 +289,6 @@ main {
     position: -moz-sticky;
     position: -ms-sticky;
     position: -o-sticky;
-    cursor: pointer;
     border-right: 2px solid rgba(196, 196, 196, 0.5);
 }
 

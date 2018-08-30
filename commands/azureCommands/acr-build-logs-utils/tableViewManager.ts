@@ -124,12 +124,12 @@ export class LogTableWebview {
 
                     <thead id = "tableHead" class = 'doubleLine'>
                         <td></td>
-                        <th>Build ID<span class="sort">  </span></th>
-                        <th>Task<span class="sort">  </span></th>
-                        <th>Status<span class="sort">  </span></th>
-                        <th>Created<span class="sort"> &#9661</span></th>
-                        <th>Elapsed Time<span class="sort">  </span></th>
-                        <th>Platform<span class="sort">  </span></th>
+                        <th><span class="colTitle">Build ID</span><span class="sort">  </span></th>
+                        <th><span class="colTitle">Task</span><span class="sort">  </span></th>
+                        <th><span class="colTitle">Status</span><span class="sort">  </span></th>
+                        <th><span class="colTitle">Created</span><span class="sort"> &#9661</span></th>
+                        <th><span class="colTitle">Elapsed Time</span><span class="sort">  </span></th>
+                        <th><span class="colTitle">Platform</span><span class="sort">  </span></th>
                     </thead>
 
                 </table>
@@ -137,9 +137,8 @@ export class LogTableWebview {
             <div class = 'loadMoreBtn'>
                 <button id= "loadBtn" class="viewLog">Load More Logs</button>
             </div>
-
-            <script src= "${scriptFile}"></script>
             <script src= "${resizingScript}"></script>
+            <script src= "${scriptFile}"></script>
         </body>`;
     }
 

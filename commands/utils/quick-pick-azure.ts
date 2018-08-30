@@ -77,7 +77,6 @@ export async function quickPickSubscription(): Promise<Subscription> {
         });
         throw new Error('User has no azure subscriptions');
     }
-
     let subsNames: string[] = [];
     for (let sub of subs) {
         subsNames.push(sub.displayName);

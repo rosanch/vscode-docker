@@ -44,8 +44,6 @@ table {
 .widthControl {
     box-sizing: border-box;
     text-align: left;
-    width: calc(15.9%);
-    padding-right: 0.7cm;
 }
 
 .widthControl2 {
@@ -95,7 +93,8 @@ h2 {
 #core td,
 #core th {
     box-sizing: border-box;
-    padding-right: 0.7cm;
+    padding-right: 0.35cm;
+    padding-left: 0.35cm;
 }
 
 #headerTable {
@@ -289,6 +288,7 @@ main {
     position: -ms-sticky;
     position: -o-sticky;
     cursor: pointer;
+    border-right: 2px solid rgba(196, 196, 196, 0.5);
 }
 
 .searchBoxes {

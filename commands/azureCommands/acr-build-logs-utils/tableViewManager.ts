@@ -16,10 +16,11 @@ export class LogTableWebview {
         //Get path to resource on disk
         let extensionPath = vscode.extensions.getExtension("PeterJausovec.vscode-docker").extensionPath;
         const scriptFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'logScripts.js')).with({ scheme: 'vscode-resource' });
+        const resizingScript = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'resizable.js')).with({ scheme: 'vscode-resource' });
         const styleFile = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'stylesheet.css')).with({ scheme: 'vscode-resource' });
         const iconStyle = vscode.Uri.file(path.join(extensionPath, 'commands', 'azureCommands', 'acr-build-logs-utils', 'style', 'fabric-components', 'css', 'vscmdl2-icons.css')).with({ scheme: 'vscode-resource' });
         //Populate Webview
-        this.panel.webview.html = this.getBaseHtml(scriptFile, styleFile, iconStyle);
+        this.panel.webview.html = this.getBaseHtml(scriptFile, resizingScript, styleFile, iconStyle);
         this.setupIncomingListeners();
         this.addLogsToWebView();
     }
@@ -84,14 +85,14 @@ export class LogTableWebview {
 
     //HTML Content Loaders
     /** Create the table in which to push the build logs */
-    private getBaseHtml(scriptFile: vscode.Uri, stylesheet: vscode.Uri, iconStyles: vscode.Uri): string {
+    private getBaseHtml(scriptFile: vscode.Uri, resizingScript: vscode.Uri, stylesheet: vscode.Uri, iconStyles: vscode.Uri): string {
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <link rel="stylesheet" type="text/css" href="${stylesheet}">
             <link rel="stylesheet" type="text/css" href=${iconStyles}>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="frame-src vscode-resource:; img-src vscode-resource: https:; script-src vscode-resource:; style-src vscode-resource:;">
+            <meta http-equiv="Content-Security-Policy" content="frame-src vscode-resource:; img-src vscode-resource: https:; script-src vscode-resource:;">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Logs</title>
         </head>
@@ -112,7 +113,7 @@ export class LogTableWebview {
                         <input type="text" name="date">
                     </div>
                 </form>
-                <table id = 'core'>
+                <table id='core' class='resizable'>
                     <col class="arrowHolder">
                     <col class="widthControl">
                     <col class="widthControl">
@@ -138,6 +139,7 @@ export class LogTableWebview {
             </div>
 
             <script src= "${scriptFile}"></script>
+            <script src= "${resizingScript}"></script>
         </body>`;
     }
 

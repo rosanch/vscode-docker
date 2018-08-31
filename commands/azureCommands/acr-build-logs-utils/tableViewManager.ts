@@ -99,7 +99,7 @@ export class LogTableWebview {
 
         <body>
             <main>
-                <form class="searchBoxes">
+                <form class="searchBoxes fixed solidBackground">
                     <div>
                         Filter by ID:<br>
                         <input type="text" name="id">
@@ -122,7 +122,7 @@ export class LogTableWebview {
                     <col class="widthControl">
                     <col class="widthControl">
 
-                    <thead id = "tableHead" class = 'doubleLine'>
+                    <thead id = "tableHead" class = 'doubleLine fixed solidBackground'>
                         <td></td>
                         <th><span class="colTitle">Build ID</span><span class="sort">  </span></th>
                         <th><span class="colTitle">Task</span><span class="sort">  </span></th>

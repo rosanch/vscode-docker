@@ -14,6 +14,14 @@ var triangles = {
     'up': ' △'
 }
 
+document.addEventListener("scroll", function () {
+    var translate = "translate(0," + this.lastChild.scrollTop + "px)";
+    let fixedItems = this.querySelectorAll(".fixed");
+    for (item of fixedItems) {
+        item.style.transform = translate;
+    }
+});
+
 // Main
 let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();

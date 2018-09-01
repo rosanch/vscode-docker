@@ -122,14 +122,14 @@ export class LogTableWebview {
                     <col class="widthControl">
                     <col class="widthControl">
 
-                    <thead id = "tableHead" class = 'doubleLine fixed solidBackground'>
+                    <thead id = "tableHead" class = 'fixed solidBackground'>
                         <td></td>
-                        <th><span class="colTitle">Build ID</span><span class="sort">  </span></th>
-                        <th><span class="colTitle">Task</span><span class="sort">  </span></th>
-                        <th><span class="colTitle">Status</span><span class="sort">  </span></th>
-                        <th><span class="colTitle">Created</span><span class="sort"> &#9661</span></th>
-                        <th><span class="colTitle">Elapsed Time</span><span class="sort">  </span></th>
-                        <th><span class="colTitle">Platform</span><span class="sort">  </span></th>
+                        <th><span class="colTitle">Build ID<span class="sort">  </span></span></th>
+                        <th><span class="colTitle">Task<span class="sort">  </span></span></th>
+                        <th><span class="colTitle">Status<span class="sort">  </span></span></th>
+                        <th><span class="colTitle">Created<span class="sort">&#160<i class="ms-Icon ms-Icon--ChevronDown"></i></span></span></th>
+                        <th><span class="colTitle">Elapsed Time<span class="sort">  </span></span></th>
+                        <th><span class="colTitle">Platform<span class="sort">  </span></span></th>
                     </thead>
 
                 </table>

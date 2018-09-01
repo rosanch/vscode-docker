@@ -8,10 +8,9 @@ const status = {
 
 var currentN = 4;
 var currentDir = "asc"
-
 var triangles = {
-    'down': ' ▽',
-    'up': ' △'
+    'down': '&nbsp;<i class="ms-Icon ms-Icon--ChevronDown"></i>',
+    'up': '&nbsp;<i class="rotate180 ms-Icon ms-Icon--ChevronDown"></i>'
 }
 
 document.addEventListener("scroll", function () {

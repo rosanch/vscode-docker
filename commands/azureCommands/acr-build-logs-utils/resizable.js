@@ -133,11 +133,9 @@ function ColumnResize(table) {
 
     // prepare table header to be draggable
     // it runs during class creation
-    for (let i = 0; i < dragColumns.length; i++) {
-        dragColumns[i].innerHTML = "<div style='position:relative;height:100%;width:100%'>" +
-            "<div style='" +
-            "position:absolute;height:100%;width:6px;margin-right:-3px;padding-left:0.35cm;padding-right:0.35cm;" +
-            "left:100%;top:0px;cursor:w-resize;z-index:10;'>" +
+    for (let i = 1; i < dragColumns.length - 1; i++) {
+        dragColumns[i].innerHTML = "<div class='dragWrapper'>" +
+            "<div class='dragLine'>" +
             "</div>" +
             dragColumns[i].innerHTML +
             "</div>";

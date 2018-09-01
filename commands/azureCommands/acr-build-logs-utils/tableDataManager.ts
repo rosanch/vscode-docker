@@ -41,7 +41,10 @@ export class LogData {
     public async loadMoreLogs(filterFunc?: (logEntry: Build) => boolean): Promise<void> {
         let buildListResult: BuildListResult;
         if (this.logs.length === 0) {
-            buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name);
+            //contains(BuildTaskName, 'testTask')
+            //`BuildTaskName eq 'testTask'
+            //
+            buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name, { 'filter': `BuildTaskName eq 'testTask'` });
             this.nextLink = buildListResult.nextLink;
         } else if (!this.nextLink) {
             throw new Error('No more logs to show');

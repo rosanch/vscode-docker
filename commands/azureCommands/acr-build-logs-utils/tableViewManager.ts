@@ -109,7 +109,7 @@ export class LogTableWebview {
                         <input type="text" name="task">
                     </div>
                     <div>
-                        Filter by date:<br>
+                        Filter by Image:<br>
                         <input type="text" name="date">
                     </div>
                 </form>

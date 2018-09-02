@@ -1,5 +1,9 @@
 import ContainerRegistryManagementClient from "azure-arm-containerregistry";
 import { Build, BuildGetLogResult, BuildListResult, Registry } from "azure-arm-containerregistry/lib/models";
+import request = require('request-promise');
+import { registryRequest } from "../../../explorer/models/commonRegistryUtils";
+import { Manifest } from "../../../explorer/utils/dockerHubUtils";
+import { acquireACRAccessTokenFromRegistry } from "../../../utils/Azure/acrTools";
 /** Class to manage data and data acquisition for logs */
 export class LogData {
     public registry: Registry;
@@ -45,20 +49,29 @@ export class LogData {
      * @param loadNext Determines if the next page of logs should be loaded, will throw an error if there are no more logs to load
      * @param removeOld Cleans preexisting information on links and logs imediately before new requests, if loadNext is specified
      * the next page of logs will be saved and all preexisting data will be deleted.
-     * @param filter Specifies a filter for log items, can be in the following formats : BuildTaskName eq '<taskName>', contains(,'')
+     * @param filter Specifies a filter for log items, if build Id is specified this will take precedence
      */
     public async loadLogs(loadNext: boolean, removeOld?: boolean, filter?: Filter): Promise<void> {
         let buildListResult: BuildListResult;
         let options: any = {};
-        if (filter) { options.filter = this.parseFilter(filter); }
-        if (loadNext) {
-            if (this.nextLink) {
-                buildListResult = await this.client.builds.listNext(this.nextLink);
+        if (filter && Object.keys(filter).length) {
+            if (!filter.buildId) {
+                options.filter = await this.parseFilter(filter);
+                buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name, options);
             } else {
-                throw new Error('No more logs to show');
+                buildListResult = [];
+                buildListResult.push(await this.client.builds.get(this.resourceGroup, this.registry.name, filter.buildId));
             }
         } else {
-            buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name, options);
+            if (loadNext) {
+                if (this.nextLink) {
+                    buildListResult = await this.client.builds.listNext(this.nextLink);
+                } else {
+                    throw new Error('No more logs to show');
+                }
+            } else {
+                buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name);
+            }
         }
         if (removeOld) { this.clearLogItems() }
         this.nextLink = buildListResult.nextLink;
@@ -80,13 +93,35 @@ export class LogData {
         this.nextLink = '';
     }
 
-    private parseFilter(filter: Filter): string {
+    private async parseFilter(filter: Filter): Promise<string> {
         let parsedFilter = "";
         if (filter.buildTask) { // Build Task id
             parsedFilter = `BuildTaskName eq '${filter.buildTask}'`;
         } else if (filter.image) { //Image
+            let items: string[] = filter.image.split(':')
+            const { acrAccessToken } = await acquireACRAccessTokenFromRegistry(this.registry, 'repository:' + items[0] + ':pull');
+            let digest;
+            // try {
+            //     manifest = await registryRequest<any>('https://' + this.registry.loginServer, `v2/${items[0]}/manifests/${items[1]}`, { bearer: acrAccessToken });
+            //     //Accept: 'application/vnd.docker.distribution.manifest.v2+json'
+            // } catch (err) {
+            //     console.log(err);
+            // }
 
-            // filter = filter.length > 0 ? filter + `and contains(Image,'${inputFields[2].value}')` : `contains(Image,'${inputFields[2].value}')`;
+            await request.get('https://' + this.registry.loginServer + `/v2/${items[0]}/manifests/${items[1]}`, {
+                auth: {
+                    bearer: acrAccessToken
+                },
+                accept: {
+                    application: 'vnd.docker.distribution.manifest.v2+json'
+                }
+            }, (err, httpResponse, body) => {
+                digest = httpResponse.headers['docker-content-digest'];
+            });
+
+            //let manifest: any = await registryRequest<any>(this.registry.loginServer, `v2/${items[0]}/manifests/${items[1]}`, { bearer: acrAccessToken });
+            if (parsedFilter.length > 0) { parsedFilter += ' and '; }
+            parsedFilter += `contains(OutputImageManifests, '${items[0]}@${digest}')`;
         }
         return parsedFilter;
     }

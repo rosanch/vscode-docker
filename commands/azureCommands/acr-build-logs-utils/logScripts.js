@@ -264,14 +264,19 @@ function setInputListeners() {
     }
 }
 
+/*interface Filter
+    image?: string;
+    buildId?: string;
+    buildTask?: string;
+*/
 function getFilterString(inputFields) {
-    let filter = "";
+    let filter = {};
     if (inputFields[0].value.length > 0) { //Build Id
-
+        filter.buildId = inputFields[0].value;
     } else if (inputFields[1].value.length > 0) { // Build Task id
-        filter = filter.length > 0 ? filter + `and BuildTaskName eq '${inputFields[1].value}'` : `BuildTaskName eq '${inputFields[1].value}'`;
+        filter.buildTask = inputFields[1].value;
     } else if (inputFields[2].value.length > 0) { //Image
-        filter = filter.length > 0 ? filter + `and contains(Image,'${inputFields[2].value}')` : `contains(Image,'${inputFields[2].value}')`;
+        filter.image = inputFields[2].value;
     }
     return filter;
 }
@@ -282,3 +287,4 @@ function clearLogs() {
         item.remove();
     }
 }
+

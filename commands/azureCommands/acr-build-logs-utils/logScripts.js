@@ -25,6 +25,7 @@ document.addEventListener("scroll", function () {
 let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();
 setLoadMoreListener();
+setInputListeners();
 
 /* Sorting
  * PR note, while this does not use a particularly quick algorithm
@@ -244,5 +245,40 @@ function setAccordionTableWidth() {
                 cell.style.width = topWidths[col - 1] + "px"
             }
         }
+    }
+}
+
+function setInputListeners() {
+    const inputFields = document.querySelectorAll("input");
+    for (let inputField of inputFields) {
+        inputField.addEventListener("keyup", function (event) {
+            if (event.key === "Enter") {
+                clearLogs();
+                vscode.postMessage({
+                    loadFiltered: {
+                        filterString: getFilterString(inputFields)
+                    }
+                });
+            }
+        });
+    }
+}
+
+function getFilterString(inputFields) {
+    let filter = "";
+    if (inputFields[0].value.length > 0) { //Build Id
+
+    } else if (inputFields[1].value.length > 0) { // Build Task id
+        filter = filter.length > 0 ? filter + `and BuildTaskName eq '${inputFields[1].value}'` : `BuildTaskName eq '${inputFields[1].value}'`;
+    } else if (inputFields[2].value.length > 0) { //Image
+        filter = filter.length > 0 ? filter + `and contains(Image,'${inputFields[2].value}')` : `contains(Image,'${inputFields[2].value}')`;
+    }
+    return filter;
+}
+
+function clearLogs() {
+    let items = document.querySelectorAll("#core tbody");
+    for (let item of items) {
+        item.remove();
     }
 }

@@ -38,25 +38,30 @@ export class LogData {
         return this.links[itemNumber].url
     }
 
-    public async loadMoreLogs(filterFunc?: (logEntry: Build) => boolean): Promise<void> {
+    //contains(BuildTaskName, 'testTask')
+    //`BuildTaskName eq 'testTask'
+    //
+    /** Loads logs from azure
+     * @param loadNext Determines if the next page of logs should be loaded, will throw an error if there are no more logs to load
+     * @param removeOld Cleans preexisting information on links and logs imediately before new requests, if loadNext is specified
+     * the next page of logs will be saved and all preexisting data will be deleted.
+     * @param filter Specifies a filter for log items, can be in the following formats : BuildTaskName eq '<taskName>', contains(,'')
+     */
+    public async loadLogs(loadNext: boolean, removeOld?: boolean, filter?: Filter): Promise<void> {
         let buildListResult: BuildListResult;
-        if (this.logs.length === 0) {
-            //contains(BuildTaskName, 'testTask')
-            //`BuildTaskName eq 'testTask'
-            //
-            buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name, { 'filter': `BuildTaskName eq 'testTask'` });
-            this.nextLink = buildListResult.nextLink;
-        } else if (!this.nextLink) {
-            throw new Error('No more logs to show');
+        let options: any = {};
+        if (filter) { options.filter = this.parseFilter(filter); }
+        if (loadNext) {
+            if (this.nextLink) {
+                buildListResult = await this.client.builds.listNext(this.nextLink);
+            } else {
+                throw new Error('No more logs to show');
+            }
         } else {
-            let options = { 'skipToken': this.nextLink };
             buildListResult = await this.client.builds.list(this.resourceGroup, this.registry.name, options);
-            this.nextLink = buildListResult.nextLink;
         }
-        if (filterFunc) {
-            buildListResult = buildListResult.filter(filterFunc);
-        }
-
+        if (removeOld) { this.clearLogItems() }
+        this.nextLink = buildListResult.nextLink;
         this.addLogs(buildListResult);
     }
 
@@ -68,4 +73,27 @@ export class LogData {
             this.links.push({ 'requesting': false });
         }
     }
+
+    public clearLogItems(): void {
+        this.logs = [];
+        this.links = [];
+        this.nextLink = '';
+    }
+
+    private parseFilter(filter: Filter): string {
+        let parsedFilter = "";
+        if (filter.buildTask) { // Build Task id
+            parsedFilter = `BuildTaskName eq '${filter.buildTask}'`;
+        } else if (filter.image) { //Image
+
+            // filter = filter.length > 0 ? filter + `and contains(Image,'${inputFields[2].value}')` : `contains(Image,'${inputFields[2].value}')`;
+        }
+        return parsedFilter;
+    }
+}
+
+export interface Filter {
+    image?: string;
+    buildId?: string;
+    buildTask?: string;
 }

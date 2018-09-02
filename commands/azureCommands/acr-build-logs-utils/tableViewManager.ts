@@ -40,7 +40,11 @@ export class LogTableWebview {
                 clipboardy.writeSync(message.copyRequest.text);
 
             } else if (message.loadMore) {
-                await this.logData.loadMoreLogs();
+                await this.logData.loadLogs(true);
+                this.addLogsToWebView();
+
+            } else if (message.loadFiltered) {
+                await this.logData.loadLogs(false, true, message.loadFiltered.filterString);
                 this.addLogsToWebView();
             }
         });

@@ -93,6 +93,10 @@ export class LogData {
         this.nextLink = '';
     }
 
+    public hasNextPage(): boolean {
+        return this.nextLink !== undefined;
+    }
+
     private async parseFilter(filter: Filter): Promise<string> {
         let parsedFilter = "";
         if (filter.buildTask) { // Build Task id
@@ -101,13 +105,6 @@ export class LogData {
             let items: string[] = filter.image.split(':')
             const { acrAccessToken } = await acquireACRAccessTokenFromRegistry(this.registry, 'repository:' + items[0] + ':pull');
             let digest;
-            // try {
-            //     manifest = await registryRequest<any>('https://' + this.registry.loginServer, `v2/${items[0]}/manifests/${items[1]}`, { bearer: acrAccessToken });
-            //     //Accept: 'application/vnd.docker.distribution.manifest.v2+json'
-            // } catch (err) {
-            //     console.log(err);
-            // }
-
             await request.get('https://' + this.registry.loginServer + `/v2/${items[0]}/manifests/${items[1]}`, {
                 auth: {
                     bearer: acrAccessToken

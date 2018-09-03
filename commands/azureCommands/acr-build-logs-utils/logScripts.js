@@ -26,13 +26,12 @@ let content = document.querySelector('#core');
 const vscode = acquireVsCodeApi();
 setLoadMoreListener();
 setInputListeners();
-
+loading();
 /* Sorting
  * PR note, while this does not use a particularly quick algorithm
  * it allows a low stuttering experience that allowed rapid testing.
  * I will improve it soon.*/
 function sortTable(n, dir = "asc", holdDir = false) {
-    currentDir = dir;
     currentN = n;
     let table, rows, switching, i, x, y, shouldSwitch, switchcount = 0;
     let cmpFunc = acquireCompareFunction(n);
@@ -71,19 +70,20 @@ function sortTable(n, dir = "asc", holdDir = false) {
             }
         }
     }
-
-    let sortColumns = document.querySelectorAll(".sort");
-    if (sortColumns[n].innerHTML === triangles['down']) {
-        sortColumns[n].innerHTML = triangles['up'];
-    } else if (sortColumns[n].innerHTML === triangles['up']) {
-        sortColumns[n].innerHTML = triangles['down'];
-    } else {
-        for (cell of sortColumns) {
-            cell.innerHTML = '  ';
+    if (!holdDir) {
+        let sortColumns = document.querySelectorAll(".sort");
+        if (sortColumns[n].innerHTML === triangles['down']) {
+            sortColumns[n].innerHTML = triangles['up'];
+        } else if (sortColumns[n].innerHTML === triangles['up']) {
+            sortColumns[n].innerHTML = triangles['down'];
+        } else {
+            for (cell of sortColumns) {
+                cell.innerHTML = '  ';
+            }
+            sortColumns[n].innerHTML = triangles['down'];
         }
-        sortColumns[n].innerHTML = triangles['down'];
     }
-
+    currentDir = dir;
 }
 
 function acquireCompareFunction(n) {
@@ -141,10 +141,17 @@ window.addEventListener('message', event => {
 
     } else if (message.type === 'endContinued') {
         sortTable(currentN, currentDir, true);
+        loading();
     } else if (message.type === 'end') {
         window.addEventListener("resize", manageWidth);
         manageWidth();
         setTableSorter();
+        loading();
+    }
+
+    if (message.canLoadMore) {
+        const loadBtn = document.querySelector('.loadMoreBtn');
+        loadBtn.style.display = 'flex';
     }
 
 });
@@ -175,7 +182,6 @@ function setSingleAccordion(item) {
 function setTableSorter() {
     let tableHeader = document.querySelector("#tableHead");
     let items = tableHeader.querySelectorAll(".colTitle");
-    console.log(items);
     for (let i = 0; i < items.length; i++) {
         items[i].addEventListener('click', () => {
             sortTable(i);
@@ -197,6 +203,9 @@ function setLogBtnListener(item, download) {
 function setLoadMoreListener() {
     let item = document.querySelector("#loadBtn");
     item.addEventListener('click', function () {
+        const loadBtn = document.querySelector('.loadMoreBtn');
+        loadBtn.style.display = 'none';
+        loading();
         vscode.postMessage({
             loadMore: true
         });
@@ -250,10 +259,13 @@ function setAccordionTableWidth() {
 
 function setInputListeners() {
     const inputFields = document.querySelectorAll("input");
+    const loadBtn = document.querySelector('.loadMoreBtn');
     for (let inputField of inputFields) {
         inputField.addEventListener("keyup", function (event) {
             if (event.key === "Enter") {
                 clearLogs();
+                loading();
+                loadBtn.style.display = 'none';
                 vscode.postMessage({
                     loadFiltered: {
                         filterString: getFilterString(inputFields)
@@ -287,4 +299,13 @@ function clearLogs() {
         item.remove();
     }
 }
-
+var shouldLoad = false;
+function loading() {
+    const loader = document.querySelector('#loadingDiv');
+    if (shouldLoad) {
+        loader.style.display = 'flex';
+    } else {
+        loader.style.display = 'none';
+    }
+    shouldLoad = !shouldLoad;
+}

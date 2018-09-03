@@ -131,11 +131,13 @@ body {
 }
 
 .loadMoreBtn {
-    display: flex;
+    display: none;
     justify-content: center;
     align-content: center;
     align-items: center;
     width: 100%;
+    margin-top: 1cm;
+    margin-bottom: 1cm;
 }
 
 .viewLog:hover {
@@ -344,4 +346,33 @@ main {
 .tooltip:hover .tooltiptext {
     display: inline;
     opacity: 1;
+}
+
+#loading {
+    display: inline-block;
+    border: 3px solid var(--vscode-editor-foreground);
+    border-radius: 50%;
+    border-top-color: var(--vscode-editor-background);
+    animation: spin 1s ease-in-out infinite;
+    -webkit-animation: spin 1s ease-in-out infinite;
+    height: calc(var(--vscode-editor-font-size)*1.5);
+    width: calc(var(--vscode-editor-font-size)*1.5);
+
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#loadingDiv{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    margin-top: 1cm;
+    margin-bottom: 1cm;
 }

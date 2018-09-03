@@ -40,8 +40,9 @@ export class LogTableWebview {
                 clipboardy.writeSync(message.copyRequest.text);
 
             } else if (message.loadMore) {
+                const alreadyLoaded = this.logData.logs.length;
                 await this.logData.loadLogs(true);
-                this.addLogsToWebView();
+                this.addLogsToWebView(alreadyLoaded);
 
             } else if (message.loadFiltered) {
                 await this.logData.loadLogs(false, true, message.loadFiltered.filterString);
@@ -63,9 +64,9 @@ export class LogTableWebview {
             });
         }
         if (startItem) {
-            this.panel.webview.postMessage({ 'type': 'endContinued' });
+            this.panel.webview.postMessage({ 'type': 'endContinued', 'canLoadMore': this.logData.hasNextPage() });
         } else {
-            this.panel.webview.postMessage({ 'type': 'end' });
+            this.panel.webview.postMessage({ 'type': 'end', 'canLoadMore': this.logData.hasNextPage() });
         }
     }
 
@@ -118,6 +119,7 @@ export class LogTableWebview {
                     </div>
                 </form>
                 <table id='core' class='resizable'>
+                    <caption>Log items</caption>
                     <col class="arrowHolder">
                     <col class="widthControl">
                     <col class="widthControl">
@@ -138,6 +140,9 @@ export class LogTableWebview {
 
                 </table>
             </main>
+            <div id = 'loadingDiv'>
+                Loading &#160 &#160 <span id= "loading"></span>
+            </div>
             <div class = 'loadMoreBtn'>
                 <button id= "loadBtn" class="viewLog">Load More Logs</button>
             </div>
@@ -170,6 +175,7 @@ export class LogTableWebview {
                 <td colspan = "7">
                     <div class= "paddingDiv overflowX">
                         <table class="innerTable">
+                        <caption>Output images and log viewing options</caption>
                             <tr>
                                 <td class = "arrowHolder">&#160</td>
                                 <th class = "borderLimit">Tag</th>

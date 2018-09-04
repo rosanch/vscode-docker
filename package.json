@@ -628,6 +628,11 @@
         "command": "vscode-docker.disconnectCustomRegistry",
         "title": "Disconnect from Private Registry",
         "category": "Docker"
+      },
+      {
+        "command": "vscode-docker.queueBuild",
+        "title": "Cloud Build",
+        "category": "Docker"
       }
     ],
     "views": {

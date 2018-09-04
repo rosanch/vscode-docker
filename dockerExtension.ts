@@ -9,6 +9,7 @@ import * as request from 'request-promise-native';
 import * as vscode from 'vscode';
 import { AzureUserInput, createTelemetryReporter, IActionContext, registerCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/lib/main';
+import { queueBuild } from './commands/azureCommands/acr-build';
 import { viewBuildLogs } from './commands/azureCommands/acr-build-logs';
 import { LogContentProvider } from './commands/azureCommands/acr-build-logs-utils/logFileManager';
 import { createRegistry } from './commands/azureCommands/create-registry';
@@ -203,6 +204,7 @@ function registerDockerCommands(azureAccount: AzureAccount): void {
     registerAzureCommand('vscode-docker.create-ACR-Registry', createRegistry);
     registerAzureCommand('vscode-docker.pullFromAzure', pullFromAzure);
     registerAzureCommand('vscode-docker.acrBuildLogs', viewBuildLogs);
+    registerAzureCommand('vscode-docker.queueBuild', queueBuild);
 
 }
 

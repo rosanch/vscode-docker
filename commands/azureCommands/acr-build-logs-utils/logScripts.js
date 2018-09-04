@@ -30,9 +30,6 @@ loading();
 
 document.onkeydown = function (event) {
     if (event.key === "Enter") { // The Enter/Return key
-        if (document.activeElement.className.indexOf('holder') !== -1) {
-            document.activeElement.children[0].onclick(event);
-        }
         document.activeElement.onclick(event);
     }
 };
@@ -310,6 +307,7 @@ function clearLogs() {
     }
 }
 var shouldLoad = false;
+
 function loading() {
     const loader = document.querySelector('#loadingDiv');
     if (shouldLoad) {
@@ -319,4 +317,3 @@ function loading() {
     }
     shouldLoad = !shouldLoad;
 }
-

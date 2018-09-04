@@ -19,10 +19,15 @@
     background-color: var(--vscode-list-hoverBackground);
 }
 
+.accordion:focus {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
 .active {
     background-color: var(--vscode-list-activeSelectionBackground);
 }
 
+.active.accordion:focus,
 .active.accordion:hover {
     background-color: var(--vscode-list-activeSelectionBackground);
 }
@@ -357,17 +362,21 @@ main {
     -webkit-animation: spin 1s ease-in-out infinite;
     height: calc(var(--vscode-editor-font-size)*1.5);
     width: calc(var(--vscode-editor-font-size)*1.5);
-
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
-}
-@-webkit-keyframes spin {
-  to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-#loadingDiv{
+@-webkit-keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#loadingDiv {
     display: flex;
     justify-content: center;
     align-items: center;

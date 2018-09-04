@@ -160,8 +160,8 @@ export class LogTableWebview {
         const statusIcon: string = this.getLogStatusIcon(log.status);
 
         return `
-         <tbody class = "holder" tabindex="0">
-            <tr id= "btn${logId}" class="accordion">
+         <tbody class = "holder">
+            <tr id= "btn${logId}" class="accordion" tabindex="0">
                     <td class = 'arrowHolder'><div class = "arrow"><i class="ms-Icon ms-Icon--ChevronRight"></i></div></td>
                     <td>${name}</td>
                     <td>${task}</td>

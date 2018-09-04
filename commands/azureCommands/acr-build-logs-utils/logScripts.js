@@ -27,6 +27,16 @@ const vscode = acquireVsCodeApi();
 setLoadMoreListener();
 setInputListeners();
 loading();
+
+document.onkeydown = function (event) {
+    if (event.key === "Enter") { // The Enter/Return key
+        if (document.activeElement.className.indexOf('holder') !== -1) {
+            document.activeElement.children[0].onclick(event);
+        }
+        document.activeElement.onclick(event);
+    }
+};
+
 /* Sorting
  * PR note, while this does not use a particularly quick algorithm
  * it allows a low stuttering experience that allowed rapid testing.
@@ -157,7 +167,7 @@ window.addEventListener('message', event => {
 });
 
 function setSingleAccordion(item) {
-    item.addEventListener('click', function () {
+    item.onclick = function (event) {
         this.classList.toggle('active');
         this.querySelector('.arrow').classList.toggle('activeArrow');
         let panel = this.nextElementSibling;
@@ -176,51 +186,51 @@ function setSingleAccordion(item) {
             let paddingBottom = +panel.style.paddingBottom.split('px')[0];
             panel.style.maxHeight = (panel.scrollHeight + paddingTop + paddingBottom) + 'px';
         }
-    });
+    };
 }
 
 function setTableSorter() {
     let tableHeader = document.querySelector("#tableHead");
     let items = tableHeader.querySelectorAll(".colTitle");
     for (let i = 0; i < items.length; i++) {
-        items[i].addEventListener('click', () => {
+        items[i].onclick = () => {
             sortTable(i);
-        });
+        };
     }
 }
 
 function setLogBtnListener(item, download) {
-    item.addEventListener('click', function () {
+    item.onclick = (event) => {
         vscode.postMessage({
             logRequest: {
-                'id': this.dataset.id,
+                'id': event.target.dataset.id,
                 'download': download
             }
         });
-    });
+    };
 }
 
 function setLoadMoreListener() {
     let item = document.querySelector("#loadBtn");
-    item.addEventListener('click', function () {
+    item.onclick = function () {
         const loadBtn = document.querySelector('.loadMoreBtn');
         loadBtn.style.display = 'none';
         loading();
         vscode.postMessage({
             loadMore: true
         });
-    });
+    };
 }
 
 function setDigestListener(digestClickables) {
     for (digest of digestClickables) {
-        digest.addEventListener('click', function () {
+        digest.onclick = function (event) {
             vscode.postMessage({
                 copyRequest: {
-                    'text': this.parentNode.dataset.digest,
+                    'text': event.target.parentNode.dataset.digest,
                 }
             });
-        });
+        };
     }
 }
 
@@ -309,3 +319,4 @@ function loading() {
     }
     shouldLoad = !shouldLoad;
 }
+

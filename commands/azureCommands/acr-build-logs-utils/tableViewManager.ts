@@ -119,7 +119,6 @@ export class LogTableWebview {
                     </div>
                 </form>
                 <table id='core' class='resizable'>
-                    <caption>Log items</caption>
                     <col class="arrowHolder">
                     <col class="widthControl">
                     <col class="widthControl">
@@ -130,12 +129,12 @@ export class LogTableWebview {
 
                     <thead id = "tableHead" class = 'fixed solidBackground'>
                         <td></td>
-                        <th><span class="colTitle">Build ID<span class="sort">  </span></span></th>
-                        <th><span class="colTitle">Task<span class="sort">  </span></span></th>
-                        <th><span class="colTitle">Status<span class="sort">  </span></span></th>
-                        <th><span class="colTitle">Created<span class="sort">&#160<i class="ms-Icon ms-Icon--ChevronDown"></i></span></span></th>
-                        <th><span class="colTitle">Elapsed Time<span class="sort">  </span></span></th>
-                        <th><span class="colTitle">Platform<span class="sort">  </span></span></th>
+                        <th><span class="colTitle" tabindex="0">Build ID<span class="sort">  </span></span></th>
+                        <th><span class="colTitle" tabindex="0">Task<span class="sort">  </span></span></th>
+                        <th><span class="colTitle" tabindex="0">Status<span class="sort">  </span></span></th>
+                        <th><span class="colTitle" tabindex="0">Created<span class="sort">&#160<i class="ms-Icon ms-Icon--ChevronDown"></i></span></span></th>
+                        <th><span class="colTitle" tabindex="0">Elapsed Time<span class="sort">  </span></span></th>
+                        <th><span class="colTitle" tabindex="0">Platform<span class="sort">  </span></span></th>
                     </thead>
 
                 </table>
@@ -161,7 +160,7 @@ export class LogTableWebview {
         const statusIcon: string = this.getLogStatusIcon(log.status);
 
         return `
-         <tbody class = "holder">
+         <tbody class = "holder" tabindex="0">
             <tr id= "btn${logId}" class="accordion">
                     <td class = 'arrowHolder'><div class = "arrow"><i class="ms-Icon ms-Icon--ChevronRight"></i></div></td>
                     <td>${name}</td>
@@ -175,14 +174,13 @@ export class LogTableWebview {
                 <td colspan = "7">
                     <div class= "paddingDiv overflowX">
                         <table class="innerTable">
-                        <caption>Output images and log viewing options</caption>
                             <tr>
                                 <td class = "arrowHolder">&#160</td>
                                 <th class = "borderLimit">Tag</th>
                                 <th>Repository</th>
                                 <th>Digest</th>
                                 <th colspan = "3">
-                                    <p class = "textAlignRight">Log  <i data-id = '${logId}' class="openLog ms-Icon ms-Icon--OpenInNewWindow"></i>  <i data-id = '${logId}' class="downloadlog ms-Icon ms-Icon--Copy"></i></p>
+                                    <p class = "textAlignRight">Log  <i data-id = '${logId}' class="openLog ms-Icon ms-Icon--OpenInNewWindow" tabindex="0"></i>  <i data-id = '${logId}' class="downloadlog ms-Icon ms-Icon--Copy" tabindex="0"></i></p>
                                 </th>
                             </tr>
                             ${imageOutput}
@@ -209,7 +207,7 @@ export class LogTableWebview {
                                 ${truncatedDigest}
                                 <span class="tooltiptext">${digest}</span>
                             </span>
-                            <i class="copy downloadlog ms-Icon ms-Icon--Copy"></i>
+                            <i class="copy downloadlog ms-Icon ms-Icon--Copy" tabindex="0"></i>
                         </td>
                         <td class = "${lastTd}" colspan = "3" ></td>
                     </tr>`

@@ -1,9 +1,14 @@
+import * as Azure from 'azure';
 import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
 //import { DockerBuildStep } from 'azure-arm-containerregistry/lib/models/dockerBuildStep';
 import { SubscriptionModels } from 'azure-arm-resource';
+//const Azure = require('azure');
+//const MsRest = require('ms-rest-azure');
+import * as MsRest from "ms-rest-azure";
+//import * as MsRest from "ms-rest-azure";
 import * as os from 'os';
 import * as vscode from "vscode";
-import { BuildStep, BuildTask, DockerBuildStep, Registry } from '../../node_modules/azure-arm-containerregistry/lib/models';
+import { DockerBuildStep, Registry, SourceTrigger, Task } from '../../node_modules/azure-arm-containerregistry/lib/models';
 import { AzureUtilityManager } from "../../utils/azureUtilityManager";
 import { quickPickACRRegistry, quickPickLocation, quickPickResourceGroup, quickPickSKU, quickPickSubscription } from '../utils/quick-pick-azure';
 //import { DockerBuildStep } from "azure-arm-containerregistry/lib/models";
@@ -20,13 +25,42 @@ import { quickPickACRRegistry, quickPickLocation, quickPickResourceGroup, quickP
 // This creates and launches a build task from a workspace solution which hasn't yet been built into an image, so no context is provided.
 
 export async function launchAsTask(): Promise<void> {
-    let subscription = await quickPickSubscription();
-    let resourceGroup = await quickPickResourceGroup(false, subscription);
-    let registry = await quickPickACRRegistry();
-    createTask(subscription, resourceGroup.name, registry);
+    const options = {
+        environment: {
+            language: 'en-us',
+            name: 'Dogfood',
+            portalUrl: 'https://df.onecloud.azure-test.net',
+            managementEndpointUrl: 'https://management.core.windows.net',
+            resourceManagerEndpointUrl: 'https://api-dogfood.resources.windows-int.net/',
+            activeDirectoryEndpointUrl: 'https://login.windows-ppe.net/',
+            activeDirectoryResourceId: 'https://management.core.windows.net/',
+            activeDirectoryGraphResourceId: 'https://graph.ppe.windows.net/',
+            activeDirectoryGraphApiVersion: '2013-04-05',
+            publishingProfileUrl: 'https://go.microsoft.com/fwlink/?LinkId=254432',
+            storageEndpointSuffix: '.core.test-cint.azure-test.net',
+            sqlManagementEndpointUrl: 'https://management.core.windows.net:8443/',
+            sqlServerHostnameSuffix: '.database.windows.net',
+            galleryEndpointUrl: 'https://gallery.azure.com/',
+            batchResourceId: 'https://batch.core.windows.net/',
+            keyVaultDnsSuffix: '.vault.azure.net',
+            azureDataLakeStoreFileSystemEndpointSuffix: 'azuredatalakestore.net',
+            azureDataLakeAnalyticsCatalogAndJobEndpointSuffix: 'azuredatalakeanalytics.net',
+            validateAuthority: true
+        }
+    };
+    // await getStorageClient(options, subscription)
+
+    MsRest.interactiveLogin(options, async (err, credentials) => {
+        if (err) { throw err; }
+        // ..use the client instance to manage service resources.
+        let subscription = await quickPickSubscription();
+        let resourceGroup = await quickPickResourceGroup(false, subscription);
+        let registry = await quickPickACRRegistry();
+        createTask(subscription, resourceGroup.name, registry);
+    });
 }
 
-async function createTask(subscription: SubscriptionModels.Subscription, resourceGroupName: string, registry: Registry): Promise<void> {
+async function getInfo(): Promise<{ gitToken: string, gitUrl: string, imageName: string, taskName: string, sourceControlType: string }> {
     let opt = {
         ignoreFocusOut: true,
         prompt: 'GitHub personal access token? Acquired from https://github.com/settings/tokens/new'
@@ -37,7 +71,7 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
         ignoreFocusOut: true,
         prompt: 'GitHub source context URL? '
     };
-    const gitURL: string = await vscode.window.showInputBox(opt);
+    const gitUrl: string = await vscode.window.showInputBox(opt);
 
     opt = {
         ignoreFocusOut: true,
@@ -50,41 +84,49 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
         prompt: 'Task Name? (5 or more charachters)'
     };
     const taskName: string = await vscode.window.showInputBox(opt);
-    let newOpt = {
-        ignoreFocusOut: true,
-        placeHolder: taskName,
-        value: taskName,
-        prompt: 'BuildTask alias? '
-    };
-    const buildTaskAlias: string = await vscode.window.showInputBox(newOpt);
     const sourceControlType: string = 'GitHub';
+    return { gitToken, gitUrl, imageName, taskName, sourceControlType }
+}
 
-    let osType = os.type();
-    if (osType === 'Windows_NT') {
-        osType = 'Windows'
-    }
+async function createTask(subscription: SubscriptionModels.Subscription, resourceGroupName: string, registry: Registry): Promise<void> {
+    let { gitToken, gitUrl, imageName, taskName, sourceControlType } = await getInfo();
+
     let client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
     console.log("uhh");
-    let taskCreateParameters: BuildTask = {
-        'type': "buildTask",
-        'location': registry.location,
-        'alias': buildTaskAlias,
-        //'id': subscription.id + '/resourceGroups/' + resourceGroupName + '/providers/Microsoft.ContainerRegistry/registries/' + registry.name + '/buildTasks/' + taskName,
-        'name': taskName,
+    let dockerStep: DockerBuildStep = {
+        'baseImageDependencies': null,
+        'imageNames': [imageName],
+        'noCache': false,
+        'dockerFilePath': 'Dockerfile',
+        'isPushEnabled': true,
+        'type': 'Docker'
+    }
+
+    let pullTrig: SourceTrigger = {
+        'name': 'triggerName',
         'sourceRepository': {
-            'repositoryUrl': gitURL,
+            'repositoryUrl': gitUrl,
             'sourceControlType': sourceControlType,
-            'isCommitTriggerEnabled': true,
             'sourceControlAuthProperties': {
                 'token': gitToken,
                 'tokenType': 'PAT',
                 'refreshToken': '',
                 'scope': 'repo',
                 'expiresIn': 1313141
-            }
+            },
+        },
+        'sourceTriggerEvents': [],
+    }
+    let taskCreateParameters: Task = {
+        'step': dockerStep,
+        'location': registry.location,
+        //'id': subscription.id + '/resourceGroups/' + resourceGroupName + '/providers/Microsoft.ContainerRegistry/registries/' + registry.name + '/buildTasks/' + taskName,
+        'name': taskName,
+        'trigger': {
+            'sourceTriggers': [pullTrig]
         },
         'provisioningState': "Succeeded",
-        'platform': { "cpu": 2, 'osType': 'Linux' },
+        'platform': { 'os': 'Linux' },
         'status': 'Enabled',
         'timeout': 3600,
         'tags': null
@@ -92,35 +134,19 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
     console.log(taskCreateParameters.id)
     console.log(taskCreateParameters);
     try {
-        await client.buildTasks.create(resourceGroupName, registry.name, taskName, taskCreateParameters);
-    } catch (error) {
-        console.log(error);
-    }
-    const type: string = 'image';
-    // stepName is set equal to taskName to prepare for new library without step
-    const stepName = taskName + 'StepName';
-    let dockerStep: DockerBuildStep = {
-        'baseImageTrigger': 'Runtime',
-        'baseImageDependencies': null,
-        'branch': 'master',
-        'imageNames': [imageName],
-        'noCache': false,
-        'dockerFilePath': 'Dockerfile',
-        'buildArguments': [],
-        'isPushEnabled': true,
-        'provisioningState': "Succeeded",
-        'type': 'Docker'
-    }
-    /*let stepCreateParameters: BuildStep = {
-        'properties': {
-            'type': dockerStep
-        }
-    }*/
-    try {
-        let buildStep = await client.buildSteps.create(resourceGroupName, registry.name, taskName, stepName, dockerStep);
-        //buildTask.prope
-        //setattr
+        await client.tasks.create(resourceGroupName, registry.name, taskName, taskCreateParameters);
     } catch (error) {
         console.log(error);
     }
 }
+
+/*
+
+let newOpt = {
+    ignoreFocusOut: true,
+    placeHolder: taskName,
+    value: taskName,
+    prompt: 'BuildTask alias? '
+};
+const buildTaskAlias: string = await vscode.window.showInputBox(newOpt);
+*/

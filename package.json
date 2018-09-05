@@ -50,7 +50,7 @@
     "onCommand:vscode-docker.create-ACR-Registry",
     "onCommand:vscode-docker.system.prune",
     "onCommand:vscode-docker.dockerHubLogout",
-    "onCommand:vscode-docker.queuebuild",
+    "onCommand:vscode-docker.ACR-Build",
     "onCommand:vscode-docker.browseDockerHub",
     "onCommand:vscode-docker.browseAzurePortal",
     "onCommand:vscode-docker.explorer.refresh",
@@ -86,7 +86,7 @@
         },
         {
           "when": "editorLangId == dockerfile",
-          "command": "vscode-docker.queueBuild",
+          "command": "vscode-docker.ACR-build",
           "group": "docker"
         },
         {
@@ -127,7 +127,7 @@
         },
         {
           "when": "resourceFilename =~ /[dD]ocker[fF]ile/",
-          "command": "vscode-docker.queueBuild",
+          "command": "vscode-docker.ACR-Build",
           "group": "docker"
         },
         {
@@ -631,7 +631,7 @@
         "category": "Docker"
       },
       {
-        "command": "vscode-docker.queueBuild",
+        "command": "vscode-docker.ACR-Build",
         "title": "Cloud Build",
         "category": "Docker"
       }

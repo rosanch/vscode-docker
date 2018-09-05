@@ -200,7 +200,7 @@ function registerDockerCommands(azureAccount: AzureAccount): void {
     registerAzureCommand('vscode-docker.delete-ACR-Image', deleteAzureImage);
     registerAzureCommand('vscode-docker.delete-ACR-Repository', deleteRepository);
     registerAzureCommand('vscode-docker.create-ACR-Registry', createRegistry);
-    registerAzureCommand('vscode-docker.queueBuild', queueBuild);
+    registerAzureCommand('vscode-docker.ACR-Build', queueBuild);
     registerAzureCommand('vscode-docker.pullFromAzure', pullFromAzure);
 }
 

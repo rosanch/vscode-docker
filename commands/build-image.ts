@@ -29,7 +29,7 @@ function createDockerfileItem(rootFolder: vscode.WorkspaceFolder, uri: vscode.Ur
     };
 }
 
-async function resolveImageItem(rootFolder: vscode.WorkspaceFolder, dockerFileUri?: vscode.Uri): Promise<Item | undefined> {
+export async function resolveImageItem(rootFolder: vscode.WorkspaceFolder, dockerFileUri?: vscode.Uri): Promise<Item | undefined> {
     if (dockerFileUri) {
         return createDockerfileItem(rootFolder, dockerFileUri);
     }

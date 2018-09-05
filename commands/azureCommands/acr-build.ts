@@ -24,12 +24,10 @@ const status = vscode.window.createOutputChannel('ACR Build status');
 // Selected source code must contain a path to the desired dockerfile.
 export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
     //Acquire information from user
-    status.appendLine("Selected Subscription ");
     const subscription = await quickPickSubscription();
 
     const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
     const registry: Registry = await quickPickACRRegistry(true);
-    status.appendLine("Selected registry: " + registry.name);
 
     const resourceGroupName = getResourceGroupName(registry);
 

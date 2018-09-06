@@ -67,8 +67,21 @@ export async function queueBuild(dockerFileUri?: vscode.Uri): Promise<void> {
         'dockerFilePath': relativeDockerPath
     };
     status.appendLine("Queueing Build");
+<<<<<<< HEAD
     await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
     status.appendLine('Success');
+=======
+    // Real line is commented out, spoof sends code to terminal with the azure cli
+    await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+    //const terminal = vscode.window.createTerminal();
+    //terminal.show();
+    //await terminal.sendText('az acr build -r ' + registry.name + ' -t ' + name + ' .');
+    //status.appendLine('Success');
+    const build: Build = await client.registries.queueBuild(resourceGroupName, registry.name, buildRequest);
+    status.show();
+    await streamLogs4(client, resourceGroupName, registry, build);
+    status.show();
+>>>>>>> a1982eb9d251775aef72af0fa3b6f0ed69cdfd8b
 }
 
 async function uploadSourceCode(client: ContainerRegistryManagementClient, registryName: string, resourceGroupName: string, sourceLocation: string, tarFilePath: string, folder: vscode.WorkspaceFolder): Promise<string> {
@@ -115,4 +128,28 @@ function filter(list: string[]): string[] {
         }
     }
     return list;
+}
+
+async function streamLogs4(client: ContainerRegistryManagementClient, resourceGroupName: string, registry: Registry, build: Build): Promise<void> {
+    const temp: BuildGetLogResult = await client.builds.getLogLink(resourceGroupName, registry.name, build.buildId);
+    const link = temp.logLink;
+    let blobInfo = getBlobInfo(link);
+    let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
+    let stream: Readable = blob.createReadStream(blobInfo.containerName, blobInfo.blobName, (error, response) => {
+        if (response) {
+            status.appendLine(response.name + 'has Completed');
+        } else {
+            status.appendLine(error.message);
+        }
+        status.show();
+    });
+
+    stream
+        .on('data', (chunk) => {
+            status.appendLine(chunk.toString());
+            status.show();
+        })
+        .on('end', () => {
+            console.log('Finished');
+        });
 }

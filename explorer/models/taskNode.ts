@@ -16,7 +16,7 @@ export class TaskRootNode extends NodeBase {
         public subscription: SubscriptionModels.Subscription,
         public readonly azureAccount: AzureAccount,
         public registry: ContainerModels.Registry,
-        public readonly iconPath: any = {},
+        public readonly iconPath: any = null,
     ) {
         super(label);
     }
@@ -57,14 +57,17 @@ export class TaskRootNode extends NodeBase {
 export class BuildTaskNode extends NodeBase {
     public static readonly contextValue: string = 'buildTaskNode';
     public label: string;
+
     constructor(
         public task: ContainerModels.BuildTask,
         public registry: ContainerModels.Registry,
         public subscription: SubscriptionModels.Subscription,
         public parent: NodeBase
+
     ) {
         super(task.name);
     }
+
     public getTreeItem(): vscode.TreeItem {
         return {
             label: this.label,

@@ -3,7 +3,6 @@ import { Subscription } from "azure-arm-resource/lib/subscription/models";
 import * as vscode from "vscode";
 import { AzureImageTagNode, AzureRegistryNode, AzureRepositoryNode } from '../../explorer/models/azureRegistryNodes';
 import { BuildTaskNode } from "../../explorer/models/taskNode";
-import { ext } from '../../extensionVariables';
 import { getResourceGroupName, getSubscriptionFromRegistry } from '../../utils/Azure/acrTools';
 import { AzureUtilityManager } from '../../utils/azureUtilityManager';
 import { quickPickACRRegistry } from '../utils/quick-pick-azure'

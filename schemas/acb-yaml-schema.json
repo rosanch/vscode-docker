@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "acb.yaml",
+  "description": "JSON schema for acb.yaml files to use with Azure Container Registries",
+  "type": "object",
+  "additionalProperties": true,
+  "definitions": {
+    "step": {
+      "anyOf": [
+        {"required":["cmd"] },
+        {"required":["build"] }
+      ],
+      "description": "Core property under which steps can be defined, the - scopes each step.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The id property is a unique identifier to reference the step throughout the task.",
+          "examples": [ "id: <someID>" ]
+        },
+        "cmd": {
+          "type": "string",
+          "description": "The cmd property of a step specifies which image to use when running the operation as well as any additional command-line parameters. This property is required if build is not present.",
+          "examples": [ "cmd: <myImgName>", "cmd: <some Comand>", "cmd: docker push imgName/multi-arch:amd64" ]
+        },
+        "build": {
+          "type": "string",
+          "description": "Specifies how to build a set of images. If build is specified, it takes precedence over cmd. It is required if cmd is not present.",
+          "examples":["build: -t <myImage> ."]
+        },
+        "push": {
+          "type": [ "string", "array" ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional list of images and tags to push after the build has completed. This is a shortcut to creating multiple push commands after builds.",
+          "examples":["push: ['<repository>:<tag>']"]
+        },
+        "workingDirectory": {
+          "type": "string",
+          "description": "Can be used to set a working directory when executing a step. By default, Azure Container Builder will produce a default root directory as the working directory. However, if your build has more than one step, you can share the artifacts created from previous steps.",
+          "examples": [ "workingDirectory: <dirName>" ]
+        },
+        "entryPoint": {
+          "type": "string",
+          "description": "EntryPoint overrides the entry point of a step's container.",
+          "examples": [ "entryPoint: <entryPoint>" ]
+        },
+        "env": {
+          "type": [ "string", "array" ],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of strings in key=val format which define environment variables for a step."
+        },
+        "ports": {
+          "type": [ "string", "array" ],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of ports to publish to the host."
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Maximum duration for a step to execute in seconds.",
+          "examples":["timeout: <number>"]
+        },
+        "keep": {
+          "type": "boolean",
+          "description": "Determines whether or not the step's container should be kept after execution.",
+          "examples":["timeout: <true|false>"]
+        },
+        "detach": {
+          "type": "boolean",
+          "description": "Determines whether or not the container should be detached when running.",
+          "examples":["detach: <true|false>"]
+        },
+        "when": {
+          "type": [ "string", "array" ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Used to block a Step's execution until one or more other Steps have been completed.",
+          "examples":["when: ['previous step id']"]
+        },
+        "exitedWith": {
+          "type": [ "number", "array" ],
+          "items": {
+            "type": "number"
+          },
+          "description": "Can be used to trigger a task when previous steps exited with one or more of the specified exit codes.",
+          "examples":["exitedWith: [<exit code>]"]
+        },
+        "exitedWithout": {
+          "type": [ "string", "number" ],
+          "description": "Can be used to trigger a task when previous steps exited without one or more of the specified exit codes.",
+          "examples":["exitedWithout: [<exit code>]"]
+        },
+        "startDelay": {
+          "type": "number",
+          "description": "Can be used to delay a step's execution. This is an integer value measured in seconds.",
+          "examples":["startDelay: <number>"]
+        },
+        "ignoreErrors": {
+          "type": "boolean",
+          "description": "If set to true, the step will be marked as complete regardless of whether or not an error occurred during its execution. Defaults to false.",
+          "examples":["ignoreErrors: <true|false>"]
+        }
+      }
+    }
+  },
+  "required": [ "steps" ],
+  "properties": {
+    "steps": {
+      "description": "Collection of steps to execute",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/step"
+      }
+    },
+    "version": {
+      "description": "Specifies version of the file",
+      "type": "string",
+      "examples":["version: <versionName>"]
+    },
+    "stepTimeout": {
+        "description": "Can be used to set the maximum time a step has to execute. This property can be overridden by a particular Step's individual timeout property in seconds.",
+        "type": "number",
+        "examples":["stepTimeout: <number>"]
+    },
+    "totalTimeout": {
+        "description": "Can be used to set the maximum time all steps must execute within.",
+        "type": "number",
+        "examples":["totalTimeout: <number>"]
+    }
+  }
+}

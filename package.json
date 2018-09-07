@@ -69,6 +69,10 @@
   ],
   "main": "./out/dockerExtension",
   "contributes": {
+    "yamlValidation": [{
+      "fileMatch": ".acb.yaml",
+      "url": "./schemas/acb-yaml-schema.json"
+    }],
     "menus": {
       "commandPalette": [{
           "command": "vscode-docker.browseDockerHub",

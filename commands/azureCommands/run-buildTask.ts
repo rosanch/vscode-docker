@@ -35,5 +35,6 @@ export async function runBuildTask(context?: BuildTaskNode): Promise<any> {
 
     let build = await client.registries.queueBuild(resourceGroup.name, registry.name, buildRequest);
     let output = vscode.window.createOutputChannel("ACR Run Task status");
+    output.show();
     acrTools.streamLogs(registry, build, output, client);
 }

@@ -240,7 +240,6 @@ function registerDockerCommands(azureAccount: AzureAccount): void {
     registerAzureCommand('vscode-docker.pullFromAzure', pullFromAzure);
     registerAzureCommand('vscode-docker.acrBuildLogs', viewBuildLogs);
     registerAzureCommand('vscode-docker.ACR-Build', queueBuild);
-    registerAzureCommand('vscode-docker.pullFromAzure', pullFromAzure);
     registerAzureCommand('vscode-docker.run-ACR-BuildTask', runBuildTask);
     registerAzureCommand('vscode-docker.show-ACR-buildTask', showBuildTaskProperties);
 }

@@ -36,7 +36,7 @@ export function accessLog(url: string, title: string, download: boolean): void {
     let blobInfo = getBlobInfo(url);
     let blob: BlobService = createBlobServiceWithSas(blobInfo.host, blobInfo.sasToken);
     blob.getBlobToText(blobInfo.containerName, blobInfo.blobName, async (error, text, result, response) => {
-        if (response) {
+        if (response && !error) {
             if (download) {
                 downloadLog(text, title);
             } else {

@@ -63,11 +63,7 @@
     "onCommand:vscode-docker.connectCustomRegistry",
     "onCommand:vscode-docker.setRegistryAsDefault",
     "onCommand:vscode-docker.disconnectCustomRegistry",
-<<<<<<< HEAD
-    "onCommand:vscode-docker.pullFromAzure",
-=======
     "onCommand:vscode-docker.pull-ACR-Image",
->>>>>>> rutusamai/updated-pull-rebased
     "onView:dockerExplorer",
     "onDebugInitialConfigurations"
   ],
@@ -231,10 +227,6 @@
         },
         {
           "command": "vscode-docker.delete-ACR-Image",
-          "when": "view == dockerExplorer && viewItem == azureImageTagNode"
-        },
-        {
-          "command": "vscode-docker.pullFromAzure",
           "when": "view == dockerExplorer && viewItem == azureImageTagNode"
         },
         {
@@ -626,11 +618,6 @@
       {
         "command": "vscode-docker.createWebApp",
         "title": "Deploy Image to Azure App Service",
-        "category": "Docker"
-      },
-      {
-        "command": "vscode-docker.pullFromAzure",
-        "title": "Pull Image from Azure",
         "category": "Docker"
       },
       {

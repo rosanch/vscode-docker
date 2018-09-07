@@ -86,7 +86,7 @@
         },
         {
           "when": "editorLangId == dockerfile",
-          "command": "vscode-docker.ACR-build",
+          "command": "vscode-docker.ACR-Build",
           "group": "docker"
         },
         {

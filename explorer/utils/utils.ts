@@ -1,4 +1,7 @@
-import * as vscode from 'vscode';
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 
 export function trimWithElipsis(str: string, max: number = 10): string {
     const elipsis: string = "...";
@@ -14,19 +17,10 @@ export function trimWithElipsis(str: string, max: number = 10): string {
     return front + elipsis + back;
 }
 
-/**
- * Returns a node module installed with VSCode, or null if it fails.
- */
-export function getCoreNodeModule(moduleName: string): any {
-    try {
-        // tslint:disable-next-line:non-literal-require
-        return require(`${vscode.env.appRoot}/node_modules.asar/${moduleName}`);
-    } catch (err) { }
-
-    try {
-        // tslint:disable-next-line:non-literal-require
-        return require(`${vscode.env.appRoot}/node_modules/${moduleName}`);
-    } catch (err) { }
-
-    return null;
+export async function delay(ms: number): Promise<void> {
+    return new Promise<void>(resolve => {
+        setTimeout(() => {
+            resolve();
+        }, ms);
+    });
 }

@@ -1,13 +1,13 @@
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { SubscriptionModels } from 'azure-arm-resource';
 import WebSiteManagementClient = require('azure-arm-website');
+import * as WebSiteModels from 'azure-arm-website/lib/models';
 import { ServiceClientCredentials } from 'ms-rest';
 import * as vscode from 'vscode';
-import * as WebSiteModels from '../../node_modules/azure-arm-website/lib/models';
 import { AzureAccountWrapper } from './azureAccountWrapper';
 
 export interface PartialList<T> extends Array<T> {
@@ -61,7 +61,7 @@ export function getWebAppPublishCredential(azureAccount: AzureAccountWrapper, su
 }
 
 // Output channel for the extension
-const outputChannel = vscode.window.createOutputChannel("Azure App Service");
+const outputChannel = vscode.window.createOutputChannel("Docker");
 
 export function getOutputChannel(): vscode.OutputChannel {
     return outputChannel;

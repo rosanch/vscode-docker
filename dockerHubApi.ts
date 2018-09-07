@@ -1,11 +1,13 @@
-/*---------------------------------------------------------
- * Copyright (C) Microsoft Corporation. All rights reserved.
- *--------------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 
 'use strict';
 
 import https = require('https');
 import vscode = require('vscode');
+import { httpsRequest } from './utils/httpRequest';
 
 export function tagsForImage(image: IHubSearchResponseResult): string {
     let tags: string[] = [];
@@ -23,10 +25,10 @@ export function tagsForImage(image: IHubSearchResponseResult): string {
 }
 
 // tslint:disable-next-line:promise-function-async // Grandfathered in
-export function searchImageInRegistryHub(imageName: string, cache: boolean): Promise<IHubSearchResponseResult> {
+export function searchImageInRegistryHub(imageName: string, cache: boolean): Promise<IHubSearchResponseResult | undefined> {
     return invokeHubSearch(imageName, 1, cache).then((data) => {
         if ((<IHubSearchResponseResult[]>data.results).length === 0) {
-            return;
+            return undefined;
         }
         return data.results[0];
     });
@@ -127,24 +129,7 @@ function fetchHttpsJson<T>(opts: https.RequestOptions, cache: boolean): Promise<
 function doFetchHttpsJson<T>(opts: https.RequestOptions): Promise<T> {
     opts.headers = opts.headers || {};
     opts.headers.Accept = 'application/json';
-    return httpsRequestAsPromise(opts).then((data) => {
+    return httpsRequest(opts).then((data) => {
         return JSON.parse(data);
     })
-}
-
-// tslint:disable-next-line:promise-function-async // Grandfathered in
-function httpsRequestAsPromise(opts: https.RequestOptions): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        let req = https.request(opts, (res) => {
-            let data = '';
-            res.on('data', (d: string) => {
-                data += d;
-            })
-            res.on('end', () => {
-                resolve(data);
-            })
-        });
-        req.end();
-        req.on('error', reject);
-    });
 }

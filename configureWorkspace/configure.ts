@@ -1,14 +1,28 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import * as fs from 'fs';
-import * as glob from 'glob';
+import * as fse from 'fs-extra';
 import * as gradleParser from "gradle-to-js/lib/parser";
+import { EOL } from 'os';
 import * as path from "path";
 import * as pomParser from "pom-parser";
 import * as vscode from "vscode";
+import { IActionContext, TelemetryProperties } from 'vscode-azureextensionui';
 import { ext } from '../extensionVariables';
 import { globAsync } from '../helpers/async';
-import { reporter } from '../telemetry/telemetry';
 import { OS, Platform, promptForPort, quickPickOS, quickPickPlatform } from './config-utils';
 
+export type ConfigureTelemetryProperties = {
+    configurePlatform?: Platform;
+    configureOs?: OS;
+    packageFileType?: string; // 'build.gradle', 'pom.xml', 'package.json', '.csproj'
+    packageFileSubfolderDepth?: string; // 0 = project/etc file in root folder, 1 = in subfolder, 2 = in subfolder of subfolder, etc.
+};
+
+// Note: serviceName includes the path of the service relative to the generated file, e.g. 'projectFolder1/myAspNetService'
 // tslint:disable-next-line:max-func-body-length
 function genDockerFile(serviceName: string, platform: string, os: string, port: string, { cmd, author, version, artifactName }: PackageJson): string {
     switch (platform.toLowerCase()) {
@@ -31,8 +45,8 @@ FROM golang:alpine AS builder
 WORKDIR /go/src/app
 COPY . .
 RUN apk add --no-cache git
-RUN go-wrapper download   # "go get -d -v ./..."
-RUN go-wrapper install    # "go install -v ./..."
+RUN go get -d -v ./...
+RUN go install -v ./...
 
 #final stage
 FROM alpine:latest
@@ -459,45 +473,55 @@ function getDefaultPackageJson(): PackageJson {
     };
 }
 
-async function readPackageJson(folderPath: string): Promise<PackageJson> {
+async function readPackageJson(folderPath: string): Promise<{ packagePath?: string, packageContents: PackageJson }> {
     // open package.json and look for main, scripts start
     const uris: vscode.Uri[] = await getPackageJson(folderPath);
-    let pkg: PackageJson = getDefaultPackageJson(); //default
+    let packageContents: PackageJson = getDefaultPackageJson(); //default
+    let packagePath: string | undefined;
 
     if (uris && uris.length > 0) {
-        const json = JSON.parse(fs.readFileSync(uris[0].fsPath, 'utf8'));
+        packagePath = uris[0].fsPath;
+        const json = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
 
         if (json.scripts && json.scripts.start) {
-            pkg.npmStart = true;
-            pkg.fullCommand = json.scripts.start;
-            pkg.cmd = 'npm start';
+            packageContents.npmStart = true;
+            packageContents.fullCommand = json.scripts.start;
+            packageContents.cmd = 'npm start';
         } else if (json.main) {
-            pkg.npmStart = false;
-            pkg.fullCommand = 'node' + ' ' + json.main;
-            pkg.cmd = pkg.fullCommand;
+            packageContents.npmStart = false;
+            packageContents.fullCommand = 'node' + ' ' + json.main;
+            packageContents.cmd = packageContents.fullCommand;
         } else {
-            pkg.fullCommand = '';
+            packageContents.fullCommand = '';
         }
 
         if (json.author) {
-            pkg.author = json.author;
+            packageContents.author = json.author;
         }
 
         if (json.version) {
-            pkg.version = json.version;
+            packageContents.version = json.version;
         }
     }
 
-    return pkg;
+    return { packagePath, packageContents };
 }
 
-async function readPomOrGradle(folderPath: string): Promise<PackageJson> {
+/**
+ * Looks for a pom.xml or build.gradle file, and returns its parsed contents, or else a default package contents if none path
+ */
+async function readPomOrGradle(folderPath: string): Promise<{ foundPath?: string, packageContents: PackageJson }> {
     let pkg: PackageJson = getDefaultPackageJson(); //default
+    let foundPath: string | undefined;
 
-    if (fs.existsSync(path.join(folderPath, 'pom.xml'))) {
+    let pomPath = path.join(folderPath, 'pom.xml');
+    let gradlePath = path.join(folderPath, 'build.gradle');
+
+    if (await fse.pathExists(pomPath)) {
+        foundPath = pomPath;
         let json = await new Promise<any>((resolve, reject) => {
             pomParser.parse({
-                filePath: path.join(folderPath, 'pom.xml')
+                filePath: pomPath
             }, (error, response) => {
                 if (error) {
                     reject(`Failed to parse pom.xml: ${error}`);
@@ -515,8 +539,9 @@ async function readPomOrGradle(folderPath: string): Promise<PackageJson> {
         if (json.project && json.project.artifactid) {
             pkg.artifactName = `target/${json.project.artifactid}-${pkg.version}.jar`;
         }
-    } else if (fs.existsSync(path.join(folderPath, 'build.gradle'))) {
-        const json = await gradleParser.parseFile(path.join(folderPath, 'build.gradle'));
+    } else if (await fse.pathExists(gradlePath)) {
+        foundPath = gradlePath;
+        const json = await gradleParser.parseFile(gradlePath);
 
         if (json.jar && json.jar.version) {
             pkg.version = json.jar.version;
@@ -532,7 +557,7 @@ async function readPomOrGradle(folderPath: string): Promise<PackageJson> {
         }
     }
 
-    return pkg;
+    return { foundPath, packageContents: pkg };
 }
 
 // Returns the relative path of the project file without the extension
@@ -556,7 +581,6 @@ async function findCSProjFile(folderPath: string): Promise<string> {
     }
 
     return projectFiles[0].slice(0, -'.csproj'.length);
-
 }
 
 type GeneratorFunction = (serviceName: string, platform: string, os: string, port: string, packageJson?: PackageJson) => string;
@@ -568,19 +592,47 @@ const DOCKER_FILE_TYPES: { [key: string]: GeneratorFunction } = {
     '.dockerignore': genDockerIgnoreFile
 };
 
-const YES_OR_NO_PROMPT: vscode.MessageItem[] = [
+const YES_PROMPT: vscode.MessageItem = {
+    title: "Yes",
+    isCloseAffordance: false
+};
+const YES_OR_NO_PROMPTS: vscode.MessageItem[] = [
+    YES_PROMPT,
     {
-        "title": 'Yes',
-        "isCloseAffordance": false
-    },
-    {
-        "title": 'No',
-        "isCloseAffordance": true
+        title: "No",
+        isCloseAffordance: true
     }
 ];
 
-export async function configure(folderPath?: string): Promise<void> {
-    if (!folderPath) {
+export interface ConfigureApiOptions {
+    /**
+     * Root folder from which to search for .csproj, package.json, .pom or .gradle files
+     */
+    rootPath: string;
+
+    /**
+     * Output folder for the docker files. Relative paths in the Dockerfile we will calculated based on this folder
+     */
+    outputFolder: string;
+
+    /**
+     * Platform
+     */
+    platform?: Platform;
+
+    /**
+     * Port to expose
+     */
+    port?: string;
+
+    /**
+     * The OS for the images. Currently only needed for .NET platforms.
+     */
+    os?: OS;
+}
+
+export async function configure(actionContext: IActionContext, rootFolderPath: string | undefined): Promise<void> {
+    if (!rootFolderPath) {
         let folder: vscode.WorkspaceFolder;
         if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
             folder = vscode.workspace.workspaceFolders[0];
@@ -596,37 +648,80 @@ export async function configure(folderPath?: string): Promise<void> {
             }
         }
 
-        folderPath = folder.uri.fsPath;
+        rootFolderPath = folder.uri.fsPath;
     }
 
-    const platformType: Platform = await quickPickPlatform();
+    return configureCore(
+        actionContext,
+        {
+            rootPath: rootFolderPath,
+            outputFolder: rootFolderPath
+        });
+}
 
-    let os: OS | undefined;
-    if (platformType.toLowerCase().includes('.net')) {
+export async function configureApi(actionContext: IActionContext, options: ConfigureApiOptions): Promise<void> {
+    return configureCore(actionContext, options);
+}
+
+// tslint:disable-next-line:max-func-body-length // Because of nested functions
+async function configureCore(actionContext: IActionContext, options: ConfigureApiOptions): Promise<void> {
+    let properties: TelemetryProperties & ConfigureTelemetryProperties = actionContext.properties;
+    let rootFolderPath: string = options.rootPath;
+    let outputFolder = options.outputFolder;
+
+    const platformType: Platform = options.platform || await quickPickPlatform();
+    properties.configurePlatform = platformType;
+
+    let os: OS | undefined = options.os;
+    if (!os && platformType.toLowerCase().includes('.net')) {
         os = await quickPickOS();
     }
+    properties.configureOs = os;
 
-    let port: string;
-    if (platformType.toLowerCase().includes('.net')) {
-        port = await promptForPort(80);
-    } else {
-        port = await promptForPort(3000);
+    let port: string = options.port;
+    if (!port) {
+        if (platformType.toLowerCase().includes('.net')) {
+            port = await promptForPort(80);
+        } else {
+            port = await promptForPort(3000);
+        }
     }
 
-    let serviceName: string;
-    if (platformType.toLowerCase().includes('.net')) {
-        serviceName = await findCSProjFile(folderPath);
-    } else {
-        serviceName = path.basename(folderPath).toLowerCase();
-    }
-    if (!serviceName) { return; }
+    let serviceNameAndPathRelativeToOutput: string;
+    {
+        // Scope serviceNameAndPathRelativeToRoot only to this block of code
+        let serviceNameAndPathRelativeToRoot: string;
+        if (platformType.toLowerCase().includes('.net')) {
+            serviceNameAndPathRelativeToRoot = await findCSProjFile(rootFolderPath);
+            properties.packageFileType = '.csproj';
+            properties.packageFileSubfolderDepth = getSubfolderDepth(serviceNameAndPathRelativeToRoot);
+        } else {
+            serviceNameAndPathRelativeToRoot = path.basename(rootFolderPath).toLowerCase();
+        }
 
-    let pkg: PackageJson = getDefaultPackageJson();
-    if (platformType.toLowerCase() === 'java') {
-        pkg = await readPomOrGradle(folderPath);
-    } else {
-        pkg = await readPackageJson(folderPath);
+        // We need paths in the Dockerfile to be relative to the output folder, not the root
+        serviceNameAndPathRelativeToOutput = path.relative(outputFolder, path.join(rootFolderPath, serviceNameAndPathRelativeToRoot));
+        serviceNameAndPathRelativeToOutput = serviceNameAndPathRelativeToOutput.replace(/\\/g, '/');
     }
+
+    let packageContents: PackageJson = getDefaultPackageJson();
+    if (platformType === 'Java') {
+        let foundPomOrGradlePath: string | undefined;
+        ({ packageContents, foundPath: foundPomOrGradlePath } = await readPomOrGradle(rootFolderPath));
+        if (foundPomOrGradlePath) {
+            properties.packageFileType = path.basename(foundPomOrGradlePath);
+            properties.packageFileSubfolderDepth = getSubfolderDepth(foundPomOrGradlePath);
+        }
+    } else {
+        let packagePath: string | undefined;
+        ({ packagePath, packageContents } = await readPackageJson(rootFolderPath));
+        if (packagePath) {
+            properties.packageFileType = 'package.json';
+            properties.packageFileSubfolderDepth = getSubfolderDepth(packagePath);
+        }
+    }
+
+    let filesWritten: string[] = [];
 
     await Promise.all(Object.keys(DOCKER_FILE_TYPES).map(async (fileName) => {
         if (platformType.toLowerCase().includes('.net') && fileName.includes('docker-compose')) {
@@ -637,28 +732,36 @@ export async function configure(folderPath?: string): Promise<void> {
         return createWorkspaceFileIfNotExists(fileName, DOCKER_FILE_TYPES[fileName]);
     }));
 
-    if (reporter) {
-        /* __GDPR__
-        "command" : {
-            "command" : { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-            "platformType": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
-        }
-        */
-        reporter.sendTelemetryEvent('command', {
-            command: 'vscode-docker.configure',
-            platformType
-        });
-    }
+    // Don't wait
+    vscode.window.showInformationMessage(
+        filesWritten.length ?
+            `The following files were written into the workspace:${EOL}${EOL}${filesWritten.join(', ')}` :
+            "No files were written"
+    );
 
     async function createWorkspaceFileIfNotExists(fileName: string, generatorFunction: GeneratorFunction): Promise<void> {
-        const workspacePath = path.join(folderPath, fileName);
-        if (fs.existsSync(workspacePath)) {
-            const item: vscode.MessageItem = await vscode.window.showErrorMessage(`A ${fileName} already exists. Would you like to override it?`, ...YES_OR_NO_PROMPT);
-            if (item.title.toLowerCase() === 'yes') {
-                fs.writeFileSync(workspacePath, generatorFunction(serviceName, platformType, os, port, pkg), { encoding: 'utf8' });
+        const filePath = path.join(outputFolder, fileName);
+        let writeFile = false;
+        if (await fse.pathExists(filePath)) {
+            const response: vscode.MessageItem = await vscode.window.showErrorMessage(`"${fileName}" already exists.Would you like to overwrite it?`, ...YES_OR_NO_PROMPTS);
+            if (response === YES_PROMPT) {
+                writeFile = true;
             }
         } else {
-            fs.writeFileSync(workspacePath, generatorFunction(serviceName, platformType, os, port, pkg), { encoding: 'utf8' });
+            writeFile = true;
         }
+
+        if (writeFile) {
+            // Paths in the docker files should be relative to the Dockerfile (which is in the output folder)
+            fs.writeFileSync(filePath, generatorFunction(serviceNameAndPathRelativeToOutput, platformType, os, port, packageContents), { encoding: 'utf8' });
+            filesWritten.push(fileName);
+        }
+    }
+
+    function getSubfolderDepth(filePath: string): string {
+        let relativeToRoot = path.relative(outputFolder, path.resolve(outputFolder, filePath));
+        let matches = relativeToRoot.match(/[\/\\]/g);
+        let depth: number = matches ? matches.length : 0;
+        return String(depth);
     }
 }

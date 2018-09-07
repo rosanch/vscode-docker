@@ -1,3 +1,8 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
 import * as moment from 'moment';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -8,13 +13,14 @@ export class ImageNode extends NodeBase {
 
     constructor(
         public readonly label: string,
-        public readonly contextValue: string,
         public readonly eventEmitter: vscode.EventEmitter<NodeBase>
     ) {
         super(label)
     }
 
-    public imageDesc: Docker.ImageDesc
+    public imageDesc: Docker.ImageDesc;
+    public static readonly contextValue: string = 'localImageNode';
+    public readonly contextValue: string = ImageNode.contextValue;
 
     public getTreeItem(): vscode.TreeItem {
         let displayName: string = this.label;
@@ -39,5 +45,5 @@ export class ImageNode extends NodeBase {
         }
     }
 
-    // no children
+    // No children
 }

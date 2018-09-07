@@ -20,8 +20,8 @@ import { AzureImage } from "./models/image";
 import { Repository } from "./models/repository";
 
 //General helpers
-/**
- * @param registry gets the subscription for a given registry
+/** Gets the subscription for a given registry
+ * @param registry gets the subscription for a given regsitry
  * @returns a subscription object
  */
 export function getSubscriptionFromRegistry(registry: Registry): SubscriptionModels.Subscription {
@@ -71,6 +71,9 @@ export async function getRepositoriesByRegistry(registry: Registry): Promise<Rep
     //Note these are ordered by default in alphabetical order
     return allRepos;
 }
+
+//Registry item management
+/** List images under a specific Repository */
 
 /** Sends a custon html request to a registry
  * @param http_method : the http method, this function currently only uses delete

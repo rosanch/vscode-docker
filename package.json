@@ -63,7 +63,11 @@
     "onCommand:vscode-docker.connectCustomRegistry",
     "onCommand:vscode-docker.setRegistryAsDefault",
     "onCommand:vscode-docker.disconnectCustomRegistry",
+<<<<<<< HEAD
     "onCommand:vscode-docker.pullFromAzure",
+=======
+    "onCommand:vscode-docker.pull-ACR-Image",
+>>>>>>> rutusamai/updated-pull-rebased
     "onView:dockerExplorer",
     "onDebugInitialConfigurations"
   ],
@@ -268,6 +272,10 @@
         {
           "command": "vscode-docker.acrBuildLogs",
           "when": "view == dockerExplorer && viewItem =~ /^(azureRegistryNode|azureImageTagNode|buildTaskNode)$/"
+        },
+        {
+          "command": "vscode-docker.pull-ACR-Image",
+          "when": "view == dockerExplorer && viewItem =~ /^(azureImageTagNode|azureRepositoryNode)$/"
         },
         {
           "command": "vscode-docker.connectCustomRegistry",
@@ -683,6 +691,11 @@
       {
         "command": "vscode-docker.ACR-Build",
         "title": "Cloud Build",
+        "category": "Docker"
+      },
+      {
+        "command": "vscode-docker.pull-ACR-Image",
+        "title": "Pull image from Azure",
         "category": "Docker"
       }
     ],

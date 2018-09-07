@@ -3,21 +3,11 @@ import { ContainerRegistryManagementClient } from 'azure-arm-containerregistry';
 import { SubscriptionModels } from 'azure-arm-resource';
 import * as os from 'os';
 import * as vscode from "vscode";
+import { BuildTaskNode } from '../../explorer/models/taskNode';
 import { BuildStep, BuildTask, DockerBuildStep, Registry } from '../../node_modules/azure-arm-containerregistry/lib/models';
+import { localeData } from '../../node_modules/moment';
 import { AzureUtilityManager } from "../../utils/azureUtilityManager";
 import { quickPickACRRegistry, quickPickLocation, quickPickResourceGroup, quickPickSKU, quickPickSubscription } from '../utils/quick-pick-azure';
-//import { DockerBuildStep } from "azure-arm-containerregistry/lib/models";
-
-// This function creates a build task from an existing image, pulling the context from that image in order to limit the number of parameters.
-
-/*export async function buildTask(context?: ImageNode): Promise<void> {
-    let registryName = context;
-    const resourceGroup: string = context.registry.id.slice(context.registry.id.search('resourceGroups/') + 'resourceGroups/'.length, context.registry.id.search('/providers/'));
-    const registryName: string = context.registry.name;
-
-    createTask(subscription, resourceGroupName, registryName);
-}*/
-// This creates and launches a build task from a workspace solution which hasn't yet been built into an image, so no context is provided.
 
 export async function launchAsTask(): Promise<void> {
     let subscription = await quickPickSubscription();
@@ -59,17 +49,11 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
     const buildTaskAlias: string = await vscode.window.showInputBox(newOpt);
     const sourceControlType: string = 'GitHub';
 
-    let osType = os.type();
-    if (osType === 'Windows_NT') {
-        osType = 'Windows'
-    }
     let client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
-    console.log("uhh");
     let taskCreateParameters: BuildTask = {
-        'type': "buildTask",
         'location': registry.location,
         'alias': buildTaskAlias,
-        //'id': subscription.id + '/resourceGroups/' + resourceGroupName + '/providers/Microsoft.ContainerRegistry/registries/' + registry.name + '/buildTasks/' + taskName,
+        'creationDate': new Date(),
         'name': taskName,
         'sourceRepository': {
             'repositoryUrl': gitURL,
@@ -89,17 +73,13 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
         'timeout': 3600,
         'tags': null
     }
-    console.log(taskCreateParameters.id)
-    console.log(taskCreateParameters);
-    try {
-        await client.buildTasks.create(resourceGroupName, registry.name, taskName, taskCreateParameters);
-    } catch (error) {
-        console.log(error);
-    }
-    const type: string = 'image';
+
+    await client.buildTasks.create(resourceGroupName, registry.name, taskName, taskCreateParameters);
+
     // stepName is set equal to taskName to prepare for new library without step
     const stepName = taskName + 'StepName';
     let dockerStep: DockerBuildStep = {
+        'type': "Docker",
         'baseImageTrigger': 'Runtime',
         'baseImageDependencies': null,
         'branch': 'master',
@@ -109,17 +89,9 @@ async function createTask(subscription: SubscriptionModels.Subscription, resourc
         'buildArguments': [],
         'isPushEnabled': true,
         'provisioningState': "Succeeded",
-        'type': 'Docker'
     }
-    /*let stepCreateParameters: BuildStep = {
-        'properties': {
-            'type': dockerStep
-        }
-    }*/
     try {
-        let buildStep = await client.buildSteps.create(resourceGroupName, registry.name, taskName, stepName, dockerStep);
-        //buildTask.prope
-        //setattr
+        let step = await client.buildSteps.create(resourceGroupName, registry.name, taskName, stepName, dockerStep);
     } catch (error) {
         console.log(error);
     }

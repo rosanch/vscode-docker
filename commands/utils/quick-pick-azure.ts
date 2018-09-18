@@ -34,7 +34,7 @@ export async function quickPickACRRepository(registry: Registry, prompt?: string
     return desiredRepo.data;
 }
 
-export async function quickPickBuildTask(registry: Registry, subscription: Subscription, resourceGroup: ResourceGroup, prompt?: string): Promise<ContainerModels.Task> {
+export async function quickPickTask(registry: Registry, subscription: Subscription, resourceGroup: ResourceGroup, prompt?: string): Promise<ContainerModels.Task> {
     const placeHolder = prompt ? prompt : 'Choose a Task';
 
     const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);

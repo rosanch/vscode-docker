@@ -5,7 +5,7 @@ import { TaskNode } from "../../explorer/models/taskNode";
 import { ext } from '../../extensionVariables';
 import * as acrTools from '../../utils/Azure/acrTools';
 import { AzureUtilityManager } from "../../utils/azureUtilityManager";
-import { quickPickACRRegistry, quickPickBuildTask, quickPickSubscription } from '../utils/quick-pick-azure';
+import { quickPickACRRegistry, quickPickSubscription, quickPickTask } from '../utils/quick-pick-azure';
 import { openTask } from "./task-utils/showTaskManager";
 
 export async function showBuildTaskProperties(context?: TaskNode): Promise<any> {
@@ -23,7 +23,7 @@ export async function showBuildTaskProperties(context?: TaskNode): Promise<any> 
         subscription = await quickPickSubscription();
         registry = await quickPickACRRegistry();
         resourceGroup = await acrTools.getResourceGroup(registry, subscription);
-        task = (await quickPickBuildTask(registry, subscription, resourceGroup)).name;
+        task = (await quickPickTask(registry, subscription, resourceGroup)).name;
     }
 
     const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);

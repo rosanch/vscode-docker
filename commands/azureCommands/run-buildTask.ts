@@ -7,7 +7,7 @@ import { TaskNode } from "../../explorer/models/taskNode";
 import { ext } from '../../extensionVariables';
 import * as acrTools from '../../utils/Azure/acrTools';
 import { AzureUtilityManager } from "../../utils/azureUtilityManager";
-import { quickPickACRRegistry, quickPickBuildTask, quickPickSubscription } from '../utils/quick-pick-azure';
+import { quickPickACRRegistry, quickPickSubscription, quickPickTask } from '../utils/quick-pick-azure';
 
 export async function runBuildTask(context?: TaskNode): Promise<any> {
     let taskName: string;
@@ -24,7 +24,7 @@ export async function runBuildTask(context?: TaskNode): Promise<any> {
         subscription = await quickPickSubscription();
         registry = await quickPickACRRegistry();
         resourceGroup = await acrTools.getResourceGroup(registry, subscription);
-        taskName = (await quickPickBuildTask(registry, subscription, resourceGroup)).name;
+        taskName = (await quickPickTask(registry, subscription, resourceGroup)).name;
     }
 
     const client = AzureUtilityManager.getInstance().getContainerRegistryManagementClient(subscription);
